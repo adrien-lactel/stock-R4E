@@ -1,0 +1,169 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+            🏬 Magasins — {{ $store->exists ? "Éditer #{$store->id}" : "Créer" }}
+        </h1>
+
+        <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded border hover:bg-gray-50">
+            ← Retour dashboard
+        </a>
+    </div>
+
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-6 p-4 bg-red-100 text-red-800 rounded border border-red-300">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-6 p-4 bg-red-50 text-red-800 rounded border border-red-200">
+            <ul class="list-disc pl-5 space-y-1 text-sm">
+                @foreach($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {{-- FORMULAIRE --}}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">
+                {{ $store->exists ? "✏️ Modifier le magasin" : "➕ Créer un magasin" }}
+            </h2>
+
+            <form method="POST"
+                  action="{{ $store->exists ? route('admin.stores.update', $store) : route('admin.stores.store') }}"
+                  class="space-y-5">
+                @csrf
+                @if($store->exists)
+                    @method('PUT')
+                @endif
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                        <input name="name" required
+                               value="{{ old('name', $store->name) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ville *</label>
+                        <input name="city" required
+                               value="{{ old('city', $store->city) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input name="email" type="email" required
+                               value="{{ old('email', $store->email) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    @unless($store->exists)
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe initial *</label>
+                            <input name="password" type="password" required class="w-full rounded border-gray-300" />
+                            <p class="text-xs text-gray-500 mt-1">Le magasin pourra le modifier après connexion</p>
+                        </div>
+                    @endunless
+                </div>
+
+                <div class="flex gap-2">
+                    <button class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                        {{ $store->exists ? '💾 Mettre à jour' : '💾 Créer' }}
+                    </button>
+
+                    @if($store->exists)
+                        <a href="{{ route('admin.stores.create') }}"
+                           class="px-6 py-2 rounded border hover:bg-gray-50">
+                            + Nouveau
+                        </a>
+                    @endif
+                </div>
+            </form>
+        </div>
+
+        {{-- LISTE --}}
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">📋 Tous les magasins</h2>
+                    <p class="text-sm text-gray-500">
+                        {{ $stores->count() }} affiché(s)
+                    </p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-3 py-2 text-left">Nom</th>
+                            <th class="px-3 py-2 text-left">Ville</th>
+                            <th class="px-3 py-2 text-left">Email</th>
+                            <th class="px-3 py-2 text-center">Consoles</th>
+                            <th class="px-3 py-2 text-center">Factures</th>
+                            <th class="px-3 py-2 text-center">Éditer</th>
+                            <th class="px-3 py-2 text-center">Supprimer</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($stores as $s)
+                            <tr>
+                                <td class="px-3 py-2 font-medium">{{ $s->name }}</td>
+                                <td class="px-3 py-2">{{ $s->city ?? '—' }}</td>
+                                <td class="px-3 py-2">{{ $s->email ?? '—' }}</td>
+
+                                <td class="px-3 py-2 text-center">{{ $s->consoles_count ?? 0 }}</td>
+                                <td class="px-3 py-2 text-center">{{ $s->invoices_count ?? 0 }}</td>
+
+                                <td class="px-3 py-2 text-center">
+                                    <a href="{{ route('admin.stores.edit', $s) }}" class="text-indigo-600 hover:underline font-medium">✏️</a>
+                                </td>
+
+                                <td class="px-3 py-2 text-center">
+                                    @if(($s->consoles_count ?? 0) > 0 || ($s->invoices_count ?? 0) > 0)
+                                        <span class="text-gray-400 cursor-not-allowed" title="Suppression impossible : données associées">🗑️</span>
+                                    @else
+                                        <form method="POST" action="{{ route('admin.stores.destroy', $s) }}" onsubmit="return confirm('Supprimer ce magasin ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:underline font-medium">🗑️</button>
+                                        </form>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-3 py-6 text-center text-gray-500">Aucun magasin</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="text-xs text-gray-500 mt-4">ℹ️ La suppression est désactivée si le magasin a des consoles ou factures associées.</p>
+        </div>
+
+    </div>
+</div>
+@endsection
+
+
+
+
+

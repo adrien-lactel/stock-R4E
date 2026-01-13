@@ -1,0 +1,14 @@
+$content = @"
+node_modules/
+vendor/
+.git/
+storage/logs/
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.idea/
+.vscode/
+"@
+
+$content | Out-File -FilePath "c:\laragon\www\stock-R4E\.railwayignore" -Encoding UTF8

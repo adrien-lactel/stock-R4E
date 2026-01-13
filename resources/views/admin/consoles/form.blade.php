@@ -1,0 +1,425 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    {{-- HEADER --}}
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+            {{ $console->exists ? "✏️ Modifier l'article #{$console->id}" : "➕ Créer un article" }}
+        </h1>
+
+        <div class="flex items-center gap-2">
+            @if($console->exists)
+                <a href="{{ route('admin.articles.edit_full', $console) }}" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
+                    ✍️ Édition complète
+                </a>
+            @endif
+
+            <a href="{{ route('admin.consoles.index') }}" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour stock</a>
+        </div>
+    </div>
+
+
+    {{-- MESSAGES --}}
+    @if ($errors->any())
+        <div class="mb-6 p-4 bg-red-50 text-red-800 rounded border border-red-200">
+            <ul class="list-disc pl-5 space-y-1 text-sm">
+                @foreach($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    {{-- FORMULAIRE --}}
+    <div class="bg-white shadow rounded-lg p-6">
+        <form method="POST"
+              action="{{ $console->exists ? route('admin.articles.update', $console) : route('admin.articles.store') }}">
+            @csrf
+            @if($console->exists)
+                @method('PUT')
+            @endif
+
+            {{-- =====================
+     TAXONOMIE
+===================== --}}
+<div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-semibold text-gray-800">Taxonomie</h2>
+
+    {{-- Bouton global gestion taxonomie --}}
+    <a href="{{ route('admin.taxonomy.index') }}"
+       target="_blank"
+       class="inline-flex items-center gap-2 px-3 py-2 rounded bg-gray-900 text-white text-sm hover:bg-black"
+       title="Gérer catégories, sous-catégories et types">
+        <span class="text-lg leading-none">+</span>
+        Gérer
+        </a>
+        <button type="button"
+        onclick="window.location.reload()"
+        class="ml-2 px-3 py-2 rounded border text-sm hover:bg-gray-50"
+        title="Recharger pour récupérer la nouvelle taxonomie">
+        ↻ Rafraîchir
+        </button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+    {{-- =====================
+         CATÉGORIE
+    ===================== --}}
+    <div>
+        <div class="flex items-center justify-between mb-1">
+            <label class="block text-sm font-medium">Catégorie *</label>
+
+            <a href="{{ route('admin.taxonomy.index') }}#categories"
+               target="_blank"
+               class="text-indigo-600 hover:underline text-sm"
+               title="Ajouter / éditer une catégorie">
+                +
+            </a>
+        </div>
+
+        <select id="article_category_id"
+                name="article_category_id"
+                class="w-full rounded border-gray-300"
+                required>
+            <option value="">— Choisir —</option>
+            @foreach($articleCategories as $cat)
+                <option value="{{ $cat->id }}"
+                    @selected(old('article_category_id', $console->article_category_id) == $cat->id)>
+                    {{ $cat->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    {{-- =====================
+         SOUS-CATÉGORIE
+    ===================== --}}
+    <div>
+        <div class="flex items-center justify-between mb-1">
+            <label class="block text-sm font-medium">Sous-catégorie *</label>
+
+            <a href="{{ route('admin.taxonomy.index') }}#subcategories"
+               target="_blank"
+               class="text-indigo-600 hover:underline text-sm"
+               title="Ajouter / éditer une sous-catégorie">
+                +
+            </a>
+        </div>
+
+        <select id="article_sub_category_id"
+                name="article_sub_category_id"
+                class="w-full rounded border-gray-300"
+                required>
+            <option value="">— Choisir —</option>
+        </select>
+    </div>
+
+    {{-- =====================
+         TYPE
+    ===================== --}}
+    <div>
+        <div class="flex items-center justify-between mb-1">
+            <label class="block text-sm font-medium">Type *</label>
+
+            <a href="{{ route('admin.taxonomy.index') }}#types"
+               target="_blank"
+               class="text-indigo-600 hover:underline text-sm"
+               title="Ajouter / éditer un type">
+                +
+            </a>
+        </div>
+
+        <select id="article_type_id"
+                name="article_type_id"
+                class="w-full rounded border-gray-300"
+                required>
+            <option value="">— Choisir —</option>
+        </select>
+    </div>
+
+</div>
+
+            {{-- =====================
+                 STOCK / RÉPARATION
+            ===================== --}}
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {{-- Statut --}}
+                <div>
+                    <label class="block text-sm font-medium mb-1">Statut *</label>
+                    <select name="status" class="w-full rounded border-gray-300" required>
+                        @php $st = old('status', $console->status); @endphp
+                        <option value="stock" @selected($st==='stock')>Stock</option>
+                        <option value="defective" @selected($st==='defective')>Défectueuse</option>
+                        <option value="repair" @selected($st==='repair')>En réparation</option>
+                        <option value="disabled" @selected($st==='disabled')>Désactivée</option>
+                    </select>
+                </div>
+
+                {{-- Réparateur --}}
+                <div>
+                    <label class="block text-sm font-medium mb-1">Réparateur</label>
+                    <select name="repairer_id" class="w-full rounded border-gray-300">
+                        <option value="">— Aucun —</option>
+                        @foreach($repairers as $rep)
+                            <option value="{{ $rep->id }}"
+                                @selected(old('repairer_id', $console->repairer_id) == $rep->id)>
+                                {{ $rep->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Obligatoire si statut = <strong>repair</strong>
+                    </p>
+                </div>
+
+                {{-- Prix achat --}}
+                <div>
+                    <label class="block text-sm font-medium mb-1">Prix d’achat (€)</label>
+                    <input type="number" step="0.01" min="0" name="prix_achat"
+                           value="{{ old('prix_achat', $console->prix_achat) }}"
+                           class="w-full rounded border-gray-300">
+                </div>
+
+                {{-- Valorisation --}}
+                <div>
+                    <label class="block text-sm font-medium mb-1">Valorisation (€)</label>
+                    <input type="number" step="0.01" min="0" name="valorisation"
+                           value="{{ old('valorisation', $console->valorisation) }}"
+                           class="w-full rounded border-gray-300">
+                </div>
+            </div>
+
+            {{-- =====================
+                 COMMENTAIRES
+            ===================== --}}
+            <h2 class="text-lg font-semibold text-gray-800 mt-8 mb-4">Commentaires</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Commentaire produit</label>
+                    <textarea name="product_comment" rows="3"
+                              class="w-full rounded border-gray-300">{{ old('product_comment', $console->product_comment) }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">Commentaire réparateur</label>
+                    <textarea name="commentaire_reparateur" rows="3"
+                              class="w-full rounded border-gray-300">{{ old('commentaire_reparateur', $console->commentaire_reparateur) }}</textarea>
+                </div>
+            </div>
+
+            
+
+            {{-- ACTIONS --}}
+            <div class="mt-6 flex gap-3">
+                <button class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                    💾 Enregistrer
+                </button>
+
+                <a href="{{ route('admin.consoles.index') }}"
+                   class="px-6 py-2 rounded border hover:bg-gray-50">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {{-- =====================
+         15 DERNIÈRES ENTRÉES
+    ===================== --}}
+    <div class="mt-10 bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">
+            🕒 15 dernières entrées en stock
+        </h2>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-3 py-2 text-left">ID</th>
+                        <th class="px-3 py-2 text-left">Catégorie</th>
+                        <th class="px-3 py-2 text-left">Type</th>
+                        <th class="px-3 py-2 text-left">Statut</th>
+                        <th class="px-3 py-2 text-left">Réparateur</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($lastConsoles as $c)
+                        <tr>
+                            <td class="px-3 py-2">#{{ $c->id }}</td>
+                            <td class="px-3 py-2">{{ $c->articleCategory?->name ?? '—' }}</td>
+                            <td class="px-3 py-2">{{ $c->articleType?->name ?? '—' }}</td>
+                            <td class="px-3 py-2">{{ ucfirst($c->status) }}</td>
+                            <td class="px-3 py-2">
+                                {{ $c->repairer?->name ?? '—' }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-3 py-6 text-center text-gray-500">
+                                Aucune entrée récente
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{{-- =====================
+     JS TAXONOMIE
+===================== --}}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const cat = document.getElementById('article_category_id');
+  const sub = document.getElementById('article_sub_category_id');
+  const type = document.getElementById('article_type_id');
+
+  const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id));
+  const oldType = @json(old('article_type_id', $console->article_type_id));
+
+  function clear(sel) {
+    sel.innerHTML = '<option value="">— Choisir —</option>';
+  }
+
+  async function fetchJson(url) {
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' }});
+    return await r.json();
+  }
+
+  async function loadSubs(catId) {
+    clear(sub); clear(type);
+    if (!catId) return;
+    const data = await fetchJson(`/admin/ajax/sub-categories/${catId}`);
+    data.forEach(o => sub.innerHTML += `<option value="${o.id}">${o.name}</option>`);
+    if (oldSub) { sub.value = oldSub; loadTypes(oldSub); }
+  }
+
+  async function loadTypes(subId) {
+    clear(type);
+    if (!subId) return;
+    const data = await fetchJson(`/admin/ajax/types/${subId}`);
+    data.forEach(o => type.innerHTML += `<option value="${o.id}">${o.name}</option>`);
+    if (oldType) type.value = oldType;
+  }
+
+  cat.addEventListener('change', e => loadSubs(e.target.value));
+  sub.addEventListener('change', e => loadTypes(e.target.value));
+
+  if (cat.value) loadSubs(cat.value);
+});
+</script>
+@endsection
+
+{{-- JS : cascade Taxonomie --}}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const catSelect  = document.getElementById('article_category_id');
+  const subSelect  = document.getElementById('article_sub_category_id');
+  const typeSelect = document.getElementById('article_type_id');
+
+  if (!catSelect || !subSelect || !typeSelect) return;
+
+  // Valeurs “old” / édition
+  const oldSub  = @json(old('article_sub_category_id', $console->article_sub_category_id));
+  const oldType = @json(old('article_type_id', $console->article_type_id));
+
+  function clearSelect(sel, placeholder = '— Choisir —') {
+    sel.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = placeholder;
+    sel.appendChild(opt);
+  }
+
+  async function fetchJson(url) {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' }});
+    if (!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
+    return await res.json();
+  }
+
+  async function loadSubCategories(categoryId, applyOld = false) {
+    clearSelect(subSelect);
+    clearSelect(typeSelect);
+
+    if (!categoryId) return;
+
+    const url = `{{ route('admin.ajax.sub-categories', ['category' => '__ID__']) }}`.replace('__ID__', categoryId);
+    const data = await fetchJson(url);
+
+    // supporte aussi {data:[...]} si jamais
+    const list = Array.isArray(data) ? data : (data.data ?? []);
+
+    list.forEach(sc => {
+      const opt = document.createElement('option');
+      opt.value = sc.id;
+      opt.textContent = sc.name;
+      subSelect.appendChild(opt);
+    });
+
+    if (applyOld && oldSub) {
+      subSelect.value = String(oldSub);
+      if (subSelect.value) await loadTypes(subSelect.value, true);
+    }
+  }
+
+  async function loadTypes(subCategoryId, applyOld = false) {
+    clearSelect(typeSelect);
+
+    if (!subCategoryId) return;
+
+    const url = `{{ route('admin.ajax.types', ['subCategory' => '__ID__']) }}`.replace('__ID__', subCategoryId);
+    const data = await fetchJson(url);
+
+    const list = Array.isArray(data) ? data : (data.data ?? []);
+
+    list.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name;
+      typeSelect.appendChild(opt);
+    });
+
+    if (applyOld && oldType) {
+      typeSelect.value = String(oldType);
+    }
+  }
+
+  // Events
+  catSelect.addEventListener('change', async () => {
+    try {
+      await loadSubCategories(catSelect.value, false);
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  subSelect.addEventListener('change', async () => {
+    try {
+      await loadTypes(subSelect.value, false);
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  // Init (édition / old input)
+  (async () => {
+    clearSelect(subSelect);
+    clearSelect(typeSelect);
+
+    if (catSelect.value) {
+      try {
+        await loadSubCategories(catSelect.value, true);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  })();
+});
+</script>
