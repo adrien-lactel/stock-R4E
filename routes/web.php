@@ -30,7 +30,9 @@ use App\Http\Controllers\Admin\RepairerAdminController;
 | Public
 |--------------------------------------------------------------------------
 */
-Route::get('/', fn () => view('welcome'));
+Route::get('/', function() {
+    return auth()->check() ? redirect('/dashboard') : redirect('/login');
+});
 
 /*
 |--------------------------------------------------------------------------
