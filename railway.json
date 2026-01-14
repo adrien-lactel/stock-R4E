@@ -1,11 +1,18 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "nixpacks"
+    "builder": "nixpacks",
+    "config": {
+      "nixpacks": {
+        "pkgs": ["php83", "php83Extensions.pdo", "php83Extensions.pdo_mysql", "nodejs_18", "npm-9_x"],
+        "env": {
+          "APP_ENV": "production",
+          "APP_DEBUG": "false"
+        }
+      }
+    }
   },
   "deploy": {
-    "startCommand": "php artisan migrate --force && php -S 0.0.0.0:$PORT -t public",
-    "numReplicas": 1,
-    "healthcheckPath": "/"
+    "startCommand": "php artisan migrate --force && php -S 0.0.0.0:$PORT -t public"
   }
 }
