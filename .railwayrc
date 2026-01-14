@@ -1,4 +1,3 @@
 {
-  "buildCommand": "composer install --optimize-autoloader --no-dev && npm run build",
-  "watchPatterns": ["app/**", "resources/**", "routes/**", "config/**"]
+  "buildCommand": "composer install --no-scripts --ignore-platform-reqs && npm run build"
 }
