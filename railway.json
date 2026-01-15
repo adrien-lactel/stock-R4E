@@ -6,7 +6,7 @@
       "nixpacks": {
         "buildCommands": [
           "cp .env.production .env || true",
-          "composer install --ignore-platform-reqs",
+          "composer install --no-scripts --ignore-platform-reqs",
           "npm ci",
           "npm run build"
         ]
