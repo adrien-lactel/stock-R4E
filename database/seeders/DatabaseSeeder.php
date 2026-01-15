@@ -14,6 +14,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Créer un utilisateur admin
+        $this->call(CreateAdminUser::class);
+
         // 1. Créer quelques magasins
         Store::factory()->count(5)->create();
 
