@@ -43,7 +43,12 @@ Route::get('/dashboard', function () {
     if (auth()->user()->role === 'admin') {
         return redirect()->route('admin.dashboard');
     } elseif (auth()->user()->role === 'store') {
-        return redirect()->route('store.dashboard', auth()->user()->store_id);
+        $storeId = auth()->user()->store_id;
+        if ($storeId) {
+            return redirect()->route('store.dashboard', $storeId);
+        }
+        // If no store attached yet, fallback to generic dashboard view
+        return view('dashboard');
     }
     return view('dashboard');
 })->middleware(['auth', 'verified'])
