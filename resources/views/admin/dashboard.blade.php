@@ -14,197 +14,91 @@
             Vous êtes connecté en tant qu'administrateur.
         </p>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-blue-50 p-4 rounded">
-                <h3 class="font-semibold text-blue-900">📊 Stocks totaux</h3>
-                <p class="text-blue-700 mt-2">{{ $mods->count() ?? 0 }} mods</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
+                <h3 class="font-semibold text-blue-900 text-lg">📦 Mods & Accessoires</h3>
+                <p class="text-blue-700 mt-3 text-2xl font-bold">{{ $mods->count() }}</p>
+                <p class="text-blue-600 text-sm mt-2">Articles en stock</p>
             </div>
-            <div class="bg-green-50 p-4 rounded">
-                <h3 class="font-semibold text-green-900">🔧 Réparateurs</h3>
-                <p class="text-green-700 mt-2">{{ $repairers->count() ?? 0 }} réparateurs</p>
+            <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
+                <h3 class="font-semibold text-green-900 text-lg">🔧 Réparateurs</h3>
+                <p class="text-green-700 mt-3 text-2xl font-bold">{{ $repairers->count() }}</p>
+                <p class="text-green-600 text-sm mt-2">Réparateurs actifs</p>
             </div>
         </div>
     </div>
 
-</div>
-@endsection
-
-
-
-        {{-- Stocks magasins --}}
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-            <h2 class="text-xl font-semibold mb-2">Stocks magasins</h2>
-            <p class="text-gray-600 mb-4">
-                Accéder aux stocks de chaque magasin.
-            </p>
-            <p class="text-sm text-gray-500 italic">
-                (via la page magasins)
-            </p>
-        </div>
-
-        <a href="{{ route('admin.repairers.create') }}"
-         class="bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-l-4 border-cyan-500">
-        <h2 class="text-xl font-semibold mb-2">Créer un réparateur</h2>
-        <p class="text-gray-600">Ajouter un réparateur (coordonnées, notes, délais…)</p>
-        </a>
-
-        {{-- Gestion SAV --}}
-        <a href="{{ route('admin.returns.index') }}"
-           class="bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-l-4 border-red-500">
-            <h2 class="text-xl font-semibold mb-2">🔧 Gestion SAV</h2>
-            <p class="text-gray-600">
-                Consulter et gérer les demandes de retour/réparation.
-            </p>
-        </a>
-
-    </div>
-
-    {{-- =====================
-         STOCK MODS DISPONIBLES
-    ===================== --}}
+    {{-- Stock Mods --}}
+    @if($mods->count() > 0)
     <div class="mt-10">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">📦 Stock Mods/Accessoires</h2>
-            <a href="{{ route('admin.mods.index') }}" class="text-blue-600 hover:underline">
-                Voir tout le catalogue →
-            </a>
-        </div>
-
+        <h2 class="text-2xl font-bold mb-4">📦 Stock Mods/Accessoires</h2>
         <div class="bg-white shadow rounded-lg overflow-hidden">
             <table class="w-full border-collapse">
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="p-3 text-left">Nom</th>
                         <th class="p-3 text-left">Type</th>
-                        <th class="p-3 text-left">Prix Achat</th>
                         <th class="p-3 text-left">Stock</th>
-                        <th class="p-3 text-left">Compatibilité</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($mods as $mod)
+                    @foreach($mods as $mod)
                         <tr class="border-t">
                             <td class="p-3 font-semibold">{{ $mod->name }}</td>
                             <td class="p-3">
                                 @if($mod->is_accessory)
-                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                                        📦 Accessoire
-                                    </span>
+                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">Accessoire</span>
                                 @else
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                                        🔧 Modification
-                                    </span>
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Modification</span>
                                 @endif
                             </td>
-                            <td class="p-3">{{ number_format($mod->purchase_price, 2, ',', ' ') }} €</td>
                             <td class="p-3">
                                 @if($mod->quantity == 0)
-                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm font-semibold">
-                                        ⚠️ Rupture (0)
-                                    </span>
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm">⚠️ Rupture</span>
                                 @elseif($mod->quantity < 5)
-                                    <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-sm font-semibold">
-                                        ⚡ Stock bas ({{ $mod->quantity }})
-                                    </span>
+                                    <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-sm">⚡ {{ $mod->quantity }}</span>
                                 @else
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-semibold">
-                                        ✅ {{ $mod->quantity }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="p-3 text-xs text-gray-600">
-                                @if($mod->compatibleCategories->count() > 0 || $mod->compatibleSubCategories->count() > 0 || $mod->compatibleTypes->count() > 0)
-                                    {{ $mod->compatibleTypes->pluck('name')->take(2)->join(', ') }}
-                                    @if($mod->compatibleTypes->count() > 2)
-                                        <span class="text-gray-400">+{{ $mod->compatibleTypes->count() - 2 }}</span>
-                                    @endif
-                                @else
-                                    <span class="text-gray-400 italic">Universel</span>
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">✅ {{ $mod->quantity }}</span>
                                 @endif
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="p-6 text-center text-gray-500">
-                                Aucun mod enregistré. <a href="{{ route('admin.mods.create') }}" class="text-blue-600 hover:underline">Créez-en un</a>
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
     </div>
+    @endif
 
-    {{-- =====================
-         RÉPARATEURS
-    ===================== --}}
+    {{-- Réparateurs --}}
+    @if($repairers->count() > 0)
     <div class="mt-10">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">🔧 Réparateurs actifs</h2>
-            <a href="{{ route('admin.repairers.create') }}" class="text-blue-600 hover:underline">
-                Voir tous les réparateurs →
-            </a>
-        </div>
-
+        <h2 class="text-2xl font-bold mb-4">🔧 Réparateurs actifs</h2>
         <div class="bg-white shadow rounded-lg overflow-hidden">
             <table class="w-full border-collapse">
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="p-3 text-left">Nom</th>
                         <th class="p-3 text-left">Ville</th>
-                        <th class="p-3 text-left">Contact</th>
                         <th class="p-3 text-center">Consoles en cours</th>
-                        <th class="p-3 text-center">Actif</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($repairers as $repairer)
+                    @foreach($repairers as $repairer)
                         <tr class="border-t">
                             <td class="p-3 font-semibold">{{ $repairer->name }}</td>
                             <td class="p-3">{{ $repairer->city ?? '—' }}</td>
-                            <td class="p-3 text-sm text-gray-600">
-                                @if($repairer->phone)
-                                    <div>☎ {{ $repairer->phone }}</div>
-                                @endif
-                                @if($repairer->email)
-                                    <div class="text-xs">✉ {{ $repairer->email }}</div>
-                                @endif
-                                @if(!$repairer->phone && !$repairer->email)
-                                    <span class="text-gray-400">—</span>
-                                @endif
-                            </td>
                             <td class="p-3 text-center">
-                                @if($repairer->consoles_count > 0)
-                                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded font-semibold">
-                                        {{ $repairer->consoles_count }}
-                                    </span>
-                                @else
-                                    <span class="text-gray-400">0</span>
-                                @endif
-                            </td>
-                            <td class="p-3 text-center">
-                                @if($repairer->is_active)
-                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">
-                                        ✅ Oui
-                                    </span>
-                                @else
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                                        ❌ Non
-                                    </span>
-                                @endif
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded font-semibold">
+                                    {{ $repairer->consoles_count }}
+                                </span>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="p-6 text-center text-gray-500">
-                                Aucun réparateur enregistré. <a href="{{ route('admin.repairers.create') }}" class="text-blue-600 hover:underline">Créez-en un</a>
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
     </div>
+    @endif
 
 </div>
 @endsection
