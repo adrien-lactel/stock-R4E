@@ -8,40 +8,26 @@
         Tableau de bord administrateur
     </h1>
 
-    {{-- Grille --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-        {{-- Créer un magasin --}}
-        <a href="{{ route('admin.stores.create') }}"
-           class="bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-l-4 border-blue-500">
-            <h2 class="text-xl font-semibold mb-2">Créer un magasin</h2>
-            <p class="text-gray-600">
-                Ajouter un nouveau magasin et créer son compte de connexion.
-            </p>
-        </a>
-
-        {{-- Saisie initiale article --}}
-        <a href="{{ route('admin.articles.create') }}"
-        class="bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-l-4 border-indigo-500">
-            <h2 class="text-xl font-semibold mb-2">➕ Saisie initiale article</h2>
-            <p class="text-gray-600">
-                Ajouter un nouvel article (console, jeu, accessoire, autre).
-            </p>
-        </a>
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Bienvenue sur Stock R4E</h2>
+        <p class="text-gray-600 mb-4">
+            Vous êtes connecté en tant qu'administrateur.
+        </p>
         
-        {{-- Gérer les consoles --}}
-        <a href="{{ route('admin.consoles.index') }}"
-           class="bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-l-4 border-green-500">
-            <h2 class="text-xl font-semibold mb-2">liste stock</h2>
-            <p class="text-gray-600">
-                Voir toutes les consoles, leur état et leurs informations.
-            </p>
-        </a>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-blue-50 p-4 rounded">
+                <h3 class="font-semibold text-blue-900">📊 Stocks totaux</h3>
+                <p class="text-blue-700 mt-2">{{ $mods->count() ?? 0 }} mods</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded">
+                <h3 class="font-semibold text-green-900">🔧 Réparateurs</h3>
+                <p class="text-green-700 mt-2">{{ $repairers->count() ?? 0 }} réparateurs</p>
+            </div>
+        </div>
+    </div>
 
-        <a href="{{ route('admin.articles.recent') }}" class="bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-l-4 border-yellow-500">
-            <h2 class="text-xl font-semibold mb-2">Derniers articles</h2>
-            <p class="text-gray-600">Voir les 40 derniers articles et filtrer par taxonomie pour édition complète.</p>
-        </a>
+</div>
+@endsection
 
 
 
