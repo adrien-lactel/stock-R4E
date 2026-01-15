@@ -39,8 +39,14 @@ Route::get('/', function() {
 | Auth dashboard fallback
 |--------------------------------------------------------------------------
 */
-Route::get('/dashboard', fn () => view('dashboard'))
-    ->middleware(['auth', 'verified'])
+Route::get('/dashboard', function () {
+    if (auth()->user()->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    } elseif (auth()->user()->role === 'store') {
+        return redirect()->route('store.dashboard', auth()->user()->store_id);
+    }
+    return view('dashboard');
+})->middleware(['auth', 'verified'])
     ->name('dashboard');
 
 /*
