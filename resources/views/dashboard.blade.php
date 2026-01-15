@@ -52,6 +52,10 @@
     {{-- ===================== --}}
     @elseif(auth()->user()->role === 'store')
 
+        @php
+            $storeId = auth()->user()->store_id;
+        @endphp
+
         <p class="text-gray-600 mb-10">
             Interface magasin – gestion de votre stock
         </p>
@@ -59,13 +63,22 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <!-- Stock magasin -->
-            <a href="{{ route('store.dashboard', auth()->user()->store_id) }}"
-               class="bg-white shadow rounded-lg p-6 hover:shadow-lg transition border-l-4 border-indigo-500">
-                <h2 class="text-xl font-semibold mb-2">Mon stock</h2>
-                <p class="text-gray-600">
-                    Consoles disponibles, vendues ou HS.
-                </p>
-            </a>
+            @if($storeId)
+                <a href="{{ route('store.dashboard', $storeId) }}"
+                   class="bg-white shadow rounded-lg p-6 hover:shadow-lg transition border-l-4 border-indigo-500">
+                    <h2 class="text-xl font-semibold mb-2">Mon stock</h2>
+                    <p class="text-gray-600">
+                        Consoles disponibles, vendues ou HS.
+                    </p>
+                </a>
+            @else
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 border-yellow-500">
+                    <h2 class="text-xl font-semibold mb-2">Mon stock</h2>
+                    <p class="text-gray-600">
+                        Associez d'abord ce compte à un magasin pour accéder au tableau de bord.
+                    </p>
+                </div>
+            @endif
 
             <!-- Factures -->
             <div class="bg-white shadow rounded-lg p-6 border-l-4 border-gray-400">
