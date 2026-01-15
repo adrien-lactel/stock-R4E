@@ -130,7 +130,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         | DASHBOARD
         ===================== */
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
-            ->name('dashboard');
+            ->name('admin.dashboard');
 
         /* =====================
         | ARTICLES
