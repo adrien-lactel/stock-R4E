@@ -13,6 +13,34 @@
         <p class="text-gray-600 mb-4">
             Vous êtes connecté en tant qu'administrateur.
         </p>
+
+        @if(!empty($quickLinks))
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-8">
+            @foreach($quickLinks as $link)
+                <a href="{{ route($link['route'], $link['params'] ?? []) }}" class="relative group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-lg transition duration-200">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">{{ $link['subtitle'] ?? 'Administration' }}</p>
+                            <p class="text-xl font-semibold text-gray-900 mt-1">{{ $link['title'] }}</p>
+                        </div>
+                        <span class="text-3xl" aria-hidden="true">{{ $link['icon'] }}</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-4 leading-relaxed">{{ $link['description'] }}</p>
+                    <div class="mt-5 flex items-center text-indigo-600 font-semibold text-sm">
+                        <span>Accéder</span>
+                        <svg class="w-4 h-4 ms-1 transition transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                    @if(!empty($link['badge']))
+                        <span class="absolute top-4 right-4 text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $link['badge_style'] ?? 'bg-gray-100 text-gray-700' }}">
+                            {{ $link['badge'] }}
+                        </span>
+                    @endif
+                </a>
+            @endforeach
+        </div>
+        @endif
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">

@@ -12,7 +12,7 @@ beforeEach(function () {
     Store::factory()->create(['id' => 2]);
 });
 
-test('admin can upsert console price for a store', function () {
+test('admin can create console offer for a store', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $console = Console::factory()->create(['id' => 1]);
     $store = Store::first();
@@ -24,9 +24,10 @@ test('admin can upsert console price for a store', function () {
 
     $response->assertRedirect(route('admin.consoles.edit', $console));
 
-    $this->assertDatabaseHas('console_store_prices', [
+    $this->assertDatabaseHas('console_offers', [
         'console_id' => $console->id,
         'store_id' => $store->id,
         'sale_price' => 50,
+        'status' => 'proposed',
     ]);
 });
