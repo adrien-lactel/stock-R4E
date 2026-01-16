@@ -192,6 +192,73 @@
         </div>
     </div>
 
+    {{-- Demandes de lots --}}
+    <div class="mt-10">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">📦 Demandes de lots en attente</h2>
+            <a href="{{ route('admin.lot-requests.index') }}" class="text-blue-600 hover:underline">
+                Voir toutes les demandes →
+            </a>
+        </div>
+
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-3 text-left">Magasin</th>
+                        <th class="p-3 text-left">Console</th>
+                        <th class="p-3 text-left">Quantité</th>
+                        <th class="p-3 text-left">Prix unitaire</th>
+                        <th class="p-3 text-left">Demandé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($lotRequests as $request)
+                        @php
+                            $offer = $request->consoleOffer;
+                            $console = $offer?->console;
+                        @endphp
+                        <tr class="border-t">
+                            <td class="p-3 font-semibold">
+                                {{ $request->store->name }}
+                                <div class="text-xs text-gray-500">{{ $request->store->city ?? 'Ville inconnue' }}</div>
+                            </td>
+                            <td class="p-3 text-sm text-gray-700">
+                                @if($console)
+                                    <div class="font-mono text-sm">#{{ $console->id }} {{ $console->serial_number ?? '' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $console->articleType->name ?? 'Type non défini' }}</div>
+                                @else
+                                    <span class="text-gray-400 italic">Console indisponible</span>
+                                @endif
+                            </td>
+                            <td class="p-3">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded font-semibold">
+                                    {{ $request->quantity }}
+                                </span>
+                            </td>
+                            <td class="p-3">
+                                @if($offer)
+                                    {{ number_format($offer->sale_price, 2, ',', ' ') }} €
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </td>
+                            <td class="p-3 text-sm text-gray-600">
+                                {{ $request->created_at->diffForHumans() }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="p-6 text-center text-gray-500">
+                                Aucune demande en attente. <a href="{{ route('admin.lot-requests.index') }}" class="text-blue-600 hover:underline">Voir l'historique complet</a>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 @endsection
 

@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Store;
-use App\Models\Console;
 use App\Models\Mod;
 use App\Models\Repairer;
 use App\Models\ConsoleReturn;
+use App\Models\StoreLotRequest;
 
 class DashboardController extends Controller
 {
@@ -26,6 +25,14 @@ class DashboardController extends Controller
             ->orderBy('consoles_count', 'desc')
             ->limit(10)
             ->get();
+        $lotRequests = StoreLotRequest::with([
+                'store:id,name,city',
+                'consoleOffer.console.articleType'
+            ])
+            ->where('status', 'pending')
+            ->latest()
+            ->limit(5)
+            ->get();
 
         $savPendingCount = ConsoleReturn::whereIn('status', ['pending', 'accepted', 'sent_to_repairer'])
             ->where('acknowledged', false)
@@ -33,32 +40,11 @@ class DashboardController extends Controller
 
         $quickLinks = [
             [
-                'title' => 'Nouveau magasin',
-                'subtitle' => 'Onboarding',
-                'description' => 'Créer un accès boutique et lui attribuer son stock initial.',
-                'icon' => '🏪',
-                'route' => 'admin.stores.create',
-            ],
-            [
                 'title' => 'Créer un article',
                 'subtitle' => 'Catalogue',
                 'description' => 'Saisie initiale d\'une console, accessoire ou article annexe.',
                 'icon' => '➕',
                 'route' => 'admin.articles.create',
-            ],
-            [
-                'title' => 'Prix consoles',
-                'subtitle' => 'Tarifs',
-                'description' => 'Synchroniser les prix par magasin et par console.',
-                'icon' => '💰',
-                'route' => 'admin.prices.index',
-            ],
-            [
-                'title' => 'Catalogue Mods',
-                'subtitle' => 'Stock',
-                'description' => 'Gérer accessoires, quantités et affectations réparateurs.',
-                'icon' => '🧰',
-                'route' => 'admin.mods.index',
             ],
             [
                 'title' => 'SAV & retours',
@@ -75,13 +61,6 @@ class DashboardController extends Controller
                 'description' => 'Consulter toutes les consoles, leurs statuts et affectations.',
                 'icon' => '🎮',
                 'route' => 'admin.consoles.index',
-            ],
-            [
-                'title' => 'Demandes de lots',
-                'subtitle' => 'Logistique',
-                'description' => 'Répondre aux besoins des magasins en consoles.',
-                'icon' => '📦',
-                'route' => 'admin.lot-requests.index',
             ],
             [
                 'title' => 'Réparateurs',
@@ -113,6 +92,6 @@ class DashboardController extends Controller
             ],
         ];
         
-        return view('admin.dashboard', compact('mods', 'repairers', 'quickLinks', 'savPendingCount'));
+        return view('admin.dashboard', compact('mods', 'repairers', 'quickLinks', 'savPendingCount', 'lotRequests'));
     }
 }
