@@ -14,34 +14,6 @@
             Vous êtes connecté en tant qu'administrateur.
         </p>
 
-        @if(!empty($quickLinks))
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-8">
-            @foreach($quickLinks as $link)
-                <a href="{{ route($link['route'], $link['params'] ?? []) }}" class="relative group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-lg transition duration-200">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">{{ $link['subtitle'] ?? 'Administration' }}</p>
-                            <p class="text-xl font-semibold text-gray-900 mt-1">{{ $link['title'] }}</p>
-                        </div>
-                        <span class="text-3xl" aria-hidden="true">{{ $link['icon'] }}</span>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-4 leading-relaxed">{{ $link['description'] }}</p>
-                    <div class="mt-5 flex items-center text-indigo-600 font-semibold text-sm">
-                        <span>Accéder</span>
-                        <svg class="w-4 h-4 ms-1 transition transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </div>
-                    @if(!empty($link['badge']))
-                        <span class="absolute top-4 right-4 text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $link['badge_style'] ?? 'bg-gray-100 text-gray-700' }}">
-                            {{ $link['badge'] }}
-                        </span>
-                    @endif
-                </a>
-            @endforeach
-        </div>
-        @endif
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
                 <h3 class="font-semibold text-blue-900 text-lg">📦 Mods & Accessoires</h3>
@@ -55,6 +27,64 @@
             </div>
         </div>
     </div>
+
+    {{-- Navigation par sections --}}
+    @if(!empty($sections))
+    <div class="mt-10 space-y-8">
+        @foreach($sections as $section)
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-2xl font-bold">{{ $section['title'] }}</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    @foreach($section['cards'] as $card)
+                        @php
+                            $isDisabled = !empty($card['disabled']) || empty($card['route']);
+                            $cardClasses = 'relative group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm transition duration-200 h-full flex flex-col';
+                            $cardClasses .= $isDisabled ? ' opacity-60 cursor-not-allowed' : ' hover:shadow-lg';
+                        @endphp
+                        @if($isDisabled)
+                            <div class="{{ $cardClasses }}">
+                        @else
+                            <a href="{{ route($card['route'], $card['params'] ?? []) }}" class="{{ $cardClasses }}">
+                        @endif
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">{{ $card['subtitle'] ?? 'Administration' }}</p>
+                                        <p class="text-xl font-semibold text-gray-900 mt-1">{{ $card['title'] }}</p>
+                                    </div>
+                                    <span class="text-3xl" aria-hidden="true">{{ $card['icon'] ?? '📌' }}</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-4 leading-relaxed flex-1">{{ $card['description'] ?? '' }}</p>
+                                @if(!$isDisabled)
+                                <div class="mt-5 flex items-center text-indigo-600 font-semibold text-sm">
+                                    <span>Accéder</span>
+                                    <svg class="w-4 h-4 ms-1 transition transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                                @endif
+                                @if(!empty($card['badge']))
+                                    <span class="absolute top-4 right-4 text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $card['badge_style'] ?? 'bg-gray-100 text-gray-700' }}">
+                                        {{ $card['badge'] }}
+                                    </span>
+                                @endif
+                                @if(!empty($card['tag']))
+                                    <span class="absolute top-4 right-4 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
+                                        {{ $card['tag'] }}
+                                    </span>
+                                @endif
+                        @if($isDisabled)
+                            </div>
+                        @else
+                            </a>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        @endforeach
+    </div>
+    @endif
 
     {{-- Stock Mods --}}
     <div class="mt-10">

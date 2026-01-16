@@ -38,60 +38,143 @@ class DashboardController extends Controller
             ->where('acknowledged', false)
             ->count();
 
-        $quickLinks = [
+        $sections = [
             [
-                'title' => 'Créer un article',
-                'subtitle' => 'Catalogue',
-                'description' => 'Saisie initiale d\'une console, accessoire ou article annexe.',
-                'icon' => '➕',
-                'route' => 'admin.articles.create',
+                'title' => 'Articles et stock',
+                'cards' => [
+                    [
+                        'title' => 'Créer un article',
+                        'subtitle' => 'Catalogue',
+                        'description' => 'Saisir une nouvelle console, accessoire ou article annexe.',
+                        'icon' => '➕',
+                        'route' => 'admin.articles.create',
+                    ],
+                    [
+                        'title' => 'Articles récents',
+                        'subtitle' => 'Production',
+                        'description' => 'Consulter les 40 dernières fiches créées.',
+                        'icon' => '📰',
+                        'route' => 'admin.articles.recent',
+                    ],
+                    [
+                        'title' => 'Inventaire articles',
+                        'subtitle' => 'Stock global',
+                        'description' => 'Piloter l’ensemble des articles, statuts et affectations.',
+                        'icon' => '📚',
+                        'route' => 'admin.consoles.index',
+                    ],
+                ],
             ],
             [
-                'title' => 'SAV & retours',
-                'subtitle' => 'Support',
-                'description' => 'Valider les dossiers SAV et assigner un réparateur.',
-                'icon' => '🛠️',
-                'route' => 'admin.returns.index',
-                'badge' => $savPendingCount > 0 ? $savPendingCount . ' en attente' : null,
-                'badge_style' => 'bg-red-100 text-red-700',
+                'title' => 'Gestion réparateurs',
+                'cards' => [
+                    [
+                        'title' => 'Réparateurs',
+                        'subtitle' => 'Réseau',
+                        'description' => 'Suivre les partenaires SAV et leurs charges.',
+                        'icon' => '🔧',
+                        'route' => 'admin.repairers.index',
+                    ],
+                    [
+                        'title' => 'Ajouter un réparateur',
+                        'subtitle' => 'Onboarding',
+                        'description' => 'Créer un nouveau partenaire et définir ses capacités.',
+                        'icon' => '🧑‍🔧',
+                        'route' => 'admin.repairers.create',
+                    ],
+                ],
             ],
             [
-                'title' => 'Inventaire consoles',
-                'subtitle' => 'Stock',
-                'description' => 'Consulter toutes les consoles, leurs statuts et affectations.',
-                'icon' => '🎮',
-                'route' => 'admin.consoles.index',
+                'title' => 'Réseau de vente',
+                'cards' => [
+                    [
+                        'title' => 'Vues magasins',
+                        'subtitle' => 'À venir',
+                        'description' => 'Tableau consolidé des performances magasins.',
+                        'icon' => '🏬',
+                        'route' => null,
+                        'disabled' => true,
+                        'tag' => 'À venir',
+                    ],
+                    [
+                        'title' => 'Demandes de lots',
+                        'subtitle' => 'Logistique',
+                        'description' => 'Valider les besoins des magasins en consoles.',
+                        'icon' => '📦',
+                        'route' => 'admin.lot-requests.index',
+                    ],
+                    [
+                        'title' => 'Prix consoles',
+                        'subtitle' => 'Tarifs',
+                        'description' => 'Synchroniser les prix par magasin et par article.',
+                        'icon' => '💰',
+                        'route' => 'admin.prices.index',
+                    ],
+                ],
             ],
             [
-                'title' => 'Réparateurs',
-                'subtitle' => 'Réseau',
-                'description' => 'Piloter les partenaires SAV et suivre leur charge.',
-                'icon' => '🔧',
-                'route' => 'admin.repairers.index',
+                'title' => 'SAV & devis',
+                'cards' => [
+                    [
+                        'title' => 'SAV & retours',
+                        'subtitle' => 'Support',
+                        'description' => 'Valider dossiers SAV, devis et affectations réparateurs.',
+                        'icon' => '🛠️',
+                        'route' => 'admin.returns.index',
+                        'badge' => $savPendingCount > 0 ? $savPendingCount . ' en attente' : null,
+                        'badge_style' => 'bg-red-100 text-red-700',
+                    ],
+                ],
             ],
             [
-                'title' => 'Ajouter un réparateur',
-                'subtitle' => 'Réseau',
-                'description' => 'Créer un nouveau partenaire SAV et définir ses capacités.',
-                'icon' => '🧑‍🔧',
-                'route' => 'admin.repairers.create',
+                'title' => 'Administration R4E',
+                'cards' => [
+                    [
+                        'title' => 'Taxonomie articles',
+                        'subtitle' => 'Catalogue',
+                        'description' => 'Maintenir catégories, sous-catégories et types.',
+                        'icon' => '🗂️',
+                        'route' => 'admin.taxonomy.index',
+                    ],
+                    [
+                        'title' => 'Créer un magasin',
+                        'subtitle' => 'Onboarding',
+                        'description' => 'Ajouter une boutique et configurer son accès.',
+                        'icon' => '🏪',
+                        'route' => 'admin.stores.create',
+                    ],
+                    [
+                        'title' => 'Créer un réparateur',
+                        'subtitle' => 'Réseau',
+                        'description' => 'Onboarder un partenaire SAV supplémentaire.',
+                        'icon' => '🧑‍🏭',
+                        'route' => 'admin.repairers.create',
+                    ],
+                    [
+                        'title' => 'Catalogue Mods',
+                        'subtitle' => 'Stock',
+                        'description' => 'Gérer accessoires, quantités et affectations.',
+                        'icon' => '🧰',
+                        'route' => 'admin.mods.index',
+                    ],
+                ],
             ],
             [
-                'title' => 'Taxonomie articles',
-                'subtitle' => 'Catalogue',
-                'description' => 'Maintenir catégories, sous-catégories et types.',
-                'icon' => '🗂️',
-                'route' => 'admin.taxonomy.index',
-            ],
-            [
-                'title' => 'Articles récents',
-                'subtitle' => 'Production',
-                'description' => 'Consulter les 40 dernières fiches créées.',
-                'icon' => '📰',
-                'route' => 'admin.articles.recent',
+                'title' => 'Suivi financier & ventes',
+                'cards' => [
+                    [
+                        'title' => 'Bilan financier',
+                        'subtitle' => 'À venir',
+                        'description' => 'Vue consolidée des marges et ventes réseau.',
+                        'icon' => '📊',
+                        'route' => null,
+                        'disabled' => true,
+                        'tag' => 'À venir',
+                    ],
+                ],
             ],
         ];
-        
-        return view('admin.dashboard', compact('mods', 'repairers', 'quickLinks', 'savPendingCount', 'lotRequests'));
+
+        return view('admin.dashboard', compact('mods', 'repairers', 'savPendingCount', 'lotRequests', 'sections'));
     }
 }

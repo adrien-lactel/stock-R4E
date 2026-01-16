@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Mod;
-use App\Models\Console;
 
 class ModFactory extends Factory
 {
@@ -13,10 +12,11 @@ class ModFactory extends Factory
     public function definition(): array
     {
         return [
-            'console_id' => Console::inRandomOrder()->first()->id,
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
-            'price' => $this->faker->numberBetween(5, 100),
+            'purchase_price' => $this->faker->randomFloat(2, 5, 250),
+            'quantity' => $this->faker->numberBetween(0, 25),
+            'is_accessory' => $this->faker->boolean(30),
         ];
     }
 }
