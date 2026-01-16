@@ -14,7 +14,14 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $mods = Mod::orderBy('quantity', 'asc')->limit(10)->get();
+        $mods = Mod::with([
+                'compatibleCategories:id,name',
+                'compatibleSubCategories:id,name',
+                'compatibleTypes:id,name',
+            ])
+            ->orderBy('quantity', 'asc')
+            ->limit(10)
+            ->get();
         $repairers = Repairer::withCount('consoles')
             ->orderBy('consoles_count', 'desc')
             ->limit(10)
@@ -31,6 +38,13 @@ class DashboardController extends Controller
                 'description' => 'Créer un accès boutique et lui attribuer son stock initial.',
                 'icon' => '🏪',
                 'route' => 'admin.stores.create',
+            ],
+            [
+                'title' => 'Créer un article',
+                'subtitle' => 'Catalogue',
+                'description' => 'Saisie initiale d\'une console, accessoire ou article annexe.',
+                'icon' => '➕',
+                'route' => 'admin.articles.create',
             ],
             [
                 'title' => 'Prix consoles',
@@ -56,6 +70,13 @@ class DashboardController extends Controller
                 'badge_style' => 'bg-red-100 text-red-700',
             ],
             [
+                'title' => 'Inventaire consoles',
+                'subtitle' => 'Stock',
+                'description' => 'Consulter toutes les consoles, leurs statuts et affectations.',
+                'icon' => '🎮',
+                'route' => 'admin.consoles.index',
+            ],
+            [
                 'title' => 'Demandes de lots',
                 'subtitle' => 'Logistique',
                 'description' => 'Répondre aux besoins des magasins en consoles.',
@@ -68,6 +89,13 @@ class DashboardController extends Controller
                 'description' => 'Piloter les partenaires SAV et suivre leur charge.',
                 'icon' => '🔧',
                 'route' => 'admin.repairers.index',
+            ],
+            [
+                'title' => 'Ajouter un réparateur',
+                'subtitle' => 'Réseau',
+                'description' => 'Créer un nouveau partenaire SAV et définir ses capacités.',
+                'icon' => '🧑‍🔧',
+                'route' => 'admin.repairers.create',
             ],
             [
                 'title' => 'Taxonomie articles',
