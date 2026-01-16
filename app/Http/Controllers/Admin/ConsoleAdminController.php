@@ -229,6 +229,9 @@ class ConsoleAdminController extends Controller
 
             'product_comment'          => 'nullable|string',
             'commentaire_reparateur'   => 'nullable|string',
+
+            // ✅ quantité pour création en lot
+            'quantity'                 => 'nullable|integer|min:1|max:100',
         ]);
 
         // Accept additional optional fields present on the Console model
@@ -256,13 +259,27 @@ class ConsoleAdminController extends Controller
                 ->withInput();
         }
 
-        $console = Console::create($data);
+        // ✅ Création en lot
+        $quantity = (int) ($data['quantity'] ?? 1);
+        unset($data['quantity']); // Ne pas insérer quantity dans la table consoles
+
+        $createdIds = [];
+        for ($i = 0; $i < $quantity; $i++) {
+            $console = Console::create($data);
+            $createdIds[] = $console->id;
+        }
 
         session()->forget('_old_input');
 
+        if ($quantity === 1) {
+            $message = "Article #{$createdIds[0]} créé avec succès";
+        } else {
+            $message = "{$quantity} articles créés avec succès (IDs: " . implode(', ', $createdIds) . ")";
+        }
+
         return redirect()
             ->route('admin.articles.create')
-            ->with('success', "Article #{$console->id} créé avec succès");
+            ->with('success', $message);
     }
 
     /* =====================================================

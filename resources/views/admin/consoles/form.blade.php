@@ -145,8 +145,20 @@
             {{-- =====================
                  STOCK / RÉPARATION
             ===================== --}}
+            <h2 class="text-lg font-semibold text-gray-800 mt-8 mb-4">Stock & Réparation</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {{-- Quantité (uniquement en création) --}}
+                @if(!$console->exists)
+                <div>
+                    <label class="block text-sm font-medium mb-1">Quantité</label>
+                    <input type="number" min="1" max="100" name="quantity"
+                           value="{{ old('quantity', 1) }}"
+                           class="w-full rounded border-gray-300">
+                    <p class="text-xs text-gray-500 mt-1">Créer plusieurs articles identiques (max 100)</p>
+                </div>
+                @endif
+
                 {{-- Statut --}}
                 <div>
                     <label class="block text-sm font-medium mb-1">Statut *</label>
