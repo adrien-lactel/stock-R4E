@@ -89,12 +89,10 @@ class DashboardController extends Controller
                 'cards' => [
                     [
                         'title' => 'Vues magasins',
-                        'subtitle' => 'À venir',
-                        'description' => 'Tableau consolidé des performances magasins.',
+                        'subtitle' => 'Réseau',
+                        'description' => 'Vue d\'ensemble des magasins et accès à leurs dashboards.',
                         'icon' => '🏬',
-                        'route' => null,
-                        'disabled' => true,
-                        'tag' => 'À venir',
+                        'route' => 'admin.stores.index',
                     ],
                     [
                         'title' => 'Demandes de lots',

@@ -11,6 +11,20 @@ use Illuminate\Support\Facades\Hash;
 class StoreAdminController extends Controller
 {
     /**
+     * Liste des magasins (vue d'ensemble)
+     */
+    public function index()
+    {
+        $stores = Store::query()
+            ->with('user')
+            ->withCount('consoles', 'invoices')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.stores.index', compact('stores'));
+    }
+
+    /**
      * Formulaire création magasin (et liste)
      */
     public function create(Request $request)

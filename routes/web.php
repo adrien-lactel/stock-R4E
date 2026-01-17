@@ -193,6 +193,12 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::post('/prices/{console}', [ConsolePriceController::class, 'store'])
             ->name('prices.store');
 
+        /* =====================
+        | MAGASINS
+        ===================== */
+        Route::get('/stores', [StoreAdminController::class, 'index'])
+            ->name('stores.index');
+
         Route::get('/stores/create', [StoreAdminController::class, 'create'])
             ->name('stores.create');
 
