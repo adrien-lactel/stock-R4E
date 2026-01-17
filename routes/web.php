@@ -190,6 +190,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
 
         Route::put('/articles/{console}', [ConsoleAdminController::class, 'updateArticle'])
             ->name('articles.update');
+        // Alias pour compatibilité avec admin namespace (formulaires inclus dans admin)
+        Route::put('/articles/{console}', [ConsoleAdminController::class, 'updateArticle'])
+            ->name('articles.update');
 
         /* =====================
         | CONSOLES

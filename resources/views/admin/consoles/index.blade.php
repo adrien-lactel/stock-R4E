@@ -161,60 +161,45 @@
     </form>
 
     {{-- TABLE --}}
-    <div class="bg-pink-50 shadow rounded-lg overflow-hidden border border-pink-100">
-        <table class="min-w-full divide-y divide-pink-100 text-sm">
+    <div class="bg-pink-50 shadow rounded-lg overflow-hidden border border-pink-100 overflow-x-auto">
+        <table class="min-w-full text-sm">
             <thead class="bg-pink-100">
                 <tr>
                     <th class="px-4 py-3 text-center">ID</th>
-                    <th class="px-4 py-3 text-left">Catégorie</th>
-                    <th class="px-4 py-3 text-left">Sous-cat.</th>
-                    <th class="px-4 py-3 text-left">Type</th>
+                    <th class="px-4 py-3 text-left">Catégorie / Sous-cat. / Type</th>
                     <th class="px-4 py-3 text-left">Magasin</th>
                     <th class="px-4 py-3 text-center">Statut</th>
                     <th class="px-4 py-3 text-right">Prix achat</th>
                     <th class="px-4 py-3 text-right">Coût répa.</th>
                     <th class="px-4 py-3 text-right">Prix revient</th>
+                    <th class="px-4 py-3 text-right">Prix R4E</th>
                     <th class="px-4 py-3 text-center">Prix définis</th>
                     <th class="px-4 py-3 text-center">Contrôle admin</th>
-                    <th class="px-4 py-3 text-center">Actions</th>
+                    <th class="px-4 py-3 text-center w-[180px] whitespace-nowrap">Actions</th>
                 </tr>
             </thead>
 
             <tbody class="divide-y divide-pink-100">
+            <tbody class="divide-y divide-gray-200">
                 @forelse($consoles as $console)
-                    @php
-                        $hasMods = $console->mods_count > 0;
-                    @endphp
+                    @php $hasMods = $console->mods_count > 0; @endphp
                     <tr class="align-top {{ $hasMods ? 'bg-amber-100 border-l-4 border-l-amber-300' : 'bg-white' }}">
-                        {{-- ID --}}
                         <td class="px-4 py-3 text-center font-medium text-gray-800">
                             {{ $console->id }}
                             @if($hasMods)
                                 <span class="block text-xs text-amber-600 font-normal">modé</span>
                             @endif
                         </td>
-
-                        {{-- Catégorie --}}
-                        <td class="px-4 py-3 bg-blue-50">
-                            {{ $console->articleCategory?->name ?? '—' }}
+                        <td class="px-4 py-3">
+                            <div>
+                                <span class="font-semibold">{{ $console->articleCategory?->name ?? '—' }}</span>
+                                <span class="text-gray-400"> / </span>
+                                <span>{{ $console->articleSubCategory?->name ?? '—' }}</span>
+                                <span class="text-gray-400"> / </span>
+                                <span>{{ $console->articleType?->name ?? '—' }}</span>
+                            </div>
                         </td>
-
-                        {{-- Sous-cat --}}
-                        <td class="px-4 py-3 bg-purple-50">
-                            {{ $console->articleSubCategory?->name ?? '—' }}
-                        </td>
-
-                        {{-- Type --}}
-                        <td class="px-4 py-3 bg-green-50">
-                            {{ $console->articleType?->name ?? '—' }}
-                        </td>
-
-                        {{-- Magasin --}}
-                        <td class="px-4 py-3 bg-yellow-50">
-                            {{ $console->store?->name ?? '—' }}
-                        </td>
-
-                        {{-- Statut badge --}}
+                        <td class="px-4 py-3">{{ $console->store?->name ?? '—' }}</td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold
                                 @if($console->status === 'stock') bg-green-100 text-green-800 border border-green-200
@@ -226,99 +211,66 @@
                                 {{ $console->status ? ucfirst($console->status) : '—' }}
                             </span>
                         </td>
-
-                        {{-- Prix d'achat --}}
-                        <td class="px-4 py-3 text-right bg-pink-50">
+                        <td class="px-4 py-3 text-right">
                             @if(!is_null($console->prix_achat))
                                 {{ number_format($console->prix_achat, 2, ',', ' ') }} €
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif
                         </td>
-
-                        {{-- Coût de réparation (mods + main d'oeuvre) --}}
-                        <td class="px-4 py-3 text-right bg-yellow-50">
-                            @php
-                                $repairCost = $console->repair_cost ?? 0;
-                            @endphp
+                        <td class="px-4 py-3 text-right">
+                            @php $repairCost = $console->repair_cost ?? 0; @endphp
                             @if($repairCost > 0)
                                 <span class="text-orange-600 font-medium">{{ number_format($repairCost, 2, ',', ' ') }} €</span>
-                                
-                                {{-- Liste des mods appliqués --}}
-                                @if($console->mods->count() > 0)
-                                    <div class="mt-1 text-left">
-                                        @foreach($console->mods as $mod)
-                                            <div class="text-xs py-0.5 flex items-center gap-1">
-                                                @if($mod->is_operation)
-                                                    <span class="text-orange-500">⚙️</span>
-                                                @elseif($mod->is_accessory)
-                                                    <span class="text-purple-500">📦</span>
-                                                @else
-                                                    <span class="text-blue-500">🔩</span>
-                                                @endif
-                                                <span class="text-gray-700">{{ $mod->name }}</span>
-                                                @if($mod->pivot->work_time_minutes)
-                                                    <span class="text-gray-400">({{ $mod->pivot->work_time_minutes }}min)</span>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif
                         </td>
-
-                        {{-- Prix de revient (coût total) --}}
-                        <td class="px-4 py-3 text-right bg-blue-50">
-                            @php
-                                $totalCost = $console->total_cost ?? 0;
-                            @endphp
+                        <td class="px-4 py-3 text-right">
+                            @php $totalCost = $console->total_cost ?? 0; @endphp
                             @if($totalCost > 0)
                                 <span class="font-semibold text-gray-900">{{ number_format($totalCost, 2, ',', ' ') }} €</span>
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif
                         </td>
-
-                        {{-- Prix définis --}}
-                        <td class="px-4 py-3 text-center bg-purple-50">
+                        <td class="px-4 py-3 text-right">
+                            <span class="font-semibold text-gray-900">{{ number_format($console->valorisation, 2, ',', ' ') }} €</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
                             {{ $console->stores_count ?? 0 }} magasin(s)
                         </td>
-
-                        {{-- CONTROLE ADMIN --}}
-                        <td class="px-4 py-3 w-[280px] bg-green-50">
-                            <form method="POST"
-                                  action="{{ route('admin.consoles.update-status', $console) }}"
-                                  class="space-y-2">
+                        <td class="px-4 py-3 w-[220px] whitespace-nowrap align-top">
+                                <form method="POST"
+                                    action="{{ route('admin.consoles.update-status', $console) }}"
+                                    class="flex flex-col space-y-1 mb-2 w-full max-w-[180px]">
                                 @csrf
                                 @method('PATCH')
-
-                                <select name="status" class="w-full border border-green-200 rounded p-2 text-sm bg-green-100">
+                                <select name="status" class="w-full border border-green-200 rounded p-2 text-sm">
                                     <option value="stock" @selected($console->status === 'stock')>🟢 En stock</option>
                                     <option value="defective" @selected($console->status === 'defective')>🟠 Défectueuse</option>
                                     <option value="repair" @selected($console->status === 'repair')>🔧 En réparation</option>
                                     <option value="disabled" @selected($console->status === 'disabled')>⛔ Désactivée</option>
                                 </select>
-
                                 <textarea name="admin_comment" rows="2"
-                                          class="w-full border border-green-200 rounded p-2 text-sm bg-green-50"
+                                          class="w-full border border-green-200 rounded p-1 text-sm h-7 min-h-0 resize-y"
                                           placeholder="Commentaire interne admin…">{{ $console->admin_comment }}</textarea>
-
                                 <button class="w-full bg-blue-100 text-blue-800 px-3 py-2 rounded hover:bg-blue-200 border border-blue-200 font-semibold">
                                     💾 Enregistrer
                                 </button>
                             </form>
+                            @if($console->admin_comment)
+                                <div class="mt-1 text-xs text-gray-600 italic">
+                                    {{ $console->admin_comment }}
+                                </div>
+                            @endif
                         </td>
-
-                        {{-- ACTIONS --}}
-                        <td class="px-4 py-3 text-center whitespace-nowrap bg-pink-50">
+                        <td class="px-4 py-3 text-center w-[180px] whitespace-nowrap align-top">
                             <div class="flex flex-col gap-2 items-center">
                                 <a href="{{ route('admin.articles.edit', $console) }}"
                                    class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded hover:bg-yellow-200 border border-yellow-200 font-medium">
                                     ✏️ Éditer
                                 </a>
-
                                 @if($console->status === 'stock')
                                     <a href="{{ route('admin.consoles.edit', $console) }}"
                                        class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded hover:bg-indigo-200 border border-indigo-200 font-medium">

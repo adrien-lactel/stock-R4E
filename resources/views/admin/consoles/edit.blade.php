@@ -80,6 +80,10 @@
                 <span class="text-gray-500">Prix de revient :</span>
                 <div class="font-semibold text-gray-900 text-lg">{{ number_format($console->total_cost ?? 0, 2, ',', ' ') }} €</div>
             </div>
+            <div>
+                <span class="text-gray-500">Prix R4E :</span>
+                <div class="font-medium text-indigo-700">{{ number_format($console->valorisation ?? 0, 2, ',', ' ') }} €</div>
+            </div>
         </div>
 
         {{-- Liste des mods et opérations --}}

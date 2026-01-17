@@ -399,7 +399,7 @@ class ConsoleAdminController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Article mis à jour');
+        return redirect()->route('admin.consoles.index')->with('success', 'Article mis à jour');
     }
 
     /* =====================================================

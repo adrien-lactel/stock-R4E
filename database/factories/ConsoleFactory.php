@@ -23,6 +23,7 @@ class ConsoleFactory extends Factory
             'store_id' => optional(Store::inRandomOrder()->first())->id ?? Store::factory()->create()->id,
             'console_type_id' => optional(ConsoleType::inRandomOrder()->first())->id ?? ConsoleType::factory()->create()->id,
             'status' => $this->faker->randomElement($statuses),
+            'valorisation' => $this->faker->randomFloat(2, 30, 300),
         ];
     }
 
