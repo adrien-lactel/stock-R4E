@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -105,7 +105,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Transport préféré</label>
                         <input name="shipping_method"
                                value="{{ old('shipping_method', $repairer->shipping_method) }}"
-                               placeholder="Colissimo, Chronopost, DHL…"
+                               placeholder="Colissimo, Chronopost, DHL..."
                                class="w-full rounded border-gray-300" />
                     </div>
 
@@ -128,16 +128,17 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                     <textarea name="notes" rows="4"
                               class="w-full rounded border-gray-300"
-                              placeholder="Spécialités, conditions, procédures…">{{ old('notes', $repairer->notes) }}</textarea>
+                              placeholder="Spécialités, conditions, procédures...">{{ old('notes', $repairer->notes) }}</textarea>
                 </div>
 
                 {{-- Mods disponibles chez ce réparateur --}}
                 @if($repairer->exists)
                 <div class="border-t pt-4">
-                    <h3 class="text-lg font-semibold mb-3">🔧 Mods/Accessoires disponibles</h3>
+                    <h3 class="text-lg font-semibold mb-3">🔩 Mods disponibles (pièces)</h3>
                     <p class="text-sm text-gray-600 mb-3">Indiquez les quantités des mods que ce réparateur a en stock</p>
                     
-                    <div class="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto border rounded p-3 bg-gray-50">
+                    @if(isset($mods) && $mods->count())
+                    <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto border rounded p-3 bg-blue-50">
                         @foreach($mods as $mod)
                             @php
                                 $currentQuantity = $repairer->mods->where('id', $mod->id)->first()?->pivot->quantity ?? 0;
@@ -145,11 +146,7 @@
                             <div class="flex items-center justify-between bg-white p-2 rounded border">
                                 <label class="text-sm font-medium flex-1">
                                     {{ $mod->name }}
-                                    @if($mod->is_accessory)
-                                        <span class="text-xs text-purple-600">📦</span>
-                                    @else
-                                        <span class="text-xs text-blue-600">🔧</span>
-                                    @endif
+                                    <span class="text-xs text-blue-600">🔩</span>
                                 </label>
                                 <input type="number" 
                                        name="mods[{{ $mod->id }}]" 
@@ -160,6 +157,39 @@
                             </div>
                         @endforeach
                     </div>
+                    @else
+                    <p class="text-sm text-gray-500 italic">Aucun mod créé.</p>
+                    @endif
+                </div>
+
+                <div class="border-t pt-4 mt-4">
+                    <h3 class="text-lg font-semibold mb-3">📦 Accessoires disponibles</h3>
+                    <p class="text-sm text-gray-600 mb-3">Boîtes, câbles, coques, manettes...</p>
+                    
+                    @if(isset($accessories) && $accessories->count())
+                    <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto border rounded p-3 bg-purple-50">
+                        @foreach($accessories as $accessory)
+                            @php
+                                $currentQuantity = $repairer->mods->where('id', $accessory->id)->first()?->pivot->quantity ?? 0;
+                            @endphp
+                            <div class="flex items-center justify-between bg-white p-2 rounded border">
+                                <label class="text-sm font-medium flex-1">
+                                    {{ $accessory->name }}
+                                    <span class="text-xs text-purple-600">📦</span>
+                                    <span class="text-xs text-gray-500">({{ number_format($accessory->purchase_price, 2) }}€)</span>
+                                </label>
+                                <input type="number" 
+                                       name="mods[{{ $accessory->id }}]" 
+                                       value="{{ old('mods.'.$accessory->id, $currentQuantity) }}"
+                                       min="0"
+                                       class="w-20 border rounded px-2 py-1 text-sm"
+                                       placeholder="0">
+                            </div>
+                        @endforeach
+                    </div>
+                    @else
+                    <p class="text-sm text-gray-500 italic">Aucun accessoire créé. <a href="{{ route('admin.accessories.create') }}" class="text-indigo-600 hover:underline">Créer un accessoire</a></p>
+                    @endif
                 </div>
                 @endif
 
@@ -176,6 +206,43 @@
                     @endif
                 </div>
             </form>
+
+            {{-- Section Compétences (Opérations) --}}
+            @if($repairer->exists && isset($operations) && $operations->count())
+            <div class="mt-6 border-t pt-6">
+                <form method="POST" action="{{ route('admin.repairers.operations.update', $repairer) }}">
+                    @csrf
+                    
+                    <h3 class="text-lg font-semibold mb-3">🔧 Compétences (Opérations)</h3>
+                    <p class="text-sm text-gray-600 mb-3">
+                        Sélectionnez les opérations que ce réparateur sait effectuer.
+                        Il pourra les associer aux articles qu'il répare.
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-3 border rounded p-3 bg-orange-50">
+                        @foreach($operations as $operation)
+                            @php
+                                $hasSkill = $repairer->operations->contains('id', $operation->id);
+                            @endphp
+                            <label class="flex items-center gap-2 bg-white p-2 rounded border cursor-pointer hover:bg-orange-100 transition">
+                                <input type="checkbox" 
+                                       name="operations[]" 
+                                       value="{{ $operation->id }}"
+                                       class="rounded border-gray-300 text-orange-600"
+                                       @checked($hasSkill)>
+                                <span class="text-sm font-medium">{{ $operation->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="px-6 py-2 rounded bg-orange-600 text-white hover:bg-orange-700">
+                            💾 Enregistrer les compétences
+                        </button>
+                    </div>
+                </form>
+            </div>
+            @endif
         </div>
 
         {{-- LISTE --}}
@@ -274,7 +341,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-3 py-6 text-center text-gray-500">
+                                <td colspan="7" class="px-3 py-6 text-center text-gray-500">
                                     Aucun réparateur
                                 </td>
                             </tr>
@@ -291,3 +358,4 @@
     </div>
 </div>
 @endsection
+

@@ -12,6 +12,7 @@ use App\Models\ArticleCategory;
 use App\Models\Repairer;
 use App\Models\ArticleSubCategory;
 use App\Models\ArticleType;
+use App\Models\Mod;
 
 class ConsoleAdminController extends Controller
 {
@@ -25,9 +26,10 @@ class ConsoleAdminController extends Controller
                 'articleCategory',
                 'articleSubCategory',
                 'store',
-                'repairer', // ✅ ajout
+                'repairer',
+                'mods', // Pour calculer le coût de réparation
             ])
-            ->withCount('stores')
+            ->withCount(['stores', 'mods'])
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('q')) {
@@ -80,7 +82,8 @@ class ConsoleAdminController extends Controller
             'articleCategory',
             'articleSubCategory',
             'stores',
-            'repairer' // ✅ ajout
+            'repairer',
+            'mods' // Pour afficher les mods/opérations et calculer les coûts
         );
 
         $stores = Store::all();
@@ -148,14 +151,14 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function editArticleFull(Console $console)
     {
-        $console->load('repairer');
+        $console->load(['repairer', 'mods']);
 
         return view('admin.consoles.edit_full', [
             'console' => $console,
             'articleCategories' => ArticleCategory::orderBy('name')->get(),
             'repairers' => Repairer::where('is_active', true)->orderBy('name')->get(),
             'provenances' => Console::whereNotNull('provenance_article')->distinct()->pluck('provenance_article'),
-            'mods' => Console::whereNotNull('mod_1')->distinct()->pluck('mod_1'),
+            'allMods' => Mod::orderBy('is_accessory')->orderBy('name')->get(),
             'lieux' => Console::whereNotNull('lieu_stockage')->distinct()->pluck('lieu_stockage'),
             'stores' => Store::orderBy('name')->get(),
             'lastConsoles'=> Console::with(['articleCategory','articleSubCategory','articleType','repairer'])->latest()->take(15)->get(),
@@ -332,6 +335,13 @@ class ConsoleAdminController extends Controller
 
             'product_comment'          => 'nullable|string',
             'commentaire_reparateur'   => 'nullable|string',
+
+            // ✅ Mods via table pivot
+            'console_mods'             => 'nullable|array|max:4',
+            'console_mods.*.mod_id'    => 'nullable|exists:mods,id',
+            'console_mods.*.price_applied' => 'nullable|numeric|min:0',
+            'console_mods.*.work_time_minutes' => 'nullable|integer|min:0',
+            'console_mods.*.notes'     => 'nullable|string|max:500',
         ]);
 
         // Accept additional optional fields present on the Console model
@@ -350,6 +360,10 @@ class ConsoleAdminController extends Controller
             'mod_4'                 => 'nullable|string|max:255',
         ]);
 
+        // Extraire console_mods avant merge
+        $consoleMods = $data['console_mods'] ?? [];
+        unset($data['console_mods']);
+
         $data = array_merge($data, $extra);
 
         // ✅ règle métier: réparateur obligatoire si repair
@@ -361,6 +375,30 @@ class ConsoleAdminController extends Controller
 
         $console->update($data);
 
+        // ✅ Ajouter les nouveaux mods (sans supprimer les existants)
+        foreach ($consoleMods as $modData) {
+            if (empty($modData['mod_id'])) {
+                continue;
+            }
+
+            $mod = Mod::find($modData['mod_id']);
+            if (!$mod) {
+                continue;
+            }
+
+            // Vérifier si ce mod n'est pas déjà associé
+            if ($console->mods()->where('mod_id', $mod->id)->exists()) {
+                continue;
+            }
+
+            $console->mods()->attach($mod->id, [
+                'repairer_id' => $console->repairer_id,
+                'price_applied' => $modData['price_applied'] ?? $mod->purchase_price,
+                'work_time_minutes' => $modData['work_time_minutes'] ?? null,
+                'notes' => $modData['notes'] ?? null,
+            ]);
+        }
+
         return back()->with('success', 'Article mis à jour');
     }
 
@@ -369,7 +407,12 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function updateStatus(Request $request, Console $console)
     {
-        if (auth()->user()->role !== 'admin') abort(403);
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        
+        if (!$user || $user->role !== 'admin') {
+            abort(403);
+        }
 
         $request->validate([
             'status' => 'required|in:stock,defective,repair,disabled',

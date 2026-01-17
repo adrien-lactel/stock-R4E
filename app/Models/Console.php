@@ -97,7 +97,7 @@ class Console extends Model
     public function mods()
     {
         return $this->belongsToMany(Mod::class, 'console_mod')
-            ->withPivot(['repairer_id', 'price_applied', 'notes'])
+            ->withPivot(['repairer_id', 'price_applied', 'notes', 'work_time_minutes'])
             ->withTimestamps();
     }
 
@@ -131,5 +131,44 @@ public function articleType() { return $this->belongsTo(\App\Models\ArticleType:
     {
         return (float) ($this->valorisation ?? $this->prix_achat ?? 0);
     }
-}
 
+    /**
+     * Coût des mods (prix des pièces)
+     */
+    public function getModsCostAttribute(): float
+    {
+        return (float) $this->mods->sum('pivot.price_applied');
+    }
+
+    /**
+     * Temps de travail total en minutes
+     */
+    public function getWorkTimeMinutesAttribute(): int
+    {
+        return (int) $this->mods->sum('pivot.work_time_minutes');
+    }
+
+    /**
+     * Coût de main d'œuvre (20€/heure)
+     */
+    public function getLaborCostAttribute(): float
+    {
+        return ($this->work_time_minutes / 60) * 20;
+    }
+
+    /**
+     * Coût total de réparation (mods + main d'œuvre)
+     */
+    public function getRepairCostAttribute(): float
+    {
+        return $this->mods_cost + $this->labor_cost;
+    }
+
+    /**
+     * Coût de revient total (prix d'achat + coût de réparation)
+     */
+    public function getTotalCostAttribute(): float
+    {
+        return (float) ($this->prix_achat ?? 0) + $this->repair_cost;
+    }
+}

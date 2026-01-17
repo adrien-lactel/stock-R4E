@@ -35,4 +35,22 @@ class Repairer extends Model
             ->withPivot('quantity')
             ->withTimestamps();
     }
+
+    /**
+     * Opérations que ce réparateur sait effectuer (compétences)
+     */
+    public function operations()
+    {
+        return $this->belongsToMany(Mod::class, 'repairer_operations')
+            ->where('is_operation', true)
+            ->withTimestamps();
+    }
+
+    /**
+     * Vérifie si le réparateur a cette compétence
+     */
+    public function canPerform(Mod $operation): bool
+    {
+        return $this->operations()->where('mod_id', $operation->id)->exists();
+    }
 }

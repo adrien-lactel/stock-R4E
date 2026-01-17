@@ -15,14 +15,30 @@ class Mod extends Model
         'description',
         'purchase_price',
         'quantity',
-        'is_accessory'
+        'is_accessory',
+        'is_operation',
     ];
 
     protected $casts = [
         'purchase_price' => 'decimal:2',
         'quantity' => 'integer',
         'is_accessory' => 'boolean',
+        'is_operation' => 'boolean',
     ];
+
+    /**
+     * Retourne le type du mod (mod, accessoire, opération)
+     */
+    public function getTypeAttribute(): string
+    {
+        if ($this->is_operation) {
+            return 'opération';
+        }
+        if ($this->is_accessory) {
+            return 'accessoire';
+        }
+        return 'mod';
+    }
 
     /**
      * Compatibilité avec les catégories d'articles
@@ -54,7 +70,7 @@ class Mod extends Model
     public function appliedConsoles(): BelongsToMany
     {
         return $this->belongsToMany(Console::class, 'console_mod')
-            ->withPivot(['repairer_id', 'price_applied', 'notes'])
+            ->withPivot(['repairer_id', 'price_applied', 'notes', 'work_time_minutes'])
             ->withTimestamps();
     }
 

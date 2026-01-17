@@ -30,6 +30,114 @@
         </div>
     @endif
 
+    {{-- Informations de l'article avec mods/opérations --}}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">📦 Informations de l'article</h2>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+            <div>
+                <span class="text-gray-500">Catégorie :</span>
+                <div class="font-medium">{{ $console->articleCategory?->name ?? '—' }}</div>
+            </div>
+            <div>
+                <span class="text-gray-500">Sous-catégorie :</span>
+                <div class="font-medium">{{ $console->articleSubCategory?->name ?? '—' }}</div>
+            </div>
+            <div>
+                <span class="text-gray-500">Type :</span>
+                <div class="font-medium">{{ $console->articleType?->name ?? '—' }}</div>
+            </div>
+            <div>
+                <span class="text-gray-500">Statut :</span>
+                <div class="font-medium">
+                    <span class="px-2 py-1 rounded text-white text-xs
+                        @if($console->status === 'stock') bg-green-600
+                        @elseif($console->status === 'defective') bg-orange-600
+                        @elseif($console->status === 'repair') bg-indigo-600
+                        @else bg-gray-600
+                        @endif">
+                        {{ ucfirst($console->status) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Coûts --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t pt-4 mb-4">
+            <div>
+                <span class="text-gray-500">Prix d'achat :</span>
+                <div class="font-medium">{{ number_format($console->prix_achat ?? 0, 2, ',', ' ') }} €</div>
+            </div>
+            <div>
+                <span class="text-gray-500">Coût mods :</span>
+                <div class="font-medium text-blue-600">{{ number_format($console->mods_cost ?? 0, 2, ',', ' ') }} €</div>
+            </div>
+            <div>
+                <span class="text-gray-500">Main d'œuvre :</span>
+                <div class="font-medium text-orange-600">{{ number_format($console->labor_cost ?? 0, 2, ',', ' ') }} €</div>
+            </div>
+            <div>
+                <span class="text-gray-500">Prix de revient :</span>
+                <div class="font-semibold text-gray-900 text-lg">{{ number_format($console->total_cost ?? 0, 2, ',', ' ') }} €</div>
+            </div>
+        </div>
+
+        {{-- Liste des mods et opérations --}}
+        @if($console->mods->count() > 0)
+        <div class="border-t pt-4">
+            <h3 class="font-medium text-gray-700 mb-3">🔧 Mods & Opérations appliqués</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                @foreach($console->mods as $mod)
+                    <div class="flex items-center gap-2 p-2 rounded border
+                        @if($mod->is_operation) bg-orange-50 border-orange-200
+                        @elseif($mod->is_accessory) bg-purple-50 border-purple-200
+                        @else bg-blue-50 border-blue-200
+                        @endif">
+                        @if($mod->is_operation)
+                            <span class="text-orange-500">⚙️</span>
+                        @elseif($mod->is_accessory)
+                            <span class="text-purple-500">📦</span>
+                        @else
+                            <span class="text-blue-500">🔩</span>
+                        @endif
+                        <div class="flex-1">
+                            <div class="font-medium text-sm">{{ $mod->name }}</div>
+                            <div class="text-xs text-gray-500">
+                                @if(!$mod->is_operation)
+                                    {{ number_format($mod->pivot->price_applied ?? 0, 2) }} €
+                                @endif
+                                @if($mod->pivot->work_time_minutes)
+                                    @if(!$mod->is_operation) — @endif
+                                    {{ $mod->pivot->work_time_minutes }} min
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            
+            {{-- Temps total --}}
+            @php
+                $totalMinutes = $console->mods->sum('pivot.work_time_minutes');
+                $hours = floor($totalMinutes / 60);
+                $minutes = $totalMinutes % 60;
+            @endphp
+            @if($totalMinutes > 0)
+            <div class="mt-3 text-sm text-gray-600">
+                ⏱️ Temps de travail total : 
+                <span class="font-medium">
+                    @if($hours > 0){{ $hours }}h @endif{{ $minutes }}min
+                </span>
+            </div>
+            @endif
+        </div>
+        @else
+        <div class="border-t pt-4 text-center text-gray-500 text-sm">
+            Aucun mod ou opération appliqué à cet article.
+        </div>
+        @endif
+    </div>
+
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-100">

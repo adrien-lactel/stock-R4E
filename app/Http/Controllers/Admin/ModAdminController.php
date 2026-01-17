@@ -7,7 +7,9 @@ use App\Models\Mod;
 use App\Models\ArticleCategory;
 use App\Models\ArticleSubCategory;
 use App\Models\ArticleType;
+use App\Models\Repairer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ModAdminController extends Controller
 {
@@ -169,7 +171,7 @@ class ModAdminController extends Controller
     public function distribute()
     {
         $mods = Mod::with('repairers')->orderBy('name')->get();
-        $repairers = \App\Models\Repairer::orderBy('name')->get();
+        $repairers = Repairer::orderBy('name')->get();
 
         return view('admin.mods.distribute', compact('mods', 'repairers'));
     }
@@ -196,7 +198,7 @@ class ModAdminController extends Controller
 
         // Ajouter/augmenter le stock chez le réparateur
         $mod->repairers()->updateExistingPivot($validated['repairer_id'], [
-            'quantity' => \DB::raw("quantity + {$validated['quantity']}"),
+            'quantity' => DB::raw("quantity + {$validated['quantity']}"),
         ], false);
 
         // Si la relation n'existait pas, la créer
@@ -207,6 +209,6 @@ class ModAdminController extends Controller
         }
 
         return back()->with('success', "{$validated['quantity']} unité(s) de {$mod->name} envoyée(s) à " . 
-            \App\Models\Repairer::find($validated['repairer_id'])->name);
+            Repairer::find($validated['repairer_id'])->name);
     }
 }

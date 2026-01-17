@@ -17,6 +17,7 @@ class User extends Authenticatable
         'password',
         'role',
         'store_id',
+        'repairer_id',
     ];
 
     protected $hidden = [
@@ -37,6 +38,11 @@ class User extends Authenticatable
         return $this->belongsTo(Store::class);
     }
 
+    public function repairer()
+    {
+        return $this->belongsTo(Repairer::class);
+    }
+
     /* ===================== */
     /*        HELPERS        */
     /* ===================== */
@@ -49,5 +55,10 @@ class User extends Authenticatable
     public function isStore(): bool
     {
         return $this->role === 'store';
+    }
+
+    public function isRepairer(): bool
+    {
+        return $this->role === 'repairer';
     }
 }

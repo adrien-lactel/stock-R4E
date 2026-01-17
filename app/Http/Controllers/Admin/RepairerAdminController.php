@@ -94,7 +94,7 @@ class RepairerAdminController extends Controller
      */
     public function edit(Request $request, Repairer $repairer)
     {
-        $repairer->load('mods');
+        $repairer->load(['mods', 'operations']);
         
         $query = Repairer::query()
             ->withCount('consoles')
@@ -104,13 +104,28 @@ class RepairerAdminController extends Controller
             $query->where('is_active', true);
         }
 
-        $mods = Mod::orderBy('name')->get();
+        // Mods (pièces) - pas opération, pas accessoire
+        $mods = Mod::where('is_operation', false)
+            ->where('is_accessory', false)
+            ->orderBy('name')
+            ->get();
+        
+        // Accessoires - is_accessory = true
+        $accessories = Mod::where('is_accessory', true)
+            ->where('is_operation', false)
+            ->orderBy('name')
+            ->get();
+        
+        // Opérations
+        $operations = Mod::where('is_operation', true)->orderBy('name')->get();
 
         return view('admin.repairers.create', [
             'repairer'   => $repairer,
             'repairers'  => $query->get(),
             'activeOnly' => $request->boolean('active'),
             'mods'       => $mods,
+            'accessories' => $accessories,
+            'operations' => $operations,
         ]);
     }
 
@@ -142,6 +157,22 @@ class RepairerAdminController extends Controller
         return redirect()
             ->route('admin.repairers.create', $redirectParams)
             ->with('success', 'Réparateur mis à jour.');
+    }
+
+    /**
+     * Mettre à jour les compétences (opérations) d'un réparateur
+     */
+    public function updateOperations(Request $request, Repairer $repairer)
+    {
+        $validated = $request->validate([
+            'operations' => ['nullable', 'array'],
+            'operations.*' => ['exists:mods,id'],
+        ]);
+
+        // Synchroniser les opérations sélectionnées
+        $repairer->operations()->sync($validated['operations'] ?? []);
+
+        return back()->with('success', 'Compétences mises à jour.');
     }
 
     public function destroy(Request $request, Repairer $repairer)

@@ -56,6 +56,18 @@
                             🔧 Catalogue Mods
                         </x-nav-link>
 
+                        <x-nav-link :href="route('admin.accessories.index')" :active="request()->routeIs('admin.accessories.*')">
+                            📦 Accessoires
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.operations.index')" :active="request()->routeIs('admin.operations.*')">
+                            ⚙️ Opérations
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.repairers.index')" :active="request()->routeIs('admin.repairers.*')">
+                            👨‍🔧 Réparateurs
+                        </x-nav-link>
+
                         {{-- ✅ AJOUT : SAV --}}
                         <x-nav-link :href="route('admin.lot-requests.index')" :active="request()->routeIs('admin.lot-requests.*')">
                             📦 Demandes de lots
@@ -91,6 +103,19 @@
                             :href="route('store.external-repair.create', auth()->user()->store_id)"
                             :active="request()->routeIs('store.external-repair.*')">
                             🔧 Réparation externe
+                        </x-nav-link>
+                    @endif
+                    @endauth
+
+                    {{-- =====================
+                         RÉPARATEUR
+                    ===================== --}}
+                    @auth
+                    @if(auth()->user()->repairer_id)
+                        <x-nav-link
+                            :href="route('repairer.consoles.index')"
+                            :active="request()->routeIs('repairer.consoles.*')">
+                            🔧 Mes consoles
                         </x-nav-link>
                     @endif
                     @endauth

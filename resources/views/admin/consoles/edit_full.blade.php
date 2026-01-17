@@ -105,16 +105,137 @@
                 </div>
             </div>
 
-            <h2 class="text-lg font-semibold text-gray-800 mt-8">Modifications</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
-                @for($i=1;$i<=4;$i++)
-                    <div>
-                        <label class="block text-sm font-medium">Mod {{ $i }}</label>
-                        <input name="mod_{{ $i }}" list="mods-list" class="w-full rounded border-gray-300" value="{{ old('mod_'.$i, $console->{'mod_'.$i}) }}">
+            <h2 class="text-lg font-semibold text-gray-800 mt-8">Modifications (Mods & Accessoires)</h2>
+            
+            {{-- Mods actuellement associés + Coût de réparation --}}
+            @if($console->mods->count())
+                @php
+                    $totalMinutes = $console->mods->sum('pivot.work_time_minutes');
+                    $hours = floor($totalMinutes / 60);
+                    $minutes = $totalMinutes % 60;
+                    $coutMods = $console->mods->sum('pivot.price_applied');
+                    $coutMainOeuvre = ($totalMinutes / 60) * 20; // 20€/heure
+                    $coutTotalReparation = $coutMods + $coutMainOeuvre;
+                    $prixAchat = $console->prix_achat ?? 0;
+                    $coutRevient = $prixAchat + $coutTotalReparation;
+                @endphp
+                
+                {{-- Bloc coût de réparation + coût de revient --}}
+                <div class="mt-3 mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                    <h4 class="text-sm font-semibold text-indigo-800 mb-3">💰 Coûts</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div class="text-center p-3 bg-white rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 uppercase">Prix d'achat</div>
+                            <div class="text-xl font-bold text-gray-700">{{ number_format($prixAchat, 2) }} €</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 uppercase">Coût Mods</div>
+                            <div class="text-xl font-bold text-blue-600">{{ number_format($coutMods, 2) }} €</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 uppercase">Temps travail</div>
+                            <div class="text-xl font-bold text-orange-600">
+                                {{ $hours > 0 ? $hours.'h ' : '' }}{{ $minutes }}min
+                            </div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 uppercase">Main d'œuvre (20€/h)</div>
+                            <div class="text-xl font-bold text-orange-600">{{ number_format($coutMainOeuvre, 2) }} €</div>
+                        </div>
+                        <div class="text-center p-3 bg-indigo-100 rounded-lg shadow-sm border border-indigo-300">
+                            <div class="text-xs text-indigo-700 uppercase font-semibold">Coût Réparation</div>
+                            <div class="text-xl font-bold text-indigo-700">{{ number_format($coutTotalReparation, 2) }} €</div>
+                        </div>
+                        <div class="text-center p-3 bg-green-100 rounded-lg shadow-sm border-2 border-green-400">
+                            <div class="text-xs text-green-700 uppercase font-semibold">Coût de Revient</div>
+                            <div class="text-2xl font-bold text-green-700">{{ number_format($coutRevient, 2) }} €</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Liste des mods associés --}}
+                <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Mods, Accessoires & Opérations associés :</h4>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($console->mods as $mod)
+                            @php
+                                $badgeClass = $mod->is_operation 
+                                    ? 'bg-orange-100 text-orange-800' 
+                                    : ($mod->is_accessory ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800');
+                                $icon = $mod->is_operation ? '🔧' : ($mod->is_accessory ? '📦' : '🔩');
+                            @endphp
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm {{ $badgeClass }}">
+                                {{ $icon }} {{ $mod->name }}
+                                @if($mod->pivot->price_applied && !$mod->is_operation)
+                                    <span class="ml-1 text-xs opacity-75">({{ number_format($mod->pivot->price_applied, 2) }}€)</span>
+                                @endif
+                                @if($mod->pivot->work_time_minutes)
+                                    <span class="ml-1 text-xs opacity-75">· {{ $mod->pivot->work_time_minutes }}min</span>
+                                @endif
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <div class="mt-3 mb-4 p-4 bg-gray-50 rounded-lg text-center text-gray-500">
+                    Aucun mod associé — Coût de réparation: <strong>0,00 €</strong>
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3" x-data="{ modSlots: [
+                { mod_id: '', price: '', time: '', notes: '' },
+                { mod_id: '', price: '', time: '', notes: '' },
+                { mod_id: '', price: '', time: '', notes: '' },
+                { mod_id: '', price: '', time: '', notes: '' }
+            ]}">
+                @for($i = 0; $i < 4; $i++)
+                    <div class="p-3 border rounded-lg bg-white">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mod / Opération {{ $i + 1 }}</label>
+                        <select name="console_mods[{{ $i }}][mod_id]" class="w-full rounded border-gray-300 text-sm">
+                            <option value="">— Aucun —</option>
+                            <optgroup label="🔧 Opérations (temps uniquement)">
+                                @foreach($allMods->where('is_operation', true) as $mod)
+                                    <option value="{{ $mod->id }}" data-price="0">
+                                        {{ $mod->name }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="🔩 Mods (pièces)">
+                                @foreach($allMods->where('is_accessory', false)->where('is_operation', false) as $mod)
+                                    <option value="{{ $mod->id }}" data-price="{{ $mod->purchase_price }}">
+                                        {{ $mod->name }} ({{ number_format($mod->purchase_price, 2) }}€)
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="📦 Accessoires">
+                                @foreach($allMods->where('is_accessory', true)->where('is_operation', false) as $mod)
+                                    <option value="{{ $mod->id }}" data-price="{{ $mod->purchase_price }}">
+                                        {{ $mod->name }} ({{ number_format($mod->purchase_price, 2) }}€)
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        </select>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <label class="block text-xs text-gray-500">Prix (€)</label>
+                                <input type="number" step="0.01" min="0" name="console_mods[{{ $i }}][price_applied]" 
+                                       class="w-full rounded border-gray-300 text-sm" placeholder="Auto">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500">Temps (min)</label>
+                                <input type="number" min="0" name="console_mods[{{ $i }}][work_time_minutes]" 
+                                       class="w-full rounded border-gray-300 text-sm" placeholder="0">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="block text-xs text-gray-500">Notes</label>
+                            <input type="text" name="console_mods[{{ $i }}][notes]" 
+                                   class="w-full rounded border-gray-300 text-sm" placeholder="Notes..."">
+                        </div>
                     </div>
                 @endfor
             </div>
-            <datalist id="mods-list">@foreach($mods as $m)<option value="{{ $m }}">@endforeach</datalist>
+            <p class="text-xs text-gray-500 mt-2">💡 Les nouveaux mods seront ajoutés aux mods existants. Pour retirer un mod, utilisez la vue réparateur.</p>
 
             <h2 class="text-lg font-semibold text-gray-800 mt-8">Logistique & magasin</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">

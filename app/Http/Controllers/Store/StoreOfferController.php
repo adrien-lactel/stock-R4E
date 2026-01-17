@@ -22,6 +22,7 @@ class StoreOfferController extends Controller
             'console.articleType',
             'console.articleCategory',
             'console.articleSubCategory',
+            'console.mods', // Pour afficher les mods/opérations
         ])
             ->where('store_id', $storeId)
             ->where('status', 'proposed')

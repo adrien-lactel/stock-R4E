@@ -4,9 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\ConsoleStorePrice;
 use App\Models\User;
 
+/**
+ * @property-read User|null $user
+ */
 class Store extends Model
 {
     use HasFactory;
@@ -17,30 +23,32 @@ class Store extends Model
     /*     RELATIONS         */
     /* ===================== */
 
-    // 🔹 COMPTE UTILISATEUR DU MAGASIN (NOUVEAU – SÛR)
-    public function user()
+    /**
+     * Compte utilisateur du magasin
+     */
+    public function user(): HasOne
     {
         return $this->hasOne(User::class);
     }
 
-    public function articles()
+    public function articles(): HasMany
     {
         return $this->hasMany(Article::class);
     }
 
-    public function invoices()
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
     // Table pivot dédiée prix console / magasin
-    public function consolePrices()
+    public function consolePrices(): HasMany
     {
         return $this->hasMany(ConsoleStorePrice::class);
     }
 
     // Consoles visibles par le magasin avec prix
-    public function consoles()
+    public function consoles(): BelongsToMany
     {
          return $this->belongsToMany(Console::class, 'console_store_prices')
         ->withPivot('sale_price')

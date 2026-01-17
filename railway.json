@@ -13,7 +13,29 @@
       }
     }
   },
+  "plugins": [
+    {
+      "name": "mysql",
+      "version": "8.0"
+    },
+    {
+      "name": "redis",
+      "version": "6"
+    }
+  ],
   "deploy": {
-    "startCommand": "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
-  }
+    "startCommand": "php artisan migrate --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=8080"
+  },
+  "envs": [
+    "APP_ENV=production",
+    "APP_DEBUG=false",
+    "DB_CONNECTION=mysql",
+    "DB_HOST=localhost",
+    "DB_PORT=3306",
+    "DB_DATABASE=stock_r4e",
+    "DB_USERNAME=root",
+    "DB_PASSWORD=",
+    "CACHE_DRIVER=redis",
+    "QUEUE_CONNECTION=sync"
+  ]
 }

@@ -23,9 +23,9 @@
         </div>
     @endif
 
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="bg-pink-50 shadow rounded-lg overflow-hidden border border-pink-100">
         <table class="w-full border-collapse">
-            <thead class="bg-gray-100">
+            <thead class="bg-pink-100">
                 <tr>
                     <th class="p-3 text-left">Nom</th>
                     <th class="p-3 text-left">Description</th>
@@ -38,37 +38,37 @@
             </thead>
             <tbody>
                 @forelse($mods as $mod)
-                    <tr class="border-t">
-                        <td class="p-3 font-semibold">{{ $mod->name }}</td>
-                        <td class="p-3 text-sm text-gray-700">{{ Str::limit($mod->description, 60) }}</td>
-                        <td class="p-3">
+                    <tr class="border-t border-pink-100 bg-white">
+                        <td class="p-3 font-semibold bg-blue-50">{{ $mod->name }}</td>
+                        <td class="p-3 text-sm text-gray-700 bg-purple-50">{{ Str::limit($mod->description, 60) }}</td>
+                        <td class="p-3 bg-green-50">
                             @if($mod->is_accessory)
-                                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs border border-purple-200">
                                     📦 Accessoire
                                 </span>
                             @else
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs border border-blue-200">
                                     🔧 Modification
                                 </span>
                             @endif
                         </td>
-                        <td class="p-3">{{ number_format($mod->purchase_price, 2, ',', ' ') }} €</td>
-                        <td class="p-3">
+                        <td class="p-3 bg-yellow-50">{{ number_format($mod->purchase_price, 2, ',', ' ') }} €</td>
+                        <td class="p-3 bg-pink-50">
                             @if($mod->quantity == 0)
-                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm font-semibold">
+                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm font-semibold border border-red-200">
                                     ⚠️ Rupture (0)
                                 </span>
                             @elseif($mod->quantity < 5)
-                                <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-sm font-semibold">
+                                <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-sm font-semibold border border-orange-200">
                                     ⚡ Stock bas ({{ $mod->quantity }})
                                 </span>
                             @else
-                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-semibold">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-semibold border border-green-200">
                                     ✅ {{ $mod->quantity }}
                                 </span>
                             @endif
                         </td>
-                        <td class="p-3 text-xs">
+                        <td class="p-3 text-xs bg-blue-50">
                             @if($mod->compatibleCategories->count() > 0)
                                 <div class="mb-1">
                                     <span class="font-semibold">Catégories:</span>
@@ -91,24 +91,34 @@
                                 <span class="text-gray-400 italic">Universel</span>
                             @endif
                         </td>
-                        <td class="p-3 text-center space-x-2">
-                            <button type="button" 
-                                    onclick="document.getElementById('receive-stock-{{ $mod->id }}').classList.toggle('hidden')"
-                                    class="inline-block bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
-                                📥 Recevoir stock
-                            </button>
-                            <a href="{{ route('admin.mods.edit', $mod) }}" 
-                               class="inline-block bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600">
-                                ✏️ Éditer
-                            </a>
-                            <form method="POST" action="{{ route('admin.mods.destroy', $mod) }}" class="inline-block">
-                                @csrf
-                                @method('DELETE')
-                                <button onclick="return confirm('Supprimer ce mod ?')"
-                                        class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
-                                    🗑️ Supprimer
+                        <td class="p-3 bg-pink-50">
+                            <div class="flex flex-col gap-2">
+                                {{-- Recevoir stock --}}
+                                <button type="button" 
+                                        onclick="document.getElementById('receive-stock-{{ $mod->id }}').classList.toggle('hidden')"
+                                        class="flex items-center justify-center gap-1 bg-green-100 text-green-800 border border-green-200 px-3 py-1.5 rounded text-sm hover:bg-green-200 w-full font-semibold">
+                                    <span>📥</span>
+                                    <span>Recevoir</span>
                                 </button>
-                            </form>
+                                
+                                {{-- Éditer --}}
+                                <a href="{{ route('admin.mods.edit', $mod) }}" 
+                                   class="flex items-center justify-center gap-1 bg-indigo-100 text-indigo-800 border border-indigo-200 px-3 py-1.5 rounded text-sm hover:bg-indigo-200 w-full font-semibold">
+                                    <span>✏️</span>
+                                    <span>Éditer</span>
+                                </a>
+                                
+                                {{-- Supprimer --}}
+                                <form method="POST" action="{{ route('admin.mods.destroy', $mod) }}" class="w-full">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button onclick="return confirm('Supprimer ce mod ?')"
+                                            class="flex items-center justify-center gap-1 bg-red-100 text-red-800 border border-red-200 px-3 py-1.5 rounded text-sm hover:bg-red-200 w-full font-semibold">
+                                        <span>🗑️</span>
+                                        <span>Supprimer</span>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {{-- Formulaire caché de réception de stock --}}
@@ -119,20 +129,20 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-1">Quantité à recevoir</label>
                                     <input type="number" name="quantity" min="1" required
-                                           class="border rounded px-3 py-2 w-24">
+                                           class="border border-green-200 rounded px-3 py-2 w-24 bg-green-50">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-1">Commentaire (optionnel)</label>
                                     <input type="text" name="notes" 
                                            placeholder="Ex: Facture #123, Fournisseur A"
-                                           class="border rounded px-3 py-2 w-40">
+                                           class="border border-blue-200 rounded px-3 py-2 w-40 bg-blue-50">
                                 </div>
-                                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                                <button type="submit" class="bg-green-100 text-green-800 border border-green-200 px-4 py-2 rounded hover:bg-green-200 font-semibold">
                                     ✅ Valider la réception
                                 </button>
                                 <button type="button"
                                         onclick="document.getElementById('receive-stock-{{ $mod->id }}').classList.add('hidden')"
-                                        class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+                                        class="bg-gray-100 text-gray-600 border border-gray-200 px-4 py-2 rounded hover:bg-gray-200 font-semibold">
                                     Annuler
                                 </button>
                             </form>

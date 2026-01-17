@@ -76,14 +76,37 @@ Route::middleware('auth')->group(function () {
 | ADMIN ROUTES
 | =========================
 */
+use App\Http\Controllers\Admin\OperationAdminController;
+use App\Http\Controllers\Admin\AccessoryAdminController;
+
 Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
 
+        /* =====================
+        | OPÉRATIONS
+        ===================== */
+        Route::get('/operations', [OperationAdminController::class, 'index'])->name('operations.index');
+        Route::get('/operations/create', [OperationAdminController::class, 'create'])->name('operations.create');
+        Route::post('/operations', [OperationAdminController::class, 'store'])->name('operations.store');
+        Route::get('/operations/{operation}/edit', [OperationAdminController::class, 'edit'])->name('operations.edit');
+        Route::put('/operations/{operation}', [OperationAdminController::class, 'update'])->name('operations.update');
+        Route::delete('/operations/{operation}', [OperationAdminController::class, 'destroy'])->name('operations.destroy');
 
+        /* =====================
+        | ACCESSOIRES
+        ===================== */
+        Route::get('/accessories', [AccessoryAdminController::class, 'index'])->name('accessories.index');
+        Route::get('/accessories/create', [AccessoryAdminController::class, 'create'])->name('accessories.create');
+        Route::post('/accessories', [AccessoryAdminController::class, 'store'])->name('accessories.store');
+        Route::get('/accessories/{accessory}/edit', [AccessoryAdminController::class, 'edit'])->name('accessories.edit');
+        Route::put('/accessories/{accessory}', [AccessoryAdminController::class, 'update'])->name('accessories.update');
+        Route::delete('/accessories/{accessory}', [AccessoryAdminController::class, 'destroy'])->name('accessories.destroy');
 
-
+        /* =====================
+        | RÉPARATEURS
+        ===================== */
         Route::get('/repairers', [RepairerAdminController::class, 'index'])->name('repairers.index');
 
         Route::get('/repairers/create', [RepairerAdminController::class, 'create'])->name('repairers.create');
@@ -93,6 +116,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/repairers/{repairer}/edit', [RepairerAdminController::class, 'edit'])->name('repairers.edit');
         Route::put('/repairers/{repairer}', [RepairerAdminController::class, 'update'])->name('repairers.update');
         Route::delete('/repairers/{repairer}', [RepairerAdminController::class, 'destroy'])->name('repairers.destroy');
+        Route::post('/repairers/{repairer}/operations', [RepairerAdminController::class, 'updateOperations'])->name('repairers.operations.update');
 
         /* =====================
         | TAXONOMIE
@@ -325,6 +349,37 @@ Route::middleware(['auth'])
 
         Route::post('/{store}/external-repair', [StoreDashboardController::class, 'storeExternalRepair'])
             ->name('external-repair.store');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| =========================
+| REPAIRER ROUTES
+| =========================
+*/
+use App\Http\Controllers\Repairer\RepairerConsoleController;
+
+Route::middleware(['auth'])
+    ->prefix('repairer')
+    ->name('repairer.')
+    ->group(function () {
+        // Liste des consoles assignées au réparateur
+        Route::get('/consoles', [RepairerConsoleController::class, 'index'])
+            ->name('consoles.index');
+
+        // Éditer les mods/accessoires d'une console
+        Route::get('/consoles/{console}/mods', [RepairerConsoleController::class, 'editMods'])
+            ->name('consoles.edit-mods');
+
+        Route::put('/consoles/{console}/mods', [RepairerConsoleController::class, 'updateMods'])
+            ->name('consoles.update-mods');
+
+        // Ajouter/retirer un mod rapidement
+        Route::post('/consoles/{console}/mods', [RepairerConsoleController::class, 'addMod'])
+            ->name('consoles.add-mod');
+
+        Route::delete('/consoles/{console}/mods/{mod}', [RepairerConsoleController::class, 'removeMod'])
+            ->name('consoles.remove-mod');
     });
 
 /*
