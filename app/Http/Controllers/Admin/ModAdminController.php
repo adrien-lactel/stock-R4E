@@ -128,6 +128,24 @@ class ModAdminController extends Controller
     }
 
     /**
+     * Supprimer un mod
+     */
+    public function destroy(Mod $mod)
+    {
+        // Détacher toutes les relations avant suppression
+        $mod->compatibleCategories()->detach();
+        $mod->compatibleSubCategories()->detach();
+        $mod->compatibleTypes()->detach();
+        $mod->repairers()->detach();
+
+        $name = $mod->name;
+        $mod->delete();
+
+        return redirect()->route('admin.mods.index')
+            ->with('success', "Mod \"{$name}\" supprimé avec succès");
+    }
+
+    /**
      * Augmenter le stock (achat/réception)
      */
     public function receiveStock(Request $request, Mod $mod)
