@@ -89,6 +89,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/repairers/create', [RepairerAdminController::class, 'create'])->name('repairers.create');
         Route::post('/repairers', [RepairerAdminController::class, 'store'])->name('repairers.store');
 
+        Route::get('/repairers/{repairer}', [RepairerAdminController::class, 'show'])->name('repairers.show');
         Route::get('/repairers/{repairer}/edit', [RepairerAdminController::class, 'edit'])->name('repairers.edit');
         Route::put('/repairers/{repairer}', [RepairerAdminController::class, 'update'])->name('repairers.update');
         Route::delete('/repairers/{repairer}', [RepairerAdminController::class, 'destroy'])->name('repairers.destroy');

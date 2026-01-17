@@ -23,31 +23,52 @@
                     <th class="px-4 py-3 text-left">Nom</th>
                     <th class="px-4 py-3 text-left">Contact</th>
                     <th class="px-4 py-3 text-left">Ville</th>
+                    <th class="px-4 py-3 text-center">Consoles</th>
                     <th class="px-4 py-3 text-center">Actif</th>
                     <th class="px-4 py-3 text-center">Délai</th>
-                    <th class="px-4 py-3 text-left">Transport</th>
+                    <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($repairers as $r)
-                    <tr>
-                        <td class="px-4 py-3 font-medium">{{ $r->name }}</td>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium">
+                            <a href="{{ route('admin.repairers.show', $r) }}" class="text-indigo-600 hover:underline">
+                                {{ $r->name }}
+                            </a>
+                        </td>
                         <td class="px-4 py-3">
                             <div>{{ $r->email ?? '—' }}</div>
                             <div class="text-gray-500">{{ $r->phone ?? '' }}</div>
                         </td>
                         <td class="px-4 py-3">{{ $r->city ?? '—' }}</td>
                         <td class="px-4 py-3 text-center">
+                            @if($r->consoles_count > 0)
+                                <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-semibold">
+                                    {{ $r->consoles_count }}
+                                </span>
+                            @else
+                                <span class="text-gray-400">0</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-center">
                             <span class="px-2 py-1 rounded text-white text-xs {{ $r->is_active ? 'bg-green-600' : 'bg-gray-500' }}">
                                 {{ $r->is_active ? 'Oui' : 'Non' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-center">{{ $r->delay_days_default ?? '—' }}</td>
-                        <td class="px-4 py-3">{{ $r->shipping_method ?? '—' }}</td>
+                        <td class="px-4 py-3 text-center">{{ $r->delay_days_default ?? '—' }} j</td>
+                        <td class="px-4 py-3 text-right space-x-2">
+                            <a href="{{ route('admin.repairers.show', $r) }}" class="text-indigo-600 hover:underline text-sm">
+                                Voir
+                            </a>
+                            <a href="{{ route('admin.repairers.edit', $r) }}" class="text-gray-600 hover:underline text-sm">
+                                Éditer
+                            </a>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                             Aucun réparateur.
                         </td>
                     </tr>

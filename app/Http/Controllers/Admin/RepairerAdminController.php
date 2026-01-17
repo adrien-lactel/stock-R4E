@@ -32,6 +32,30 @@ class RepairerAdminController extends Controller
     }
 
     /**
+     * Voir le détail d'un réparateur avec ses consoles affectées
+     */
+    public function show(Repairer $repairer)
+    {
+        $repairer->load(['mods']);
+        
+        // Consoles affectées à ce réparateur
+        $consoles = \App\Models\Console::with(['articleCategory', 'articleSubCategory', 'articleType', 'store'])
+            ->where('repairer_id', $repairer->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(30);
+
+        // Stats
+        $stats = [
+            'total' => \App\Models\Console::where('repairer_id', $repairer->id)->count(),
+            'repair' => \App\Models\Console::where('repairer_id', $repairer->id)->where('status', 'repair')->count(),
+            'stock' => \App\Models\Console::where('repairer_id', $repairer->id)->where('status', 'stock')->count(),
+            'defective' => \App\Models\Console::where('repairer_id', $repairer->id)->where('status', 'defective')->count(),
+        ];
+
+        return view('admin.repairers.show', compact('repairer', 'consoles', 'stats'));
+    }
+
+    /**
      * Page principale: formulaire + liste réparateurs
      */
     public function create(Request $request)
