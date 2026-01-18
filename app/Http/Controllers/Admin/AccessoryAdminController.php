@@ -111,4 +111,44 @@ class AccessoryAdminController extends Controller
             ->route('admin.accessories.index')
             ->with('success', "Accessoire \"{$name}\" supprimé.");
     }
+
+    /**
+     * Bilan des accessoires
+     */
+    public function report()
+    {
+        $accessories = Mod::where('is_accessory', true)
+            ->where('is_operation', false)
+            ->orderBy('quantity', 'desc')
+            ->get();
+
+        $stats = [
+            'total_items' => $accessories->count(),
+            'total_quantity' => $accessories->sum('quantity'),
+            'total_value' => $accessories->sum(function($acc) {
+                return $acc->quantity * $acc->purchase_price;
+            }),
+            'out_of_stock' => $accessories->where('quantity', '<=', 0)->count(),
+            'low_stock' => $accessories->where('quantity', '>', 0)->where('quantity', '<=', 5)->count(),
+        ];
+
+        return view('admin.accessories.report', compact('accessories', 'stats'));
+    }
+
+    /**
+     * Mettre à jour la valorisation d'un accessoire
+     */
+    public function updateValorisation(Request $request, Mod $accessory)
+    {
+        $validated = $request->validate([
+            'valorisation' => 'required|numeric|min:0',
+        ]);
+
+        $accessory->update([
+            'valorisation' => $validated['valorisation'],
+        ]);
+
+        return redirect()->route('admin.accessories.report')
+            ->with('success', "Valorisation de '{$accessory->name}' mise à jour avec succès.");
+    }
 }

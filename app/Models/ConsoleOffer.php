@@ -12,6 +12,7 @@ class ConsoleOffer extends Model
         'console_id',
         'store_id',
         'sale_price',
+        'consignment_price',
         'status',
     ];
 

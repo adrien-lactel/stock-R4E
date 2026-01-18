@@ -100,8 +100,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/accessories', [AccessoryAdminController::class, 'index'])->name('accessories.index');
         Route::get('/accessories/create', [AccessoryAdminController::class, 'create'])->name('accessories.create');
         Route::post('/accessories', [AccessoryAdminController::class, 'store'])->name('accessories.store');
+        Route::get('/accessories/report', [AccessoryAdminController::class, 'report'])->name('accessories.report');
         Route::get('/accessories/{accessory}/edit', [AccessoryAdminController::class, 'edit'])->name('accessories.edit');
         Route::put('/accessories/{accessory}', [AccessoryAdminController::class, 'update'])->name('accessories.update');
+        Route::patch('/accessories/{accessory}/valorisation', [AccessoryAdminController::class, 'updateValorisation'])->name('accessories.update-valorisation');
         Route::delete('/accessories/{accessory}', [AccessoryAdminController::class, 'destroy'])->name('accessories.destroy');
 
         /* =====================
@@ -200,6 +202,15 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/consoles', [ConsoleAdminController::class, 'index'])
             ->name('consoles.index');
 
+        Route::get('/consoles/disabled', [ConsoleAdminController::class, 'disabled'])
+            ->name('consoles.disabled');
+
+        Route::get('/consoles/{console}/valorize', [ConsoleAdminController::class, 'valorize'])
+            ->name('consoles.valorize');
+
+        Route::post('/consoles/{console}/valorize', [ConsoleAdminController::class, 'storeValorization'])
+            ->name('consoles.valorize.store');
+
         Route::get('/consoles/{console}/edit', [ConsoleAdminController::class, 'edit'])
             ->name('consoles.edit');
 
@@ -211,6 +222,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
 
         Route::patch('/consoles/{console}/status', [ConsoleAdminController::class, 'updateStatus'])
             ->name('consoles.update-status');
+
+        Route::patch('/consoles/{console}/valorisation', [ConsoleAdminController::class, 'updateValorisation'])
+            ->name('consoles.update-valorisation');
 
         /* =====================
         | PRIX / MAGASINS

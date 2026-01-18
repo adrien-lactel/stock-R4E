@@ -166,10 +166,41 @@ public function articleType() { return $this->belongsTo(\App\Models\ArticleType:
     }
 
     /**
-     * Coût de revient total (prix d'achat + coût de réparation)
+     * Coût de revient total (prix d'achat + coût de réparation + quote-part consoles disabled)
      */
     public function getTotalCostAttribute(): float
     {
-        return (float) ($this->prix_achat ?? 0) + $this->repair_cost;
+        $baseCost = (float) ($this->prix_achat ?? 0) + $this->repair_cost;
+        
+        // Ajouter la quote-part des consoles disabled du même type
+        if ($this->article_type_id && !in_array($this->status, ['disabled', 'parted_out'])) {
+            // Total du prix d'achat des consoles disabled ET parted_out de ce type
+            // MOINS la valorisation récupérée sur les consoles parted_out
+            $disabledTotalCost = static::where('article_type_id', $this->article_type_id)
+                ->where('status', 'disabled')
+                ->sum('prix_achat');
+            
+            // Pour les consoles parted_out : prix_achat - valorisation
+            $partedOutConsoles = static::where('article_type_id', $this->article_type_id)
+                ->where('status', 'parted_out')
+                ->get();
+            
+            foreach ($partedOutConsoles as $partedOut) {
+                $netCost = ($partedOut->prix_achat ?? 0) - ($partedOut->valorisation ?? 0);
+                $disabledTotalCost += max(0, $netCost); // Ne pas avoir de coût négatif
+            }
+            
+            // Nombre de consoles non-disabled de ce type (vendables)
+            $sellableCount = static::where('article_type_id', $this->article_type_id)
+                ->whereIn('status', ['stock', 'defective', 'repair', 'vendue'])
+                ->count();
+            
+            // Répartir le coût des disabled sur les vendables
+            if ($sellableCount > 0 && $disabledTotalCost > 0) {
+                $baseCost += ($disabledTotalCost / $sellableCount);
+            }
+        }
+        
+        return $baseCost;
     }
 }

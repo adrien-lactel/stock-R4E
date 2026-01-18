@@ -14,6 +14,7 @@ class Mod extends Model
         'name',
         'description',
         'purchase_price',
+        'valorisation',
         'quantity',
         'is_accessory',
         'is_operation',

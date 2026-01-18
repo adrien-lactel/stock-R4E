@@ -30,6 +30,7 @@ class ConsoleAdminController extends Controller
                 'mods', // Pour calculer le coût de réparation
             ])
             ->withCount(['stores', 'mods'])
+            ->where('status', '!=', 'disabled') // Exclure les consoles disabled
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('q')) {
@@ -82,6 +83,7 @@ class ConsoleAdminController extends Controller
             'articleCategory',
             'articleSubCategory',
             'stores',
+            'offers', // Charger les offres avec sale_price et consignment_price
             'repairer',
             'mods' // Pour afficher les mods/opérations et calculer les coûts
         );
@@ -97,25 +99,27 @@ class ConsoleAdminController extends Controller
     public function storePrice(Request $request, Console $console)
     {
         $request->validate([
-            'store_id'   => 'required|exists:stores,id',
-            'sale_price' => 'required|numeric|min:0',
+            'store_id'          => 'required|exists:stores,id',
+            'sale_price'        => 'nullable|numeric|min:0',
+            'consignment_price' => 'nullable|numeric|min:0',
         ]);
 
-        // Créer une offre au lieu d'ajouter directement au stock
+        // Créer une offre avec les deux types de prix
         ConsoleOffer::updateOrCreate(
             [
                 'console_id' => $console->id,
                 'store_id'   => $request->store_id,
             ],
             [
-                'sale_price' => $request->sale_price,
-                'status'     => 'proposed',
+                'sale_price'        => $request->sale_price,
+                'consignment_price' => $request->consignment_price,
+                'status'            => 'proposed',
             ]
         );
 
         return redirect()
             ->route('admin.consoles.edit', $console)
-            ->with('success', 'Offre créée. Le magasin pourra la consulter et demander un lot.');
+            ->with('success', 'Offre créée avec les prix de vente et de dépôt. Le magasin pourra la consulter et demander un lot.');
     }
 
     /* =====================================================
@@ -415,7 +419,7 @@ class ConsoleAdminController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:stock,defective,repair,disabled',
+            'status' => 'required|in:stock,defective,repair,disabled,parted_out',
             'admin_comment' => 'nullable|string|max:1000',
         ]);
 
@@ -425,5 +429,121 @@ class ConsoleAdminController extends Controller
         ]);
 
         return back()->with('success', 'Statut de la console mis à jour.');
+    }
+
+    /* =====================================================
+     | UPDATE VALORISATION (Prix R4E)
+     ===================================================== */
+    public function updateValorisation(Request $request, Console $console)
+    {
+        $request->validate([
+            'valorisation' => 'required|numeric|min:0',
+        ]);
+
+        $console->update([
+            'valorisation' => $request->valorisation,
+        ]);
+
+        return back()->with('success', 'Prix R4E mis à jour avec succès.');
+    }
+
+    /* =====================================================
+     | CONSOLES DISABLED (HS - Pièces détachées)
+     ===================================================== */
+    public function disabled(Request $request)
+    {
+        $tab = $request->get('tab', 'disabled'); // disabled ou parted_out
+        
+        $query = Console::with([
+                'articleType',
+                'articleCategory',
+                'articleSubCategory',
+            ])
+            ->where('status', $tab === 'parted_out' ? 'parted_out' : 'disabled')
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function($s) use ($q) {
+                $s->where('serial_number', 'like', "%{$q}%")
+                  ->orWhere('provenance_article', 'like', "%{$q}%")
+                  ->orWhere('product_comment', 'like', "%{$q}%");
+            });
+        }
+
+        if ($request->filled('category')) {
+            $query->where('article_category_id', $request->category);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('article_type_id', $request->type);
+        }
+
+        $consoles = $query->paginate(25)->withQueryString();
+        $categories = \App\Models\ArticleCategory::orderBy('name')->get();
+        $types = \App\Models\ArticleType::orderBy('name')->get();
+
+        return view('admin.consoles.disabled', compact('consoles', 'categories', 'types', 'tab'));
+    }
+
+    /* =====================================================
+     | VALORISER EN PIÈCES DÉTACHÉES
+     ===================================================== */
+    public function valorize(Console $console)
+    {
+        // Vérifier que c'est bien une console disabled
+        if ($console->status !== 'disabled') {
+            return redirect()->route('admin.consoles.disabled')
+                ->with('error', 'Seules les consoles HS peuvent être valorisées en pièces détachées.');
+        }
+
+        // Récupérer les accessoires depuis la table mods
+        $accessories = Mod::where('is_accessory', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.consoles.valorize', compact('console', 'accessories'));
+    }
+
+    /* =====================================================
+     | ENREGISTRER LA VALORISATION EN PIÈCES
+     ===================================================== */
+    public function storeValorization(Request $request, Console $console)
+    {
+        if ($console->status !== 'disabled') {
+            return redirect()->route('admin.consoles.disabled')
+                ->with('error', 'Opération invalide.');
+        }
+
+        $validated = $request->validate([
+            'accessories' => 'required|array|min:1',
+            'accessories.*.mod_id' => 'required|exists:mods,id',
+            'accessories.*.quantity' => 'required|integer|min:1',
+            'accessories.*.product_comment' => 'nullable|string|max:500',
+            'valorisation' => 'required|numeric|min:0|max:' . ($console->prix_achat ?? 999999),
+        ]);
+
+        // Créer les articles accessoires en augmentant le stock des mods
+        $totalCreated = 0;
+        foreach ($validated['accessories'] as $accessory) {
+            $mod = Mod::find($accessory['mod_id']);
+            if (!$mod) {
+                continue;
+            }
+
+            // Augmenter la quantité en stock du mod
+            $mod->increment('quantity', $accessory['quantity']);
+            $totalCreated += $accessory['quantity'];
+        }
+
+        // Changer le statut de la console en "valorisé"
+        $console->update([
+            'status' => 'parted_out',
+            'valorisation' => $validated['valorisation'],
+            'admin_comment' => 'Valorisé en pièces détachées le ' . now()->format('d/m/Y à H:i') . " - {$totalCreated} pièce(s) ajoutée(s) au stock - Valorisation: " . number_format($validated['valorisation'], 2, ',', ' ') . '€',
+        ]);
+
+        return redirect()->route('admin.consoles.disabled')
+            ->with('success', "Console #{$console->id} valorisée avec succès. {$totalCreated} accessoire(s) / pièce(s) détachée(s) ajouté(es) au stock.");
     }
 }
