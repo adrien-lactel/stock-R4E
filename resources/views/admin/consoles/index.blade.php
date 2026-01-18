@@ -167,14 +167,13 @@
                 <tr>
                     <th class="px-4 py-3 text-center">ID</th>
                     <th class="px-4 py-3 text-left">Catégorie / Sous-cat. / Type</th>
-                    <th class="px-4 py-3 text-left">Magasin</th>
+                    <th class="px-4 py-3 text-left">Localisation</th>
                     <th class="px-4 py-3 text-center">Statut</th>
                     <th class="px-4 py-3 text-right">Prix achat</th>
                     <th class="px-4 py-3 text-right">Coût répa.</th>
                     <th class="px-4 py-3 text-right">Prix revient</th>
                     <th class="px-4 py-3 text-right">Prix R4E</th>
-                    <th class="px-4 py-3 text-center">Prix définis</th>
-                    <th class="px-4 py-3 text-center">Contrôle admin</th>
+                    <th class="px-4 py-3 text-center">Modifier statut</th>
                     <th class="px-4 py-3 text-center w-[180px] whitespace-nowrap">Actions</th>
                 </tr>
             </thead>
@@ -199,7 +198,19 @@
                                 <span>{{ $console->articleType?->name ?? '—' }}</span>
                             </div>
                         </td>
-                        <td class="px-4 py-3">{{ $console->store?->name ?? '—' }}</td>
+                        <td class="px-4 py-3">
+                            @if($console->repairer)
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                                    🔧 {{ $console->repairer->name }}
+                                </span>
+                            @elseif($console->store)
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                    🏪 {{ $console->store->name }}
+                                </span>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold
                                 @if($console->status === 'stock') bg-green-100 text-green-800 border border-green-200
@@ -237,33 +248,22 @@
                         <td class="px-4 py-3 text-right">
                             <span class="font-semibold text-gray-900">{{ number_format($console->valorisation, 2, ',', ' ') }} €</span>
                         </td>
-                        <td class="px-4 py-3 text-center">
-                            {{ $console->stores_count ?? 0 }} magasin(s)
-                        </td>
-                        <td class="px-4 py-3 w-[220px] whitespace-nowrap align-top">
-                                <form method="POST"
-                                    action="{{ route('admin.consoles.update-status', $console) }}"
-                                    class="flex flex-col space-y-1 mb-2 w-full max-w-[180px]">
+                        <td class="px-4 py-3 text-center align-top">
+                            <form method="POST"
+                                action="{{ route('admin.consoles.update-status', $console) }}"
+                                class="flex flex-col space-y-2 items-center">
                                 @csrf
                                 @method('PATCH')
-                                <select name="status" class="w-full border border-green-200 rounded p-2 text-sm">
+                                <select name="status" class="w-full max-w-[160px] border border-gray-300 rounded p-2 text-sm">
                                     <option value="stock" @selected($console->status === 'stock')>🟢 En stock</option>
                                     <option value="defective" @selected($console->status === 'defective')>🟠 Défectueuse</option>
                                     <option value="repair" @selected($console->status === 'repair')>🔧 En réparation</option>
                                     <option value="disabled" @selected($console->status === 'disabled')>⛔ Désactivée</option>
                                 </select>
-                                <textarea name="admin_comment" rows="2"
-                                          class="w-full border border-green-200 rounded p-1 text-sm h-7 min-h-0 resize-y"
-                                          placeholder="Commentaire interne admin…">{{ $console->admin_comment }}</textarea>
-                                <button class="w-full bg-blue-100 text-blue-800 px-3 py-2 rounded hover:bg-blue-200 border border-blue-200 font-semibold">
+                                <button type="submit" class="w-full max-w-[160px] bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm font-medium">
                                     💾 Enregistrer
                                 </button>
                             </form>
-                            @if($console->admin_comment)
-                                <div class="mt-1 text-xs text-gray-600 italic">
-                                    {{ $console->admin_comment }}
-                                </div>
-                            @endif
                         </td>
                         <td class="px-4 py-3 text-center w-[180px] whitespace-nowrap align-top">
                             <div class="flex flex-col gap-2 items-center">
@@ -287,7 +287,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="12" class="px-4 py-8 text-center text-gray-500">
+                        <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                             Aucun article trouvé
                         </td>
                     </tr>

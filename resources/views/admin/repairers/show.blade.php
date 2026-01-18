@@ -161,7 +161,7 @@
                                     {{ $console->created_at->format('d/m/Y') }}
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.articles.edit', $console) }}" 
+                                    <a href="{{ route('admin.articles.edit_full', $console) }}" 
                                        class="text-indigo-600 hover:text-indigo-800 text-sm">
                                         Éditer →
                                     </a>

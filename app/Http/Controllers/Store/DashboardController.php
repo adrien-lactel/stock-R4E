@@ -21,33 +21,34 @@ class DashboardController extends Controller
 {
     // =====================
     // Sécurité magasin
+    // Autoriser les admins à voir tous les dashboards
     // =====================
-    if (Auth::user()->store_id !== $store->id) {
-        abort(403);
+    $user = Auth::user();
+    if ($user->role !== 'admin' && $user->store_id !== $store->id) {
+        abort(403, 'Accès non autorisé à ce magasin');
     }
 
     // =====================
     // STOCK VENDABLE
-    // (aucune demande SAV)
     // =====================
-    $consoles = $store->consoles()
-        ->with(['articleType', 'articleCategory', 'articleSubCategory'])
-        ->wherePivotNotNull('sale_price')
-        ->whereDoesntHave('returnRequest')
+    $consoles = Console::with(['articleType', 'articleCategory', 'articleSubCategory', 'repairer'])
+        ->where('store_id', $store->id)
+        ->where('status', 'stock')
         ->get();
 
     // =====================
     // 🛠️ SAV & RÉPARATIONS EN COURS
     // =====================
-    $savConsoles = $store->consoles()
-        ->with([
-            'articleType',
-            'articleCategory',
-            'articleSubCategory',
-            'returnRequest.repairQuote',
-            'returnRequest.repairer',
+    $savConsoles = ConsoleReturn::with([
+            'console.articleType',
+            'console.articleCategory',
+            'console.articleSubCategory',
+            'repairQuote',
+            'repairer',
         ])
-        ->whereHas('returnRequest')
+        ->where('store_id', $store->id)
+        ->where('is_external', false)
+        ->orderBy('created_at', 'desc')
         ->get();
 
     // =====================

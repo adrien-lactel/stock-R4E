@@ -104,8 +104,8 @@ php artisan migrate  # Apply pending migrations
 4. Never directly update `Console` `price` field for store-specific pricing
 
 ## Files to Know
-- **Models**: [app/Models](app/Models) - 15 entities including new Repairer
-- **Controllers**: [app/Http/Controllers/Admin](app/Http/Controllers/Admin) - Core business logic
-- **Migrations**: [database/migrations](database/migrations) - Schema evolution (read 2026_01_04_* for taxonomy pattern)
-- **Factories**: [database/factories](database/factories) - Use for seeding/testing
-- **Routes**: [routes/web.php](routes/web.php) - All routes use auth middleware + prefix namespacing
+- **Models**: [app/Models](../app/Models) - 15 entities including new Repairer
+- **Controllers**: [app/Http/Controllers/Admin](../app/Http/Controllers/Admin) - Core business logic
+- **Migrations**: [database/migrations](../database/migrations) - Schema evolution (read 2026_01_04_* for taxonomy pattern)
+- **Factories**: [database/factories](../database/factories) - Use for seeding/testing
+- **Routes**: [routes/web.php](../routes/web.php) - All routes use auth middleware + prefix namespacing

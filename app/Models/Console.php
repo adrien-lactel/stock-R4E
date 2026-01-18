@@ -43,6 +43,7 @@ class Console extends Model
         // LOGISTIQUE / RÉPARATION
         'lieu_stockage',
         'commentaire_reparateur',
+        'repairer_id',
     ];
 
     protected $casts = [

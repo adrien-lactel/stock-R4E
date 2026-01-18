@@ -12,12 +12,32 @@ use App\Models\User;
 
 /**
  * @property-read User|null $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<Article> $articles
+ * @property-read \Illuminate\Database\Eloquent\Collection<Invoice> $invoices
+ * @property-read \Illuminate\Database\Eloquent\Collection<Console> $consoles
+ * @method \Illuminate\Database\Eloquent\Relations\HasOne user()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany articles()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany invoices()
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsToMany consoles()
  */
 class Store extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'email', 'city'];
+    protected $fillable = [
+        'name',
+        'email',
+        'city',
+        'phone',
+        'address',
+        'postal_code',
+        'notes',
+        'is_active',
+        'siret',
+        'vat_number',
+        'manager_name',
+        'opening_hours',
+    ];
 
     /* ===================== */
     /*     RELATIONS         */

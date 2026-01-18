@@ -60,6 +60,20 @@
                     </div>
 
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input name="email" type="email" required
+                               value="{{ old('email', $store->email) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                        <input name="phone"
+                               value="{{ old('phone', $store->phone) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Ville *</label>
                         <input name="city" required
                                value="{{ old('city', $store->city) }}"
@@ -67,10 +81,46 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                        <input name="email" type="email" required
-                               value="{{ old('email', $store->email) }}"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Code postal</label>
+                        <input name="postal_code"
+                               value="{{ old('postal_code', $store->postal_code) }}"
                                class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                        <input name="address"
+                               value="{{ old('address', $store->address) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">SIRET</label>
+                        <input name="siret" maxlength="14"
+                               value="{{ old('siret', $store->siret) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">N° TVA</label>
+                        <input name="vat_number"
+                               value="{{ old('vat_number', $store->vat_number) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
+                        <input name="manager_name"
+                               value="{{ old('manager_name', $store->manager_name) }}"
+                               class="w-full rounded border-gray-300" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Actif</label>
+                        <select name="is_active" class="w-full rounded border-gray-300">
+                            <option value="1" @selected(old('is_active', $store->is_active ?? true))>Oui</option>
+                            <option value="0" @selected(old('is_active', $store->is_active) === false)>Non</option>
+                        </select>
                     </div>
 
                     @unless($store->exists)
@@ -80,6 +130,19 @@
                             <p class="text-xs text-gray-500 mt-1">Le magasin pourra le modifier après connexion</p>
                         </div>
                     @endunless
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Horaires d'ouverture</label>
+                        <textarea name="opening_hours" rows="2" class="w-full rounded border-gray-300">{{ old('opening_hours', $store->opening_hours) }}</textarea>
+                        <p class="text-xs text-gray-500 mt-1">Ex: Lun-Ven 9h-18h, Sam 10h-17h</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes internes</label>
+                        <textarea name="notes" rows="3" class="w-full rounded border-gray-300">{{ old('notes', $store->notes) }}</textarea>
+                    </div>
                 </div>
 
                 <div class="flex gap-2">

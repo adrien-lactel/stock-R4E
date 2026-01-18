@@ -50,6 +50,15 @@ class StoreAdminController extends Controller
             'city' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
+            'phone' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'notes' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+            'siret' => 'nullable|string|max:14',
+            'vat_number' => 'nullable|string|max:20',
+            'manager_name' => 'nullable|string|max:255',
+            'opening_hours' => 'nullable|string',
         ]);
 
         // =====================
@@ -59,6 +68,15 @@ class StoreAdminController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'city' => $data['city'],
+            'phone' => $data['phone'] ?? null,
+            'address' => $data['address'] ?? null,
+            'postal_code' => $data['postal_code'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'is_active' => $data['is_active'] ?? true,
+            'siret' => $data['siret'] ?? null,
+            'vat_number' => $data['vat_number'] ?? null,
+            'manager_name' => $data['manager_name'] ?? null,
+            'opening_hours' => $data['opening_hours'] ?? null,
         ]);
 
         // =====================
@@ -99,6 +117,15 @@ class StoreAdminController extends Controller
             'name' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'email' => ['required','email','max:255'],
+            'phone' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'notes' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+            'siret' => 'nullable|string|max:14',
+            'vat_number' => 'nullable|string|max:20',
+            'manager_name' => 'nullable|string|max:255',
+            'opening_hours' => 'nullable|string',
         ]);
 
         // if email changed, ensure uniqueness on users table
@@ -108,11 +135,7 @@ class StoreAdminController extends Controller
             ]);
         }
 
-        $store->update([
-            'name' => $data['name'],
-            'city' => $data['city'],
-            'email' => $data['email'],
-        ]);
+        $store->update($data);
 
         // sync user account email/name if exists
         if ($store->user) {

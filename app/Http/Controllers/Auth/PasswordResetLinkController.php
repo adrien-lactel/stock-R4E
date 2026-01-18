@@ -40,12 +40,8 @@ class PasswordResetLinkController extends Controller
         if (app()->environment('testing')) {
             $user = \App\Models\User::where('email', $request->email)->first();
             if ($user) {
-                try {
-                    $token = Password::broker()->createToken($user);
-                } catch (\Throwable $e) {
-                    // Fallback to a random token if the broker doesn't provide the method in this env
-                    $token = (string) \Illuminate\Support\Str::random(40);
-                }
+                // Generate a random token for testing purposes
+                $token = \Illuminate\Support\Str::random(64);
                 // Use Notification facade send to ensure Notification::fake() catches it in tests
                 \Illuminate\Support\Facades\Notification::sendNow($user, new \Illuminate\Auth\Notifications\ResetPassword($token));
             }

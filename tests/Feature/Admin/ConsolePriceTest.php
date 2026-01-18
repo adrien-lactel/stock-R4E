@@ -14,12 +14,27 @@ beforeEach(function () {
     Store::factory()->create(['id' => 2]);
 });
 
+test('admin can create a console with a repairer', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $repairer = \App\Models\Repairer::factory()->create(['is_active' => true]);
+    $console = Console::factory()->create([
+        'id' => 2,
+        'status' => 'repair',
+        'repairer_id' => $repairer->id,
+    ]);
+
+    expect('consoles')->toHaveInDatabase([
+        'id' => $console->id,
+        'repairer_id' => $repairer->id,
+    ]);
+});
+
 test('admin can create console offer for a store', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $console = Console::factory()->create(['id' => 1, 'status' => 'stock']);
     $store = Store::first();
 
-    $response = $this->actingAs($admin)->post(route('admin.consoles.prices.store', $console), [
+    $response = actingAs($admin)->post(route('admin.consoles.prices.store', $console), [
         'offers' => [
             $store->id => 50,
         ],
@@ -27,7 +42,7 @@ test('admin can create console offer for a store', function () {
 
     $response->assertRedirect();
 
-    $this->assertDatabaseHas('console_offers', [
+    expect('console_offers')->toHaveInDatabase([
         'console_id' => $console->id,
         'store_id' => $store->id,
         'sale_price' => 50,

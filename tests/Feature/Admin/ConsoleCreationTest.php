@@ -18,7 +18,7 @@ beforeEach(function () {
 test('admin can create console without store_id', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
-    $response = $this->actingAs($admin)->post(route('admin.articles.store'), [
+    $response = actingAs($admin)->post(route('admin.articles.store'), [
         'article_category_id' => 1,
         'article_sub_category_id' => 1,
         'article_type_id' => 1,
@@ -28,5 +28,5 @@ test('admin can create console without store_id', function () {
     ]);
 
     $response->assertRedirect(route('admin.articles.create'));
-    $this->assertDatabaseHas('consoles', ['prix_achat' => 40, 'valorisation' => 90]);
+    expect('consoles')->toHaveInDatabase(['prix_achat' => 40, 'valorisation' => 90]);
 });
