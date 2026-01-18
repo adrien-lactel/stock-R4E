@@ -49,6 +49,8 @@ Route::get('/dashboard', function () {
         }
         // If no store attached yet, fallback to generic dashboard view
         return view('dashboard');
+    } elseif (auth()->user()->role === 'repairer') {
+        return redirect()->route('repairer.dashboard');
     }
     return view('dashboard');
 })->middleware(['auth', 'verified'])
@@ -376,10 +378,14 @@ Route::middleware(['auth'])
 */
 use App\Http\Controllers\Repairer\RepairerConsoleController;
 
-Route::middleware(['auth'])
+Route::middleware(['auth', 'repairer'])
     ->prefix('repairer')
     ->name('repairer.')
     ->group(function () {
+        // Dashboard réparateur
+        Route::get('/dashboard', [RepairerConsoleController::class, 'dashboard'])
+            ->name('dashboard');
+
         // Liste des consoles assignées au réparateur
         Route::get('/consoles', [RepairerConsoleController::class, 'index'])
             ->name('consoles.index');

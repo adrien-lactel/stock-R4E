@@ -12,6 +12,35 @@ use Illuminate\Support\Facades\Auth;
 class RepairerConsoleController extends Controller
 {
     /**
+     * Dashboard du réparateur
+     */
+    public function dashboard()
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if (!$repairer) {
+            abort(403, 'Aucun réparateur associé à ce compte.');
+        }
+
+        // Statistiques
+        $stats = [
+            'total' => Console::where('repairer_id', $repairer->id)->count(),
+            'repair' => Console::where('repairer_id', $repairer->id)->where('status', 'repair')->count(),
+            'stock' => Console::where('repairer_id', $repairer->id)->where('status', 'stock')->count(),
+            'defective' => Console::where('repairer_id', $repairer->id)->where('status', 'defective')->count(),
+        ];
+
+        // Consoles récentes
+        $recentConsoles = Console::with(['articleCategory', 'articleSubCategory', 'articleType'])
+            ->where('repairer_id', $repairer->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('repairer.dashboard', compact('repairer', 'stats', 'recentConsoles'));
+    }
+
+    /**
      * Afficher la liste des consoles assignées au réparateur connecté
      */
     public function index()

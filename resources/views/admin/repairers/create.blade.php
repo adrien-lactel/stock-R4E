@@ -131,6 +131,37 @@
                               placeholder="Spécialités, conditions, procédures...">{{ old('notes', $repairer->notes) }}</textarea>
                 </div>
 
+                {{-- Compte utilisateur pour connexion réparateur --}}
+                @if(!$repairer->exists)
+                <div class="border-t pt-4 mt-4 bg-blue-50 rounded p-4">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-900">🔐 Accès au dashboard réparateur</h3>
+                    <p class="text-sm text-gray-600 mb-3">Créez un compte pour que ce réparateur puisse se connecter et gérer ses consoles</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email de connexion *</label>
+                            <input type="email" 
+                                   name="user_email" 
+                                   required
+                                   value="{{ old('user_email') }}"
+                                   class="w-full rounded border-gray-300"
+                                   placeholder="email@exemple.com" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe *</label>
+                            <input type="password" 
+                                   name="user_password" 
+                                   required
+                                   minlength="8"
+                                   class="w-full rounded border-gray-300"
+                                   placeholder="Min. 8 caractères" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">⚠️ Le réparateur pourra se connecter avec cet email et ce mot de passe</p>
+                </div>
+                @endif
+
                 {{-- Mods disponibles chez ce réparateur --}}
                 @if($repairer->exists)
                 <div class="border-t pt-4">

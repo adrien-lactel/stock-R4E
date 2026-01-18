@@ -82,11 +82,27 @@ class RepairerAdminController extends Controller
     {
         $data = $this->validated($request);
 
-        Repairer::create($data);
+        // Valider les champs utilisateur
+        $userData = $request->validate([
+            'user_email' => ['required', 'email', 'unique:users,email'],
+            'user_password' => ['required', 'string', 'min:8'],
+        ]);
+
+        // Créer le réparateur
+        $repairer = Repairer::create($data);
+
+        // Créer l'utilisateur associé
+        \App\Models\User::create([
+            'name' => $repairer->name,
+            'email' => $userData['user_email'],
+            'password' => \Hash::make($userData['user_password']),
+            'role' => 'repairer',
+            'repairer_id' => $repairer->id,
+        ]);
 
         return redirect()
             ->route('admin.repairers.create')
-            ->with('success', 'Réparateur créé.');
+            ->with('success', "Réparateur créé avec succès. Login: {$userData['user_email']}");
     }
 
     /**
