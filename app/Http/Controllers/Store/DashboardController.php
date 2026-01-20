@@ -31,8 +31,8 @@ class DashboardController extends Controller
     // =====================
     // STOCK VENDABLE
     // =====================
-    $consoles = Console::with(['articleType', 'articleCategory', 'articleSubCategory', 'repairer'])
-        ->where('store_id', $store->id)
+    $consoles = $store->consoles()
+        ->with(['articleType', 'articleCategory', 'articleSubCategory', 'repairer'])
         ->where('status', 'stock')
         ->get();
 
@@ -69,6 +69,27 @@ class DashboardController extends Controller
 }
 
 
+
+    /**
+     * =====================
+     * FICHE PRODUIT
+     * =====================
+     */
+    public function productSheet(Store $store, Console $console)
+    {
+        // Vérifier que le magasin a accès à cette console
+        $user = Auth::user();
+        if ($user->role !== 'admin' && $user->store_id !== $store->id) {
+            abort(403, 'Accès non autorisé');
+        }
+
+        // Charger la console avec ses relations et le pivot price
+        $console = $store->consoles()
+            ->with(['articleType', 'articleCategory', 'articleSubCategory', 'mods'])
+            ->findOrFail($console->id);
+
+        return view('store.product-sheet', compact('store', 'console'));
+    }
 
     /**
      * =====================

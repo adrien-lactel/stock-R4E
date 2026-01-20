@@ -22,22 +22,33 @@ class RepairerConsoleController extends Controller
             abort(403, 'Aucun réparateur associé à ce compte.');
         }
 
+        // Charger les relations
+        $repairer->load(['mods', 'operations']);
+
         // Statistiques
         $stats = [
             'total' => Console::where('repairer_id', $repairer->id)->count(),
+            'pending' => Console::where('repairer_id', $repairer->id)->where('assignment_status', 'pending_acceptance')->count(),
+            'accepted' => Console::where('repairer_id', $repairer->id)->where('assignment_status', 'accepted')->count(),
+            'to_ship' => Console::where('repairer_id', $repairer->id)->where('assignment_status', 'to_ship')->count(),
             'repair' => Console::where('repairer_id', $repairer->id)->where('status', 'repair')->count(),
             'stock' => Console::where('repairer_id', $repairer->id)->where('status', 'stock')->count(),
             'defective' => Console::where('repairer_id', $repairer->id)->where('status', 'defective')->count(),
         ];
 
         // Consoles récentes
-        $recentConsoles = Console::with(['articleCategory', 'articleSubCategory', 'articleType'])
+        $recentConsoles = Console::with(['articleCategory', 'articleSubCategory', 'articleType', 'destinationStore'])
             ->where('repairer_id', $repairer->id)
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
-        return view('repairer.dashboard', compact('repairer', 'stats', 'recentConsoles'));
+        // Toutes les opérations disponibles pour la gestion des compétences
+        $allOperations = Mod::where('is_operation', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('repairer.dashboard', compact('repairer', 'stats', 'recentConsoles', 'allOperations'));
     }
 
     /**
@@ -51,7 +62,7 @@ class RepairerConsoleController extends Controller
             abort(403, 'Aucun réparateur associé à ce compte.');
         }
 
-        $consoles = Console::with(['articleCategory', 'articleSubCategory', 'articleType', 'mods'])
+        $consoles = Console::with(['articleCategory', 'articleSubCategory', 'articleType', 'mods', 'destinationStore'])
             ->where('repairer_id', $repairer->id)
             ->orderBy('created_at', 'desc')
             ->paginate(30);
@@ -221,5 +232,140 @@ class RepairerConsoleController extends Controller
 
         // Sinon chercher par email
         return Repairer::where('email', $user->email)->first();
+    }
+
+    /**
+     * Mettre à jour les compétences (opérations) du réparateur
+     */
+    public function updateSkills(Request $request)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if (!$repairer) {
+            abort(403, 'Aucun réparateur associé à ce compte.');
+        }
+
+        $validated = $request->validate([
+            'operations' => ['nullable', 'array'],
+            'operations.*' => ['exists:mods,id'],
+        ]);
+
+        // Synchroniser les opérations sélectionnées
+        $repairer->operations()->sync($validated['operations'] ?? []);
+
+        return back()->with('success', 'Vos compétences ont été mises à jour avec succès.');
+    }
+
+    /**
+     * Marquer une console comme fonctionnelle (statut stock)
+     */
+    public function markFunctional(Console $console)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if ($console->repairer_id !== $repairer->id) {
+            abort(403, 'Vous n\'êtes pas autorisé à modifier cette console.');
+        }
+
+        if (!in_array($console->status, ['repair', 'defective'])) {
+            return back()->with('error', 'Seules les consoles en réparation ou défectueuses peuvent être déclarées fonctionnelles.');
+        }
+
+        $console->update(['status' => 'stock']);
+
+        return back()->with('success', 'Console déclarée fonctionnelle et passée en stock.');
+    }
+    /**
+     * Accepter l'affectation d'une console
+     */
+    public function acceptAssignment(Console $console)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if ($console->repairer_id !== $repairer->id) {
+            abort(403, 'Vous n\'\u00eates pas autoris\u00e9 \u00e0 accepter cette affectation.');
+        }
+
+        if ($console->assignment_status !== 'pending_acceptance') {
+            return back()->with('error', 'Cette console n\'est pas en attente d\'acceptation.');
+        }
+
+        $console->update([
+            'assignment_status' => 'accepted',
+            'assignment_accepted_at' => now(),
+        ]);
+
+        return back()->with('success', 'Affectation accept\u00e9e. Vous pouvez maintenant confirmer la r\u00e9ception.');
+    }
+
+    /**
+     * Confirmer la r\u00e9ception physique d'une console
+     */
+    public function confirmReceipt(Console $console)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if ($console->repairer_id !== $repairer->id) {
+            abort(403, 'Vous n\'\u00eates pas autoris\u00e9 \u00e0 confirmer la r\u00e9ception.');
+        }
+
+        if ($console->assignment_status !== 'accepted') {
+            return back()->with('error', 'Vous devez d\'abord accepter l\'affectation.');
+        }
+
+        $console->update([
+            'assignment_status' => 'received',
+            'assignment_received_at' => now(),
+        ]);
+
+        return back()->with('success', 'R\u00e9ception confirm\u00e9e. Vous pouvez maintenant travailler sur cette console.');
+    }
+
+    /**
+     * Confirmer l'expédition d'une console vers le magasin
+     */
+    public function confirmShipment(Console $console)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if ($console->repairer_id !== $repairer->id) {
+            abort(403, 'Vous n\'êtes pas autorisé à modifier cette console.');
+        }
+
+        if ($console->assignment_status !== 'to_ship') {
+            return back()->with('error', 'Cette console n\'est pas marquée comme devant être expédiée.');
+        }
+
+        if (!$console->destination_store_id) {
+            return back()->with('error', 'Aucun magasin de destination défini.');
+        }
+
+        $console->update([
+            'assignment_status' => 'unassigned',
+            'shipped_at' => now(),
+            'repairer_id' => null, // Libérer le réparateur
+        ]);
+
+        return back()->with('success', 'Expédition confirmée vers ' . $console->destinationStore->name . '.');
+    }
+
+    /**
+     * Repasser une console en réparation (défaillance découverte)
+     */
+    public function markForRepair(Console $console)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if ($console->repairer_id !== $repairer->id) {
+            abort(403, 'Vous n\'êtes pas autorisé à modifier cette console.');
+        }
+
+        if ($console->assignment_status !== 'received') {
+            return back()->with('error', 'Seules les consoles réceptionnées peuvent être repassées en réparation.');
+        }
+
+        $console->update(['status' => 'repair']);
+
+        return back()->with('success', 'Console repassée en réparation.');
     }
 }

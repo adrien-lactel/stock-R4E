@@ -64,14 +64,26 @@
             @forelse($consoles as $console)
                 <tr class="border-t align-top">
                     <td class="p-3 font-mono text-sm">#{{ $console->id }}</td>
-                    <td class="p-3">{{ $console->articleType?->name ?? 'N/A' }}</td>
+                    <td class="p-3">
+                        <div class="text-sm">
+                            <div class="font-semibold">{{ $console->articleCategory?->name ?? 'N/A' }}</div>
+                            <div class="text-gray-600">{{ $console->articleSubCategory?->name ?? '-' }}</div>
+                            <div class="text-gray-500">{{ $console->articleType?->name ?? '-' }}</div>
+                        </div>
+                    </td>
                     <td class="p-3">{{ $console->real_value }} €</td>
                     <td class="p-3 font-semibold text-indigo-600">
-                        {{ $console->pivot->sale_price }} €
+                        {{ $console->pivot?->sale_price ?? 'N/A' }} €
                     </td>
 
                     <td class="p-3">
                         <div class="flex flex-col gap-3">
+
+                            {{-- FICHE PRODUIT --}}
+                            <a href="{{ route('store.product-sheet', ['store' => $store->id, 'console' => $console->id]) }}" 
+                               class="w-full bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-center">
+                                📄 Fiche produit
+                            </a>
 
                             {{-- VENTE --}}
                             <form method="POST" action="{{ route('store.console.sell', $console) }}">

@@ -44,10 +44,18 @@ class Console extends Model
         'lieu_stockage',
         'commentaire_reparateur',
         'repairer_id',
+        'destination_store_id',
+        'assignment_status',
+        'assignment_accepted_at',
+        'assignment_received_at',
+        'shipped_at',
     ];
 
     protected $casts = [
         'sold_at' => 'datetime',
+        'assignment_accepted_at' => 'datetime',
+        'assignment_received_at' => 'datetime',
+        'shipped_at' => 'datetime',
     ];
 
     /* ===================== */
@@ -66,6 +74,11 @@ class Console extends Model
     public function store()
     {
         return $this->belongsTo(Store::class, 'store_id');
+    }
+
+    public function destinationStore()
+    {
+        return $this->belongsTo(Store::class, 'destination_store_id');
     }
 
     public function stores()

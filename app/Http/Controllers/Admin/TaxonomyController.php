@@ -77,9 +77,16 @@ class TaxonomyController extends Controller
      ===================================================== */
     public function ajaxSubCategories($categoryId)
     {
-        return ArticleSubCategory::where('article_category_id', $categoryId)
-        ->orderBy('name')
-        ->get(['id', 'name']);
+        $subCategories = ArticleSubCategory::where('article_category_id', $categoryId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $html = '<option value="">-- Sélectionner --</option>';
+        foreach ($subCategories as $sub) {
+            $html .= '<option value="' . $sub->id . '">' . e($sub->name) . '</option>';
+        }
+
+        return response($html);
     }
 
     /* =====================================================
@@ -87,10 +94,17 @@ class TaxonomyController extends Controller
      ===================================================== */
     public function ajaxTypes($subCategoryId)
     {
-        return ArticleType::where('article_sub_category_id', $subCategoryId)
+        $types = ArticleType::where('article_sub_category_id', $subCategoryId)
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
+
+        $html = '<option value="">-- Sélectionner --</option>';
+        foreach ($types as $type) {
+            $html .= '<option value="' . $type->id . '">' . e($type->name) . '</option>';
+        }
+
+        return response($html);
     }
 
 

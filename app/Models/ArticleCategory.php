@@ -13,7 +13,7 @@ class ArticleCategory extends Model
 
     public function subCategories()
     {
-        return $this->hasMany(ArticleSubCategory::class);
+        return $this->hasMany(ArticleSubCategory::class, 'article_category_id');
     }
 
 

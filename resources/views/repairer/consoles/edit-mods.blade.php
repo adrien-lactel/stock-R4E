@@ -64,11 +64,70 @@
                     </span>
                 </div>
             </div>
-            <div>
-                <span class="text-gray-500">Prix d'achat:</span>
-                <div class="font-medium">{{ number_format($console->prix_achat ?? 0, 2) }} €</div>
-            </div>
         </div>
+        
+        @if(in_array($console->status, ['repair', 'defective']) && $console->assignment_status === 'received')
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <form action="{{ route('repairer.consoles.mark-functional', $console) }}" method="POST" 
+                      onsubmit="return confirm('Confirmer que cette console est fonctionnelle ?')">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                        ✅ Déclarer fonctionnelle
+                    </button>
+                </form>
+            </div>
+        @endif
+        
+        @if($console->status === 'stock' && $console->assignment_status === 'received')
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <form action="{{ route('repairer.consoles.mark-for-repair', $console) }}" method="POST" 
+                      onsubmit="return confirm('Repasser cette console en réparation ?')">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium">
+                        🔧 Repasser en réparation
+                    </button>
+                </form>
+            </div>
+        @endif
+        
+        @if($console->assignment_status === 'to_ship' && $console->destinationStore)
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="bg-purple-50 p-4 rounded-lg mb-3 border border-purple-200">
+                    <div class="font-semibold text-purple-900 mb-3 text-lg">📮 Expédier cette console vers:</div>
+                    <div class="space-y-2">
+                        <div class="text-gray-900 font-bold text-lg">{{ $console->destinationStore->name }}</div>
+                        @if($console->destinationStore->address)
+                            <div class="text-gray-700">{{ $console->destinationStore->address }}</div>
+                        @endif
+                        @if($console->destinationStore->postal_code || $console->destinationStore->city)
+                            <div class="text-gray-700 font-medium">
+                                {{ $console->destinationStore->postal_code }} {{ $console->destinationStore->city }}
+                            </div>
+                        @endif
+                        @if($console->destinationStore->phone)
+                            <div class="text-gray-600 mt-2">
+                                <span class="font-medium">☎️ Téléphone:</span> {{ $console->destinationStore->phone }}
+                            </div>
+                        @endif
+                        @if($console->destinationStore->manager_name)
+                            <div class="text-gray-600">
+                                <span class="font-medium">Contact:</span> {{ $console->destinationStore->manager_name }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <form action="{{ route('repairer.consoles.confirm-shipment', $console) }}" method="POST" 
+                      onsubmit="return confirm('Confirmer l\'expédition vers {{ $console->destinationStore->name }} ?')">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-lg">
+                        ✅ Confirmer l'expédition
+                    </button>
+                </form>
+            </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -93,11 +152,8 @@
                                     @endif
                                 </div>
                                 <div class="text-sm text-gray-500 mt-1">
-                                    @if (!$mod->is_operation)
-                                        Prix: {{ number_format($mod->pivot->price_applied ?? 0, 2) }} €
-                                    @endif
                                     @if ($mod->pivot->work_time_minutes)
-                                        {{ !$mod->is_operation ? '—' : '' }} Temps: {{ $mod->pivot->work_time_minutes }} min
+                                        Temps: {{ $mod->pivot->work_time_minutes }} min
                                     @endif
                                 </div>
                                 @if ($mod->pivot->notes)
@@ -133,12 +189,6 @@
                             @else
                                 {{ $minutes }} min
                             @endif
-                        </span>
-                    </div>
-                    <div class="flex justify-between text-sm mt-1">
-                        <span class="text-gray-600">Total mods/accessoires:</span>
-                        <span class="font-semibold text-gray-900">
-                            {{ number_format($console->mods->sum('pivot.price_applied'), 2) }} €
                         </span>
                     </div>
                 </div>

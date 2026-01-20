@@ -6,10 +6,12 @@
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-800">📦 Liste stock</h1>
 
-        <a href="{{ route('admin.articles.create') }}"
-           class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
-            ➕ Ajouter un article
-        </a>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('admin.articles.create') }}"
+               class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                ➕ Ajouter un article
+            </a>
+        </div>
     </div>
 
     {{-- MESSAGE SUCCÈS --}}
@@ -271,6 +273,12 @@
                                    class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded hover:bg-yellow-200 border border-yellow-200 font-medium">
                                     ✏️ Éditer
                                 </a>
+                                @if($console->article_type_id)
+                                    <a href="{{ route('admin.product-sheets.create', ['article_type_id' => $console->article_type_id]) }}"
+                                       class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded hover:bg-emerald-200 border border-emerald-200 font-medium">
+                                        🖼️ Fiche
+                                    </a>
+                                @endif
                                 @if($console->status === 'stock')
                                     <a href="{{ route('admin.consoles.edit', $console) }}"
                                        class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded hover:bg-indigo-200 border border-indigo-200 font-medium">

@@ -41,7 +41,7 @@ class PasswordResetLinkController extends Controller
             $user = \App\Models\User::where('email', $request->email)->first();
             if ($user) {
                 // Generate a random token for testing purposes
-                $token = \Illuminate\Support\Str::random(64);
+       http://localhost/stock-R4E/public/admin/consoles/8/editoken = \Illuminate\Support\Str::random(64);
                 // Use Notification facade send to ensure Notification::fake() catches it in tests
                 \Illuminate\Support\Facades\Notification::sendNow($user, new \Illuminate\Auth\Notifications\ResetPassword($token));
             }

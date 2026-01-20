@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ConsoleReturnController;
 use App\Http\Controllers\Admin\RepairQuoteAdminController;
 use App\Http\Controllers\Admin\TaxonomyController;
 use App\Http\Controllers\Admin\ConsoleOfferController;
+use App\Http\Controllers\Admin\ProductSheetController;
 use App\Http\Controllers\Store\DashboardController as StoreDashboardController;
 use App\Http\Controllers\Store\StoreOfferController;
 use App\Http\Controllers\StockController;
@@ -173,6 +174,44 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
             ->name('dashboard');
 
         /* =====================
+        | FICHES PRODUITS
+        ===================== */
+        Route::get('/product-sheets', [ProductSheetController::class, 'index'])
+            ->name('product-sheets.index');
+
+        Route::get('/product-sheets/create', [ProductSheetController::class, 'create'])
+            ->name('product-sheets.create');
+
+        Route::post('/product-sheets', [ProductSheetController::class, 'store'])
+            ->name('product-sheets.store');
+
+        Route::get('/product-sheets/{productSheet}/edit', [ProductSheetController::class, 'edit'])
+            ->name('product-sheets.edit');
+
+        Route::put('/product-sheets/{productSheet}', [ProductSheetController::class, 'update'])
+            ->name('product-sheets.update');
+
+        Route::delete('/product-sheets/{productSheet}', [ProductSheetController::class, 'destroy'])
+            ->name('product-sheets.destroy');
+
+        // Upload et suppression d'images
+        Route::post('/product-sheets/upload-image', [ProductSheetController::class, 'uploadImage'])
+            ->name('product-sheets.upload-image');
+
+        Route::post('/product-sheets/upload-from-url', [ProductSheetController::class, 'uploadFromUrl'])
+            ->name('product-sheets.upload-from-url');
+
+        Route::delete('/product-sheets/delete-image', [ProductSheetController::class, 'deleteImage'])
+            ->name('product-sheets.delete-image');
+
+        // Lookup Game Boy ROM ID
+        Route::get('/product-sheets/autocomplete-rom', [ProductSheetController::class, 'autocompleteRomId'])
+            ->name('product-sheets.autocomplete-rom');
+        
+        Route::get('/product-sheets/lookup-rom/{romId}', [ProductSheetController::class, 'lookupRomId'])
+            ->name('product-sheets.lookup-rom');
+
+        /* =====================
         | ARTICLES
         ===================== */
         Route::get('/articles/create', [ConsoleAdminController::class, 'createArticle'])
@@ -321,6 +360,9 @@ Route::middleware(['auth'])
         Route::get('/dashboard/{store}', [StoreDashboardController::class, 'index'])
             ->name('dashboard');
 
+        Route::get('/product/{store}/{console}', [StoreDashboardController::class, 'productSheet'])
+            ->name('product-sheet');
+
         Route::post('/console/{console}/sell', [StoreDashboardController::class, 'sell'])
             ->name('console.sell');
 
@@ -386,6 +428,10 @@ Route::middleware(['auth', 'repairer'])
         Route::get('/dashboard', [RepairerConsoleController::class, 'dashboard'])
             ->name('dashboard');
 
+        // Mettre à jour les compétences
+        Route::post('/skills', [RepairerConsoleController::class, 'updateSkills'])
+            ->name('skills.update');
+
         // Liste des consoles assignées au réparateur
         Route::get('/consoles', [RepairerConsoleController::class, 'index'])
             ->name('consoles.index');
@@ -403,6 +449,26 @@ Route::middleware(['auth', 'repairer'])
 
         Route::delete('/consoles/{console}/mods/{mod}', [RepairerConsoleController::class, 'removeMod'])
             ->name('consoles.remove-mod');
+
+        // Marquer une console comme fonctionnelle
+        Route::patch('/consoles/{console}/mark-functional', [RepairerConsoleController::class, 'markFunctional'])
+            ->name('consoles.mark-functional');
+
+        // Accepter l'affectation d'une console
+        Route::patch('/consoles/{console}/accept-assignment', [RepairerConsoleController::class, 'acceptAssignment'])
+            ->name('consoles.accept-assignment');
+
+        // Confirmer la réception d'une console
+        Route::patch('/consoles/{console}/confirm-receipt', [RepairerConsoleController::class, 'confirmReceipt'])
+            ->name('consoles.confirm-receipt');
+
+        // Confirmer l'expédition d'une console
+        Route::patch('/consoles/{console}/confirm-shipment', [RepairerConsoleController::class, 'confirmShipment'])
+            ->name('consoles.confirm-shipment');
+
+        // Repasser une console en réparation
+        Route::patch('/consoles/{console}/mark-for-repair', [RepairerConsoleController::class, 'markForRepair'])
+            ->name('consoles.mark-for-repair');
     });
 
 /*

@@ -73,15 +73,29 @@
                         </td>
                         <td class="px-4 py-3">
                             @php
-                                $statusColors = [
-                                    'stock' => 'bg-green-100 text-green-800',
-                                    'repair' => 'bg-orange-100 text-orange-800',
-                                    'defective' => 'bg-red-100 text-red-800',
-                                    'vendue' => 'bg-blue-100 text-blue-800',
-                                ];
+                                // Afficher en priorité le statut d'affectation
+                                if ($console->assignment_status === 'pending_acceptance') {
+                                    $statusClass = 'bg-yellow-100 text-yellow-800';
+                                    $statusLabel = '⏳ En attente';
+                                } elseif ($console->assignment_status === 'accepted') {
+                                    $statusClass = 'bg-blue-100 text-blue-800';
+                                    $statusLabel = '📬 À réceptionner';
+                                } elseif ($console->assignment_status === 'to_ship') {
+                                    $statusClass = 'bg-purple-100 text-purple-800';
+                                    $statusLabel = '📮 À expédier';
+                                } else {
+                                    $statusColors = [
+                                        'stock' => 'bg-green-100 text-green-800',
+                                        'repair' => 'bg-orange-100 text-orange-800',
+                                        'defective' => 'bg-red-100 text-red-800',
+                                        'vendue' => 'bg-blue-100 text-blue-800',
+                                    ];
+                                    $statusClass = $statusColors[$console->status] ?? 'bg-gray-100 text-gray-800';
+                                    $statusLabel = ucfirst($console->status);
+                                }
                             @endphp
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusColors[$console->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                {{ ucfirst($console->status) }}
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusClass }}">
+                                {{ $statusLabel }}
                             </span>
                         </td>
                         <td class="px-4 py-3 text-sm">
@@ -104,13 +118,81 @@
                             {{ Str::limit($console->commentaire_reparateur, 40) ?? '—' }}
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <a href="{{ route('repairer.consoles.edit-mods', $console) }}"
-                               class="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 transition">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                Mods
-                            </a>
+                            <div class="flex items-center justify-center gap-2">
+                                @if($console->assignment_status === 'pending_acceptance')
+                                    <form action="{{ route('repairer.consoles.accept-assignment', $console) }}" 
+                                          method="POST" 
+                                          class="inline"
+                                          onsubmit="return confirm('Accepter cette affectation ?')">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" 
+                                                class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700">
+                                            ✓ Accepter
+                                        </button>
+                                    </form>
+                                @elseif($console->assignment_status === 'accepted')
+                                    <form action="{{ route('repairer.consoles.confirm-receipt', $console) }}" 
+                                          method="POST" 
+                                          class="inline"
+                                          onsubmit="return confirm('Confirmer la réception physique ?')">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" 
+                                                class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700">
+                                            📬 Réceptionner
+                                        </button>
+                                    </form>
+                                @elseif($console->assignment_status === 'to_ship' && $console->destinationStore)
+                                    <div class="text-xs bg-purple-50 p-2 rounded">
+                                        <div class="font-semibold text-purple-900">📮 Vers: {{ $console->destinationStore->name }}</div>
+                                    </div>
+                                    <form action="{{ route('repairer.consoles.confirm-shipment', $console) }}" 
+                                          method="POST" 
+                                          class="inline"
+                                          onsubmit="return confirm('Confirmer l\'expédition ?')">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" 
+                                                class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700">
+                                            ✅ Expédier
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('repairer.consoles.edit-mods', $console) }}"
+                                       class="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 transition">
+                                        ✏️ Gérer
+                                    </a>
+                                    
+                                    @if(in_array($console->status, ['repair', 'defective']) && $console->assignment_status === 'received')
+                                        <form action="{{ route('repairer.consoles.mark-functional', $console) }}" 
+                                              method="POST" 
+                                              class="inline"
+                                              onsubmit="return confirm('Déclarer fonctionnelle ?')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" 
+                                                    class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700">
+                                                ✅ Stock
+                                            </button>
+                                        </form>
+                                    @endif
+                                    
+                                    @if($console->status === 'stock' && $console->assignment_status === 'received')
+                                        <form action="{{ route('repairer.consoles.mark-for-repair', $console) }}" 
+                                              method="POST" 
+                                              class="inline"
+                                              onsubmit="return confirm('Repasser en réparation ?')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" 
+                                                    class="px-3 py-1.5 bg-orange-600 text-white text-sm font-medium rounded hover:bg-orange-700">
+                                                🔧 Réparer
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty

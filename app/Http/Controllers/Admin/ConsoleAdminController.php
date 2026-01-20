@@ -266,6 +266,11 @@ class ConsoleAdminController extends Controller
                 ->withInput();
         }
 
+        // ✅ Si un réparateur est sélectionné, passer l'assignment_status à pending_acceptance
+        if (!empty($data['repairer_id'])) {
+            $data['assignment_status'] = 'pending_acceptance';
+        }
+
         // ✅ Création en lot
         $quantity = (int) ($data['quantity'] ?? 1);
         unset($data['quantity']); // Ne pas insérer quantity dans la table consoles
@@ -375,6 +380,13 @@ class ConsoleAdminController extends Controller
             return back()
                 ->withErrors(['repairer_id' => 'Un réparateur est obligatoire si le statut est "repair".'])
                 ->withInput();
+        }
+
+        // ✅ Si réparateur changé, repasser à pending_acceptance
+        if (isset($data['repairer_id']) && $data['repairer_id'] != $console->repairer_id) {
+            $data['assignment_status'] = 'pending_acceptance';
+            $data['assignment_accepted_at'] = null;
+            $data['assignment_received_at'] = null;
         }
 
         $console->update($data);

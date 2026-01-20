@@ -14,12 +14,12 @@ class ArticleSubCategory extends Model
 
     public function category()
     {
-        return $this->belongsTo(ArticleCategory::class);
+        return $this->belongsTo(ArticleCategory::class, 'article_category_id');
     }
 
     public function types()
     {
-        return $this->hasMany(ArticleType::class);
+        return $this->hasMany(ArticleType::class, 'article_sub_category_id');
     }
 
 }

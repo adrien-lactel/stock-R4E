@@ -68,6 +68,10 @@
                             👨‍🔧 Réparateurs
                         </x-nav-link>
 
+                        <x-nav-link :href="route('admin.product-sheets.index')" :active="request()->routeIs('admin.product-sheets.*')">
+                            🖼️ Fiches produits
+                        </x-nav-link>
+
                         {{-- ✅ AJOUT : SAV --}}
                         <x-nav-link :href="route('admin.lot-requests.index')" :active="request()->routeIs('admin.lot-requests.*')">
                             📦 Demandes de lots
