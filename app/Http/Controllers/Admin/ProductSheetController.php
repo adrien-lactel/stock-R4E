@@ -94,15 +94,18 @@ class ProductSheetController extends Controller
                 'mime' => $file->getMimeType(),
             ]);
             
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('product-sheets', $filename, 'public');
+            // Upload vers Cloudinary
+            $uploadedFileUrl = cloudinary()->upload($file->getRealPath(), [
+                'folder' => 'product-sheets',
+                'resource_type' => 'image'
+            ])->getSecurePath();
 
-            \Log::info('Fichier uploadé avec succès', ['path' => $path]);
+            \Log::info('Fichier uploadé vers Cloudinary avec succès', ['url' => $uploadedFileUrl]);
 
             return response()->json([
                 'success' => true,
-                'url' => url(Storage::url($path)),
-                'path' => $path,
+                'url' => $uploadedFileUrl,
+                'path' => $uploadedFileUrl,
             ]);
         } catch (\Exception $e) {
             \Log::error('Erreur upload', [
@@ -128,43 +131,16 @@ class ProductSheetController extends Controller
         try {
             $imageUrl = $request->input('url');
             
-            // Télécharger l'image
-            $imageContent = @file_get_contents($imageUrl);
-            
-            if ($imageContent === false) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Impossible de télécharger l\'image depuis cette URL'
-                ], 400);
-            }
-
-            // Détecter l'extension depuis l'URL ou le contenu
-            $extension = pathinfo(parse_url($imageUrl, PHP_URL_PATH), PATHINFO_EXTENSION);
-            if (empty($extension)) {
-                // Détecter depuis le type MIME
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->buffer($imageContent);
-                $extension = match($mimeType) {
-                    'image/jpeg' => 'jpg',
-                    'image/png' => 'png',
-                    'image/gif' => 'gif',
-                    'image/webp' => 'webp',
-                    'image/avif' => 'avif',
-                    default => 'jpg'
-                };
-            }
-
-            // Générer un nom de fichier unique
-            $filename = time() . '_' . uniqid() . '.' . $extension;
-            $path = 'product-sheets/' . $filename;
-
-            // Sauvegarder l'image
-            Storage::disk('public')->put($path, $imageContent);
+            // Upload direct vers Cloudinary depuis l'URL
+            $uploadedFileUrl = cloudinary()->upload($imageUrl, [
+                'folder' => 'product-sheets',
+                'resource_type' => 'image'
+            ])->getSecurePath();
 
             return response()->json([
                 'success' => true,
-                'url' => url(Storage::url($path)),
-                'path' => $path,
+                'url' => $uploadedFileUrl,
+                'path' => $uploadedFileUrl,
             ]);
         } catch (\Exception $e) {
             return response()->json([
