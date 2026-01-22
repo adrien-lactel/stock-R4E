@@ -24,7 +24,7 @@
     }
   ],
   "deploy": {
-    "startCommand": "php artisan storage:link && php artisan migrate --force && php artisan gameboy:scrape && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=8080"
+    "startCommand": "php artisan storage:link && php artisan migrate --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=8080"
   },
   "envs": [
     "APP_ENV=production",
