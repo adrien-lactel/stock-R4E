@@ -129,6 +129,16 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/taxonomy', [TaxonomyController::class, 'index'])
             ->name('taxonomy.index');
 
+        /* =====================
+        | GAME BOY IMPORT
+        ===================== */
+        Route::get('/gameboy/import', [\App\Http\Controllers\Admin\GameBoyImportController::class, 'index'])
+            ->name('gameboy.import');
+        
+        Route::post('/gameboy/import', [\App\Http\Controllers\Admin\GameBoyImportController::class, 'import'])
+            ->name('gameboy.import.run');
+
+
         Route::post('/taxonomy/category', [TaxonomyController::class, 'storeCategory'])
             ->name('taxonomy.category.store');
 
