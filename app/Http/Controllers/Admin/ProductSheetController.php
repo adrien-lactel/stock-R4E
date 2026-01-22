@@ -96,11 +96,11 @@ class ProductSheetController extends Controller
             ]);
             
             // Upload vers Cloudinary
-            \$result = Cloudinary::upload(\$file->getRealPath(), [
+            $result = Cloudinary::upload($file->getRealPath(), [
                 'folder' => 'product-sheets',
             ]);
             
-            \$uploadedFileUrl = \$result->getSecurePath();
+            $uploadedFileUrl = $result->getSecurePath();
 
             \Log::info('Fichier uploadé vers Cloudinary avec succès', ['url' => $uploadedFileUrl]);
 
@@ -134,11 +134,11 @@ class ProductSheetController extends Controller
             $imageUrl = $request->input('url');
             
             // Upload direct vers Cloudinary depuis l'URL
-            \$result = Cloudinary::upload(\$imageUrl, [
+            $result = Cloudinary::upload($imageUrl, [
                 'folder' => 'product-sheets',
             ]);
             
-            \$uploadedFileUrl = \$result->getSecurePath();
+            $uploadedFileUrl = $result->getSecurePath();
 
             return response()->json([
                 'success' => true,
