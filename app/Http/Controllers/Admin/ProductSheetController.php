@@ -68,7 +68,7 @@ class ProductSheetController extends Controller
 
         try {
             $request->validate([
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp,avif|max:5120', // Max 5MB
+                'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:5120', // Max 5MB
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation échouée', ['errors' => $e->validator->errors()->all()]);
