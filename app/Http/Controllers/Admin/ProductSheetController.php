@@ -95,10 +95,25 @@ class ProductSheetController extends Controller
                 'mime' => $file->getMimeType(),
             ]);
             
+            // Vérifier la configuration Cloudinary
+            \Log::info('Cloudinary config', [
+                'cloud_name' => config('cloudinary.cloud_name'),
+                'api_key_exists' => !empty(config('cloudinary.api_key')),
+            ]);
+            
             // Upload vers Cloudinary
             $result = Cloudinary::upload($file->getRealPath(), [
                 'folder' => 'product-sheets',
             ]);
+            
+            \Log::info('Cloudinary upload result', [
+                'result_type' => gettype($result),
+                'result_class' => is_object($result) ? get_class($result) : null,
+            ]);
+            
+            if (!$result) {
+                throw new \Exception('Cloudinary upload returned null');
+            }
             
             $uploadedFileUrl = $result->getSecurePath();
 
