@@ -189,6 +189,15 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/product-sheets', [ProductSheetController::class, 'index'])
             ->name('product-sheets.index');
 
+        Route::get('/product-sheets/images-manager', [ProductSheetController::class, 'imagesManager'])
+            ->name('product-sheets.images-manager');
+
+        Route::post('/product-sheets/images-manager/upload', [ProductSheetController::class, 'uploadTaxonomyImage'])
+            ->name('product-sheets.images-manager.upload');
+
+        Route::delete('/product-sheets/images-manager/delete', [ProductSheetController::class, 'deleteTaxonomyImage'])
+            ->name('product-sheets.images-manager.delete');
+
         Route::get('/product-sheets/create', [ProductSheetController::class, 'create'])
             ->name('product-sheets.create');
 
@@ -220,6 +229,14 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         
         Route::get('/product-sheets/lookup-rom/{romId}', [ProductSheetController::class, 'lookupRomId'])
             ->name('product-sheets.lookup-rom');
+
+        // Galerie d'images de taxonomie
+        Route::get('/product-sheets/taxonomy-images', [ProductSheetController::class, 'getTaxonomyImages'])
+            ->name('product-sheets.taxonomy-images');
+
+        // Duplication de fiche
+        Route::post('/product-sheets/{productSheet}/duplicate', [ProductSheetController::class, 'duplicate'])
+            ->name('product-sheets.duplicate');
 
         /* =====================
         | ARTICLES

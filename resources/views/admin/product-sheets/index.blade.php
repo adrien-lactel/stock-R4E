@@ -5,10 +5,16 @@
 
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-800">🖼️ Fiches produits</h1>
-        <a href="{{ route('admin.product-sheets.create') }}"
-           class="inline-flex items-center px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
-            ➕ Créer une fiche produit
-        </a>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.product-sheets.images-manager') }}"
+               class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                📸 Gérer les images
+            </a>
+            <a href="{{ route('admin.product-sheets.create') }}"
+               class="inline-flex items-center px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
+                ➕ Créer une fiche produit
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -80,6 +86,16 @@
                                    class="flex-1 text-center px-3 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700">
                                     ✏️ Éditer
                                 </a>
+                                
+                                <form method="POST" action="{{ route('admin.product-sheets.duplicate', $sheet) }}"
+                                      class="flex-shrink-0">
+                                    @csrf
+                                    <button type="submit" 
+                                            class="px-3 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
+                                            title="Dupliquer cette fiche">
+                                        📋
+                                    </button>
+                                </form>
                                 
                                 <form method="POST" action="{{ route('admin.product-sheets.destroy', $sheet) }}"
                                       onsubmit="return confirm('Supprimer cette fiche produit ?')"

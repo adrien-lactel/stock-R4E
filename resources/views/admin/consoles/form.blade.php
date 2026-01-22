@@ -10,6 +10,11 @@
         </h1>
 
         <div class="flex items-center gap-2">
+            <a href="{{ route('admin.product-sheets.index') }}" 
+               class="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
+                🖼️ Fiches produits
+            </a>
+            
             @if($console->exists)
                 <a href="{{ route('admin.articles.edit_full', $console) }}" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
                     ✍️ Édition complète
@@ -288,10 +293,12 @@
      JS TAXONOMIE
 ===================== --}}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+(function() {
   const cat = document.getElementById('article_category_id');
   const sub = document.getElementById('article_sub_category_id');
   const type = document.getElementById('article_type_id');
+
+  if (!cat || !sub || !type) return;
 
   const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id));
   const oldType = @json(old('article_type_id', $console->article_type_id));
@@ -300,38 +307,46 @@ document.addEventListener('DOMContentLoaded', () => {
     sel.innerHTML = '<option value="">— Choisir —</option>';
   }
 
-  async function fetchJson(url) {
-    const r = await fetch(url, { headers: { 'Accept': 'application/json' }});
-    return await r.json();
-  }
-
   async function loadSubs(catId) {
     clear(sub); clear(type);
     if (!catId) return;
-    const data = await fetchJson(`/admin/ajax/sub-categories/${catId}`);
-    data.forEach(o => sub.innerHTML += `<option value="${o.id}">${o.name}</option>`);
-    if (oldSub) { sub.value = oldSub; loadTypes(oldSub); }
+    try {
+      const url = `{{ url('admin/ajax/sub-categories') }}/${catId}`;
+      const response = await fetch(url);
+      const html = await response.text();
+      sub.innerHTML = html;
+      if (oldSub) { sub.value = oldSub; loadTypes(oldSub); }
+    } catch (e) {
+      console.error('Erreur chargement sous-catégories:', e);
+    }
   }
 
   async function loadTypes(subId) {
     clear(type);
     if (!subId) return;
-    const data = await fetchJson(`/admin/ajax/types/${subId}`);
-    data.forEach(o => type.innerHTML += `<option value="${o.id}">${o.name}</option>`);
-    if (oldType) type.value = oldType;
+    try {
+      const url = `{{ url('admin/ajax/types') }}/${subId}`;
+      const response = await fetch(url);
+      const html = await response.text();
+      type.innerHTML = html;
+      if (oldType) type.value = oldType;
+    } catch (e) {
+      console.error('Erreur chargement types:', e);
+    }
   }
 
   cat.addEventListener('change', e => loadSubs(e.target.value));
   sub.addEventListener('change', e => loadTypes(e.target.value));
 
   if (cat.value) loadSubs(cat.value);
-});
+})();
 </script>
 @endsection
 
-{{-- JS : cascade Taxonomie --}}
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+{{-- Bloc redondant supprimé - le premier suffit --}}
+<script style="display:none">
+// OBSOLÈTE - gardé pour référence
+(function() {
   const catSelect  = document.getElementById('article_category_id');
   const subSelect  = document.getElementById('article_sub_category_id');
   const typeSelect = document.getElementById('article_type_id');
@@ -433,5 +448,5 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   })();
-});
+})();
 </script>

@@ -218,6 +218,15 @@ class ProductSheetController extends Controller
 
         $sheet = ProductSheet::create($data);
 
+        // Si un console_id est fourni, lier la fiche à l'article
+        if ($request->has('console_id')) {
+            $console = \App\Models\Console::find($request->console_id);
+            if ($console) {
+                $console->product_sheet_id = $sheet->id;
+                $console->save();
+            }
+        }
+
         return redirect()
             ->route('admin.product-sheets.index')
             ->with('success', "Fiche produit \"{$sheet->name}\" créée avec succès");
@@ -361,5 +370,183 @@ class ProductSheetController extends Controller
             });
 
         return response()->json($suggestions);
+    }
+
+    /* =====================================================
+     | GET TAXONOMY IMAGES — Récupérer images existantes pour une taxonomie
+     ===================================================== */
+    public function getTaxonomyImages(Request $request)
+    {
+        $typeId = $request->get('article_type_id');
+        
+        if (!$typeId) {
+            return response()->json([]);
+        }
+        
+        // Récupérer toutes les fiches avec le même type
+        $sheets = ProductSheet::where('article_type_id', $typeId)
+            ->whereNotNull('images')
+            ->get();
+        
+        $allImages = [];
+        
+        foreach ($sheets as $sheet) {
+            $images = is_string($sheet->images) ? json_decode($sheet->images, true) : $sheet->images;
+            if (is_array($images)) {
+                foreach ($images as $img) {
+                    $allImages[] = [
+                        'url' => $img,
+                        'sheet_id' => $sheet->id,
+                        'sheet_name' => $sheet->name,
+                    ];
+                }
+            }
+        }
+        
+        return response()->json($allImages);
+    }
+
+    /* =====================================================
+     | DUPLICATE — Dupliquer une fiche produit
+     ===================================================== */
+    public function duplicate(Request $request, $id)
+    {
+        $original = ProductSheet::findOrFail($id);
+        
+        // Créer une copie
+        $duplicate = $original->replicate();
+        $duplicate->name = $original->name . ' (Copie)';
+        $duplicate->save();
+        
+        // Si un console_id est fourni, lier la fiche à l'article
+        if ($request->has('console_id')) {
+            $console = \App\Models\Console::find($request->console_id);
+            if ($console) {
+                $console->product_sheet_id = $duplicate->id;
+                $console->save();
+            }
+        }
+        
+        return redirect()
+            ->route('admin.product-sheets.edit', $duplicate->id)
+            ->with('success', 'Fiche dupliquée avec succès ! Vous pouvez maintenant la modifier.');
+    }
+
+    /* =====================================================
+     | IMAGES MANAGER — Gestion centralisée des images par taxonomie
+     ===================================================== */
+    public function imagesManager(Request $request)
+    {
+        $categories = ArticleCategory::with('subCategories.types')->orderBy('name')->get();
+        
+        $images = [];
+        $selectedType = null;
+        
+        if ($request->has('article_type_id')) {
+            $selectedType = ArticleType::with(['subCategory.category'])->find($request->article_type_id);
+            
+            // Récupérer toutes les images des fiches de cette taxonomie
+            $sheets = ProductSheet::where('article_type_id', $request->article_type_id)
+                ->whereNotNull('images')
+                ->get();
+            
+            foreach ($sheets as $sheet) {
+                $sheetImages = is_string($sheet->images) ? json_decode($sheet->images, true) : $sheet->images;
+                if (is_array($sheetImages)) {
+                    foreach ($sheetImages as $img) {
+                        $images[] = [
+                            'url' => $img,
+                            'sheet_id' => $sheet->id,
+                            'sheet_name' => $sheet->name,
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return view('admin.product-sheets.images-manager', compact('categories', 'images', 'selectedType'));
+    }
+
+    public function uploadTaxonomyImage(Request $request)
+    {
+        $request->validate([
+            'article_type_id' => 'required|exists:article_types,id',
+            'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:5120',
+        ]);
+
+        try {
+            $file = $request->file('image');
+            $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+            
+            $path = Storage::disk('cloudinary')->putFileAs(
+                'R4E/products/images',
+                $file,
+                $filename
+            );
+
+            $url = Storage::disk('cloudinary')->url($path);
+
+            // Créer ou mettre à jour une fiche "Template" pour cette taxonomie
+            $type = ArticleType::find($request->article_type_id);
+            $templateSheet = ProductSheet::firstOrCreate(
+                [
+                    'article_type_id' => $request->article_type_id,
+                    'name' => 'Template - ' . $type->name,
+                ],
+                [
+                    'description' => 'Fiche template pour la gestion centralisée des images',
+                    'images' => [],
+                    'is_active' => false, // Invisible pour les utilisateurs
+                ]
+            );
+
+            // Ajouter l'image au template
+            $images = $templateSheet->images ?? [];
+            $images[] = $url;
+            $templateSheet->images = $images;
+            $templateSheet->save();
+
+            return response()->json([
+                'success' => true,
+                'url' => $url,
+                'message' => 'Image uploadée avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteTaxonomyImage(Request $request)
+    {
+        $request->validate([
+            'url' => 'required|url',
+            'sheet_id' => 'required|exists:product_sheets,id',
+        ]);
+
+        try {
+            $sheet = ProductSheet::find($request->sheet_id);
+            $images = $sheet->images ?? [];
+            
+            // Retirer l'image
+            $images = array_values(array_filter($images, function($img) use ($request) {
+                return $img !== $request->url;
+            }));
+            
+            $sheet->images = $images;
+            $sheet->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Image supprimée avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression : ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

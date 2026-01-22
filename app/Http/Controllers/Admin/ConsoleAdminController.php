@@ -28,6 +28,7 @@ class ConsoleAdminController extends Controller
                 'store',
                 'repairer',
                 'mods', // Pour calculer le coût de réparation
+                'productSheet', // Fiche produit liée
             ])
             ->withCount(['stores', 'mods'])
             ->where('status', '!=', 'disabled') // Exclure les consoles disabled
@@ -70,7 +71,13 @@ class ConsoleAdminController extends Controller
         $categories = \App\Models\ArticleCategory::orderBy('name')->get();
         $stores = Store::orderBy('name')->get();
 
-        return view('admin.consoles.index', compact('consoles', 'types', 'categories', 'stores'));
+        // Charger les fiches produits pour chaque taxonomie présente
+        $productSheets = \App\Models\ProductSheet::whereIn('article_type_id', $consoles->pluck('article_type_id')->filter()->unique())
+            ->select('id', 'name', 'article_type_id')
+            ->get()
+            ->groupBy('article_type_id');
+
+        return view('admin.consoles.index', compact('consoles', 'types', 'categories', 'stores', 'productSheets'));
     }
 
     /* =====================================================

@@ -7,6 +7,10 @@
         <h1 class="text-2xl font-bold text-gray-800">📦 Liste stock</h1>
 
         <div class="flex items-center gap-3">
+            <a href="{{ route('admin.product-sheets.index') }}"
+               class="inline-flex items-center px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
+                🖼️ Fiches produits
+            </a>
             <a href="{{ route('admin.articles.create') }}"
                class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
                 ➕ Ajouter un article
@@ -274,10 +278,36 @@
                                     ✏️ Éditer
                                 </a>
                                 @if($console->article_type_id)
-                                    <a href="{{ route('admin.product-sheets.create', ['article_type_id' => $console->article_type_id]) }}"
-                                       class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded hover:bg-emerald-200 border border-emerald-200 font-medium">
-                                        🖼️ Fiche
-                                    </a>
+                                    @if($console->productSheet)
+                                        {{-- Article déjà lié à une fiche --}}
+                                        <a href="{{ route('admin.product-sheets.edit', $console->productSheet) }}"
+                                           class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded hover:bg-emerald-200 border border-emerald-200 font-medium"
+                                           title="Voir la fiche '{{ $console->productSheet->name }}'">
+                                            🖼️ Voir fiche
+                                        </a>
+                                    @else
+                                        @php
+                                            $existingSheet = $productSheets->get($console->article_type_id)?->first();
+                                        @endphp
+                                        @if($existingSheet)
+                                            {{-- Dupliquer une fiche existante --}}
+                                            <form method="POST" action="{{ route('admin.product-sheets.duplicate', $existingSheet) }}" class="w-full">
+                                                @csrf
+                                                <input type="hidden" name="console_id" value="{{ $console->id }}">
+                                                <button type="submit"
+                                                        class="w-full bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200 border border-blue-200 font-medium"
+                                                        title="Dupliquer la fiche '{{ $existingSheet->name }}'">
+                                                    📋 Dupliquer fiche
+                                                </button>
+                                            </form>
+                                        @else
+                                            {{-- Créer une nouvelle fiche --}}
+                                            <a href="{{ route('admin.product-sheets.create', ['article_type_id' => $console->article_type_id, 'console_id' => $console->id]) }}"
+                                               class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded hover:bg-emerald-200 border border-emerald-200 font-medium">
+                                                🖼️ Créer fiche
+                                            </a>
+                                        @endif
+                                    @endif
                                 @endif
                                 @if($console->status === 'stock')
                                     <a href="{{ route('admin.consoles.edit', $console) }}"

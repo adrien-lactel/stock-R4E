@@ -283,6 +283,24 @@
                     </div>
                 </div>
 
+                {{-- GALERIE D'IMAGES DE TAXONOMIE --}}
+                <div id="taxonomy_gallery_container" class="hidden mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-blue-900">
+                            📚 Images existantes pour cette taxonomie
+                        </h3>
+                        <button type="button" 
+                                onclick="document.getElementById('taxonomy_gallery_container').classList.add('hidden')"
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            Masquer
+                        </button>
+                    </div>
+                    <p class="text-xs text-blue-700 mb-3">Cliquez sur une image pour l'ajouter à votre fiche</p>
+                    <div id="taxonomy_gallery" class="grid grid-cols-3 md:grid-cols-8 gap-2 max-h-64 overflow-y-auto">
+                        {{-- Les images de taxonomie seront chargées ici --}}
+                    </div>
+                </div>
+
                 <input type="hidden" name="images" id="images_input">
                 <input type="hidden" name="main_image" id="main_image_input">
             </div>
@@ -376,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const url = '{{ url("admin/ajax/sub-categories") }}/' + categoryId;
+                const url = `{{ url('admin/ajax/sub-categories') }}/${categoryId}`;
                 console.log('🔄 Chargement sous-catégories depuis:', url);
                 
                 const response = await fetch(url);
@@ -406,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const url = '{{ url("admin/ajax/types") }}/' + subCategoryId;
+                const url = `{{ url('admin/ajax/types') }}/${subCategoryId}`;
                 console.log('🔄 Chargement types depuis:', url);
                 
                 const response = await fetch(url);
@@ -584,6 +602,87 @@ document.addEventListener('DOMContentLoaded', function() {
         tagsInput.addEventListener('input', function() {
             const tags = this.value.split(',').map(t => t.trim()).filter(t => t);
             document.getElementById('tags_hidden').value = JSON.stringify(tags);
+        });
+    }
+
+    // ========================================
+    // GALERIE D'IMAGES DE TAXONOMIE
+    // ========================================
+    const typeSelect = document.getElementById('type_select'); // ID correct du select
+    const galleryContainer = document.getElementById('taxonomy_gallery_container');
+    const galleryDiv = document.getElementById('taxonomy_gallery');
+
+    // Écouter les changements de taxonomie (type)
+    if (typeSelect) {
+        typeSelect.addEventListener('change', async function() {
+            const typeId = this.value;
+            
+            if (!typeId) {
+                galleryContainer.classList.add('hidden');
+                return;
+            }
+
+            // Charger les images de taxonomie
+            try {
+                const response = await fetch('{{ route("admin.product-sheets.taxonomy-images") }}?article_type_id=' + typeId);
+                const images = await response.json();
+
+                if (images && images.length > 0) {
+                    // Afficher la galerie
+                    galleryDiv.innerHTML = '';
+                    
+                    images.forEach(img => {
+                        const imgDiv = document.createElement('div');
+                        imgDiv.className = 'relative group cursor-pointer hover:opacity-75 transition';
+                        imgDiv.innerHTML = `
+                            <img src="${img.url}" 
+                                 alt="Image de ${img.sheet_name}"
+                                 class="w-full h-20 object-cover rounded border border-gray-300">
+                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-[10px] px-1 py-0.5 truncate">
+                                ${img.sheet_name}
+                            </div>
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black bg-opacity-40 rounded transition">
+                                <span class="text-white text-xs font-bold bg-blue-600 px-2 py-1 rounded">
+                                    + Ajouter
+                                </span>
+                            </div>
+                        `;
+                        
+                        imgDiv.addEventListener('click', function() {
+                            // Ajouter l'image à la liste (réutilise la logique existante)
+                            selectedImages.push({
+                                url: img.url,
+                                path: img.url // Cloudinary URL, pas besoin de path séparé
+                            });
+                            
+                            if (!mainImage) {
+                                mainImage = img.url;
+                            }
+                            
+                            updateSelectedImages();
+                            
+                            // Notification visuelle
+                            const notification = document.createElement('div');
+                            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+                            notification.textContent = '✅ Image ajoutée !';
+                            document.body.appendChild(notification);
+                            
+                            setTimeout(() => {
+                                notification.remove();
+                            }, 2000);
+                        });
+                        
+                        galleryDiv.appendChild(imgDiv);
+                    });
+                    
+                    galleryContainer.classList.remove('hidden');
+                } else {
+                    galleryContainer.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Erreur chargement images taxonomie:', error);
+                galleryContainer.classList.add('hidden');
+            }
         });
     }
 

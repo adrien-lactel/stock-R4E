@@ -136,6 +136,7 @@ class Console extends Model
     public function articleCategory() { return $this->belongsTo(\App\Models\ArticleCategory::class); }
 public function articleSubCategory() { return $this->belongsTo(\App\Models\ArticleSubCategory::class); }
 public function articleType() { return $this->belongsTo(\App\Models\ArticleType::class); }
+public function productSheet() { return $this->belongsTo(\App\Models\ProductSheet::class); }
 
     /**
      * Valeur réelle utilisée pour facturation/valorisation
