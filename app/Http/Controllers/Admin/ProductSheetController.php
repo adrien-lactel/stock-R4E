@@ -96,12 +96,9 @@ class ProductSheetController extends Controller
                 'mime' => $file->getMimeType(),
             ]);
             
-            // Générer un nom de fichier unique
-            $filename = 'product-sheets/' . Str::random(40) . '.' . $file->getClientOriginalExtension();
-            
-            // Upload vers Cloudinary via Storage disk
+            // Upload vers Cloudinary via Storage disk dans R4E/products/images
             $path = Storage::disk('cloudinary')->putFileAs(
-                'product-sheets',
+                'R4E/products/images',
                 $file,
                 Str::random(40) . '.' . $file->getClientOriginalExtension(),
                 'public'
@@ -143,7 +140,7 @@ class ProductSheetController extends Controller
             
             // Télécharger l'image depuis l'URL
             $imageContent = file_get_contents($imageUrl);
-            $filename = 'product-sheets/' . Str::random(40) . '.jpg';
+            $filename = 'R4E/products/images/' . Str::random(40) . '.jpg';
             
             // Upload vers Cloudinary
             Storage::disk('cloudinary')->put($filename, $imageContent, 'public');
