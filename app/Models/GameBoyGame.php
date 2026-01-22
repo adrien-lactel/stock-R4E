@@ -11,6 +11,7 @@ class GameBoyGame extends Model
         'name',
         'year',
         'image_url',
+        'cloudinary_url',
         'price',
         'source',
     ];

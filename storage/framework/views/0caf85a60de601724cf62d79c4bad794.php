@@ -179,6 +179,24 @@
                     <h3 class="text-sm font-medium text-gray-700 mb-2">Nouvelles images</h3>
                     <div id="newImagesList" class="grid grid-cols-2 md:grid-cols-6 gap-3"></div>
                 </div>
+
+                
+                <div id="taxonomy_gallery_container" class="hidden mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-blue-900">
+                            📚 Images existantes pour cette taxonomie
+                        </h3>
+                        <button type="button" 
+                                onclick="document.getElementById('taxonomy_gallery_container').classList.add('hidden')"
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            Masquer
+                        </button>
+                    </div>
+                    <p class="text-xs text-blue-700 mb-3">Cliquez sur une image pour l'ajouter à votre fiche</p>
+                    <div id="taxonomy_gallery" class="grid grid-cols-3 md:grid-cols-8 gap-2 max-h-64 overflow-y-auto">
+                        
+                    </div>
+                </div>
             </div>
 
             
@@ -286,6 +304,88 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Erreur chargement types:', error);
             typeSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
+    }
+
+    // ========================================
+    // GALERIE D'IMAGES DE TAXONOMIE
+    // ========================================
+    const typeSelect = document.getElementById('type_select');
+    const galleryContainer = document.getElementById('taxonomy_gallery_container');
+    const galleryDiv = document.getElementById('taxonomy_gallery');
+
+    // Écouter les changements de taxonomie (type)
+    if (typeSelect) {
+        typeSelect.addEventListener('change', async function() {
+            const typeId = this.value;
+            
+            if (!typeId) {
+                galleryContainer.classList.add('hidden');
+                return;
+            }
+
+            // Charger les images de taxonomie
+            try {
+                const response = await fetch('<?php echo e(route("admin.product-sheets.taxonomy-images")); ?>?article_type_id=' + typeId);
+                const images = await response.json();
+
+                if (images && images.length > 0) {
+                    // Afficher la galerie
+                    galleryDiv.innerHTML = '';
+                    
+                    images.forEach(img => {
+                        const imgDiv = document.createElement('div');
+                        imgDiv.className = 'relative group cursor-pointer hover:opacity-75 transition';
+                        imgDiv.innerHTML = `
+                            <img src="${img.url}" 
+                                 alt="Image de ${img.sheet_name}"
+                                 class="w-full h-20 object-cover rounded border border-gray-300">
+                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-[10px] px-1 py-0.5 truncate">
+                                ${img.sheet_name}
+                            </div>
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black bg-opacity-40 rounded transition">
+                                <span class="text-white text-xs font-bold bg-blue-600 px-2 py-1 rounded">
+                                    + Ajouter
+                                </span>
+                            </div>
+                        `;
+                        
+                        imgDiv.addEventListener('click', function() {
+                            // Ajouter l'image aux nouvelles images
+                            newImages.push({
+                                url: img.url,
+                                path: img.url
+                            });
+                            
+                            updateNewImages();
+                            
+                            // Notification visuelle
+                            const notification = document.createElement('div');
+                            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+                            notification.textContent = '✅ Image ajoutée !';
+                            document.body.appendChild(notification);
+                            
+                            setTimeout(() => {
+                                notification.remove();
+                            }, 2000);
+                        });
+                        
+                        galleryDiv.appendChild(imgDiv);
+                    });
+                    
+                    galleryContainer.classList.remove('hidden');
+                } else {
+                    galleryContainer.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Erreur chargement images taxonomie:', error);
+                galleryContainer.classList.add('hidden');
+            }
+        });
+
+        // Charger la galerie au chargement initial si un type est sélectionné
+        if (typeSelect.value) {
+            typeSelect.dispatchEvent(new Event('change'));
         }
     }
 

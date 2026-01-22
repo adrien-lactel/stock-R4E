@@ -131,20 +131,98 @@ class ProductSheetController extends Controller
      ===================================================== */
     public function uploadFromUrl(Request $request)
     {
+        \Log::info('uploadFromUrl appelée', ['url' => $request->input('url')]);
+        
         $request->validate([
             'url' => 'required|url',
+            'rom_id' => 'nullable|string',
         ]);
 
         try {
             $imageUrl = $request->input('url');
+            $romId = $request->input('rom_id');
             
-            // Télécharger l'image depuis l'URL
-            $imageContent = file_get_contents($imageUrl);
-            $filename = 'R4E/products/images/' . Str::random(40) . '.jpg';
+            // Si c'est une URL Cloudinary, la retourner directement
+            if (str_contains($imageUrl, 'cloudinary.com')) {
+                return response()->json([
+                    'success' => true,
+                    'url' => $imageUrl,
+                    'path' => $imageUrl,
+                    'cached' => true,
+                ]);
+            }
+            
+            \Log::info('Téléchargement image depuis URL', ['url' => $imageUrl, 'rom_id' => $romId]);
+            
+            // Ajouter un délai aléatoire pour éviter le rate limiting (1-3 secondes)
+            usleep(rand(1000000, 3000000)); // 1-3 secondes
+            
+            // Utiliser cURL avec des headers pour éviter le blocage anti-scraping
+            $ch = curl_init($imageUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                'Accept-Language: fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Referer: https://full-set.net/',
+                'Cache-Control: no-cache',
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            
+            $imageContent = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($error) {
+                throw new \Exception('Erreur cURL: ' . $error);
+            }
+            
+            if ($httpCode === 429) {
+                throw new \Exception('Rate limit atteint sur full-set.net. Veuillez réessayer dans quelques secondes.');
+            }
+            
+            if ($httpCode !== 200) {
+                throw new \Exception('HTTP ' . $httpCode . ' lors du téléchargement de l\'image');
+            }
+            
+            if (!$imageContent || strlen($imageContent) < 100) {
+                throw new \Exception('Image vide ou invalide (taille: ' . strlen($imageContent) . ' bytes)');
+            }
+            
+            \Log::info('Image téléchargée', ['size' => strlen($imageContent), 'http_code' => $httpCode]);
+            
+            // Créer un fichier temporaire
+            $tempFile = tempnam(sys_get_temp_dir(), 'rom_image_');
+            file_put_contents($tempFile, $imageContent);
+            
+            $filename = Str::random(40) . '.jpg';
             
             // Upload vers Cloudinary
-            Storage::disk('cloudinary')->put($filename, $imageContent, 'public');
-            $uploadedFileUrl = Storage::disk('cloudinary')->url($filename);
+            $path = Storage::disk('cloudinary')->putFileAs(
+                'R4E/products/images',
+                new \Illuminate\Http\File($tempFile),
+                $filename
+            );
+            
+            // Supprimer le fichier temporaire
+            @unlink($tempFile);
+            
+            $uploadedFileUrl = Storage::disk('cloudinary')->url($path);
+
+            \Log::info('Image uploadée vers Cloudinary', ['url' => $uploadedFileUrl]);
+
+            // Sauvegarder l'URL Cloudinary dans la BDD pour réutilisation
+            if ($romId) {
+                $game = GameBoyGame::where('rom_id', $romId)->first();
+                if ($game) {
+                    $game->cloudinary_url = $uploadedFileUrl;
+                    $game->save();
+                    \Log::info('URL Cloudinary sauvegardée pour ROM', ['rom_id' => $romId]);
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -152,6 +230,11 @@ class ProductSheetController extends Controller
                 'path' => $uploadedFileUrl,
             ]);
         } catch (\Exception $e) {
+            \Log::error('Erreur uploadFromUrl', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors du téléchargement: ' . $e->getMessage()
@@ -331,14 +414,18 @@ class ProductSheetController extends Controller
             ], 404);
         }
 
+        // Utiliser cloudinary_url si disponible, sinon image_url
+        $imageUrl = $game->cloudinary_url ?: $game->image_url;
+
         return response()->json([
             'success' => true,
             'data' => [
                 'name' => $game->name,
                 'year' => $game->year,
-                'image_url' => $game->image_url,
+                'image_url' => $imageUrl,
                 'price' => $game->price,
                 'rom_id' => $game->rom_id,
+                'has_cloudinary' => !empty($game->cloudinary_url),
             ],
         ]);
     }

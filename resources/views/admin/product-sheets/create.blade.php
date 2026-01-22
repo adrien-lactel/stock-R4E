@@ -814,6 +814,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Download and add image if available
                     if (data.image_url) {
+                        console.log('📥 Téléchargement image depuis:', data.image_url);
+                        console.log('🎮 ROM ID:', data.rom_id);
+                        console.log('💾 Déjà sur Cloudinary?', data.has_cloudinary);
+                        
                         try {
                             const imgResponse = await fetch('{{ route("admin.product-sheets.upload-from-url") }}', {
                                 method: 'POST',
@@ -821,11 +825,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                     'Content-Type': 'application/json',
                                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                                 },
-                                body: JSON.stringify({ url: data.image_url })
+                                body: JSON.stringify({ 
+                                    url: data.image_url,
+                                    rom_id: data.rom_id
+                                })
                             });
 
                             const imgData = await imgResponse.json();
+                            console.log('📦 Réponse upload:', imgData);
+                            
                             if (imgData.success) {
+                                console.log('✅ Image uploadée avec succès:', imgData.url);
+                                if (imgData.cached) {
+                                    console.log('⚡ Image déjà en cache Cloudinary (pas de re-téléchargement)');
+                                }
+                                
                                 selectedImages.push({
                                     url: imgData.url,
                                     path: imgData.path
@@ -834,11 +848,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (!mainImage) {
                                     mainImage = imgData.url;
                                 }
+                                
+                                console.log('📊 selectedImages après ajout:', selectedImages);
+                                console.log('🖼️ mainImage:', mainImage);
                                 updateSelectedImages();
+                            } else {
+                                console.error('❌ Échec upload image:', imgData.message);
                             }
                         } catch (imgError) {
-                            console.error('Image download failed:', imgError);
+                            console.error('❌ Image download failed:', imgError);
                         }
+                    } else {
+                        console.log('ℹ️ Pas d\'image disponible pour ce ROM');
                     }
 
                     // Show success message
