@@ -9,6 +9,7 @@ use App\Models\ArticleType;
 use App\Models\ArticleCategory;
 use App\Models\GameBoyGame;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ProductSheetController extends Controller
 {
@@ -95,10 +96,11 @@ class ProductSheetController extends Controller
             ]);
             
             // Upload vers Cloudinary
-            $uploadedFileUrl = cloudinary()->upload($file->getRealPath(), [
+            \$result = Cloudinary::upload(\$file->getRealPath(), [
                 'folder' => 'product-sheets',
-                'resource_type' => 'image'
-            ])->getSecurePath();
+            ]);
+            
+            \$uploadedFileUrl = \$result->getSecurePath();
 
             \Log::info('Fichier uploadé vers Cloudinary avec succès', ['url' => $uploadedFileUrl]);
 
@@ -132,10 +134,11 @@ class ProductSheetController extends Controller
             $imageUrl = $request->input('url');
             
             // Upload direct vers Cloudinary depuis l'URL
-            $uploadedFileUrl = cloudinary()->upload($imageUrl, [
+            \$result = Cloudinary::upload(\$imageUrl, [
                 'folder' => 'product-sheets',
-                'resource_type' => 'image'
-            ])->getSecurePath();
+            ]);
+            
+            \$uploadedFileUrl = \$result->getSecurePath();
 
             return response()->json([
                 'success' => true,
