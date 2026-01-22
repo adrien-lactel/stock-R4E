@@ -349,13 +349,14 @@ class ProductSheetController extends Controller
             ->whereNotNull('rom_id')
             ->orderBy('rom_id')
             ->limit(10)
-            ->get(['rom_id', 'name', 'year'])
+            ->get(['rom_id', 'name', 'year', 'image_url'])
             ->map(function($game) {
                 return [
                     'rom_id' => $game->rom_id,
                     'label' => $game->rom_id . ' - ' . $game->name,
                     'name' => $game->name,
                     'year' => $game->year,
+                    'image_url' => $game->image_url,
                 ];
             });
 

@@ -623,15 +623,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     const suggestions = await response.json();
 
                     if (suggestions.length > 0) {
-                        suggestionsDiv.innerHTML = suggestions.map(s => `
-                            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-0"
-                                 data-rom-id="${s.rom_id}"
-                                 data-name="${s.name}"
-                                 data-year="${s.year || ''}">
-                                <div class="font-medium text-sm text-gray-900">${s.rom_id}</div>
-                                <div class="text-xs text-gray-600">${s.name}</div>
-                            </div>
-                        `).join('');
+                        suggestionsDiv.innerHTML = suggestions.map(s => {
+                            const imageHtml = s.image_url 
+                                ? '<img src="' + s.image_url + '" class="w-12 h-12 object-cover rounded" alt="' + s.name + '">'
+                                : '<div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">No img</div>';
+                            
+                            return '<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-0 flex items-center gap-3"' +
+                                   ' data-rom-id="' + s.rom_id + '"' +
+                                   ' data-name="' + s.name + '"' +
+                                   ' data-year="' + (s.year || '') + '"' +
+                                   ' data-image="' + (s.image_url || '') + '">' +
+                                   imageHtml +
+                                   '<div class="flex-1">' +
+                                   '<div class="font-medium text-sm text-gray-900">' + s.rom_id + '</div>' +
+                                   '<div class="text-xs text-gray-600">' + s.name + '</div>' +
+                                   (s.year ? '<div class="text-xs text-gray-500">📅 ' + s.year + '</div>' : '') +
+                                   '</div>' +
+                                   '</div>';
+                        }).join('');
                         suggestionsDiv.classList.remove('hidden');
 
                         // Add click handlers to suggestions
