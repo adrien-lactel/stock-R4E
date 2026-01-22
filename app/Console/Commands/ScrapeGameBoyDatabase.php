@@ -44,9 +44,24 @@ class ScrapeGameBoyDatabase extends Command
         
         $bar->finish();
         $this->newLine();
-        $this->info("✅ Scraped and saved {$bar->getMaxSteps()} games!");
+        
+        // Statistiques finales
+        $totalGames = GameBoyGame::count();
+        $gamesWithImages = GameBoyGame::whereNotNull('image_url')->count();
+        $gamesWithYear = GameBoyGame::whereNotNull('year')->count();
+        
+        $this->info("✅ Scraping terminé !");
+        $this->info("📊 Statistiques :");
+        $this->info("   • Total de jeux : {$totalGames}");
+        $this->info("   • Jeux avec image : {$gamesWithImages} ({$this->percentage($gamesWithImages, $totalGames)}%)");
+        $this->info("   • Jeux avec année : {$gamesWithYear} ({$this->percentage($gamesWithYear, $totalGames)}%)");
         
         return Command::SUCCESS;
+    }
+    
+    protected function percentage(int $part, int $total): int
+    {
+        return $total > 0 ? round(($part / $total) * 100) : 0;
     }
 
     protected function scrapeGbhwdb(): array
@@ -136,7 +151,10 @@ class ScrapeGameBoyDatabase extends Command
             ];
         }
         
+        $gamesWithImages = collect($games)->filter(fn($g) => !empty($g['image_url']))->count();
         $this->info("  → Found " . count($games) . " games from full-set.net");
+        $this->info("  → Images found: {$gamesWithImages} / " . count($games));
+        
         return $games;
     }
 

@@ -12,8 +12,10 @@ class GameBoyImportController extends Controller
     public function index()
     {
         $gamesCount = GameBoyGame::count();
+        $gamesWithImages = GameBoyGame::whereNotNull('image_url')->count();
+        $gamesWithYear = GameBoyGame::whereNotNull('year')->count();
         
-        return view('admin.gameboy.import', compact('gamesCount'));
+        return view('admin.gameboy.import', compact('gamesCount', 'gamesWithImages', 'gamesWithYear'));
     }
 
     public function import(Request $request)
@@ -25,11 +27,19 @@ class GameBoyImportController extends Controller
             Artisan::call('gameboy:scrape');
             $output = Artisan::output();
             
-            $gamesCount = GameBoyGame::count();
+            $totalGames = GameBoyGame::count();
+            $gamesWithImages = GameBoyGame::whereNotNull('image_url')->count();
+            $gamesWithYear = GameBoyGame::whereNotNull('year')->count();
+            
+            $successMessage = "Scraping terminé avec succès !\n\n" .
+                "📊 Statistiques :\n" .
+                "• Total : {$totalGames} jeux\n" .
+                "• Avec image : {$gamesWithImages}\n" .
+                "• Avec année : {$gamesWithYear}";
             
             return redirect()
                 ->route('admin.gameboy.import')
-                ->with('success', "Scraping terminé avec succès ! {$gamesCount} jeux importés.");
+                ->with('success', $successMessage);
                 
         } catch (\Exception $e) {
             return redirect()

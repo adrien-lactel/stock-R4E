@@ -24,7 +24,7 @@
                     </h1>
                     
                     @if(session('success'))
-                        <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                        <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded whitespace-pre-line">
                             ✅ {{ session('success') }}
                         </div>
                     @endif
@@ -37,10 +37,26 @@
 
                     <div class="mb-8 p-4 bg-blue-50 rounded-lg">
                         <h3 class="text-lg font-semibold mb-2">📊 Statut de la base de données</h3>
-                        <p class="text-gray-700">
-                            Jeux Game Boy actuellement en base : 
-                            <span class="text-2xl font-bold text-blue-600">{{ $gamesCount }}</span>
-                        </p>
+                        <div class="space-y-2">
+                            <p class="text-gray-700">
+                                Total de jeux : 
+                                <span class="text-2xl font-bold text-blue-600">{{ $gamesCount }}</span>
+                            </p>
+                            @if($gamesCount > 0)
+                                <div class="mt-3 space-y-1 text-sm">
+                                    <p class="text-gray-600">
+                                        🖼️ Jeux avec image : 
+                                        <span class="font-semibold">{{ $gamesWithImages }}</span>
+                                        <span class="text-gray-500">({{ $gamesCount > 0 ? round(($gamesWithImages / $gamesCount) * 100) : 0 }}%)</span>
+                                    </p>
+                                    <p class="text-gray-600">
+                                        📅 Jeux avec année : 
+                                        <span class="font-semibold">{{ $gamesWithYear }}</span>
+                                        <span class="text-gray-500">({{ $gamesCount > 0 ? round(($gamesWithYear / $gamesCount) * 100) : 0 }}%)</span>
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
