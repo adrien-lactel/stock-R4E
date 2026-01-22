@@ -45,7 +45,6 @@ class DatabaseSeeder extends Seeder
         // 6. Les factures sont automatiquement créées via ConsoleFactory après création d'une console vendue
         // donc pas besoin de créer séparément ici.
 
-        // 7. Importer les jeux Game Boy si la table est vide
-        $this->call(GameBoyGameSeeder::class);
+        // 7. Game Boy games: lancer manuellement via `php artisan db:seed --class=GameBoyGameSeeder`
     }
 }
