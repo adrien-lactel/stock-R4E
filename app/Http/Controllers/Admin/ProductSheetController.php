@@ -95,29 +95,19 @@ class ProductSheetController extends Controller
                 'mime' => $file->getMimeType(),
             ]);
             
-            // Vérifier la configuration Cloudinary complète
-            \Log::info('Cloudinary config détaillée', [
-                'cloud_name' => config('cloudinary.cloud_name'),
-                'api_key' => config('cloudinary.api_key'),
-                'api_secret_exists' => !empty(config('cloudinary.api_secret')),
-                'all_config' => config('cloudinary'),
-            ]);
+            // Générer un nom de fichier unique
+            $filename = 'product-sheets/' . Str::random(40) . '.' . $file->getClientOriginalExtension();
             
-            // Upload vers Cloudinary
-            $result = Cloudinary::upload($file->getRealPath(), [
-                'folder' => 'product-sheets',
-            ]);
+            // Upload vers Cloudinary via Storage disk
+            $path = Storage::disk('cloudinary')->putFileAs(
+                'product-sheets',
+                $file,
+                Str::random(40) . '.' . $file->getClientOriginalExtension(),
+                'public'
+            );
             
-            \Log::info('Cloudinary upload result', [
-                'result_type' => gettype($result),
-                'result_class' => is_object($result) ? get_class($result) : null,
-            ]);
-            
-            if (!$result) {
-                throw new \Exception('Cloudinary upload returned null');
-            }
-            
-            $uploadedFileUrl = $result->getSecurePath();
+            // Récupérer l'URL complète
+            $uploadedFileUrl = Storage::disk('cloudinary')->url($path);
 
             \Log::info('Fichier uploadé vers Cloudinary avec succès', ['url' => $uploadedFileUrl]);
 
@@ -150,12 +140,13 @@ class ProductSheetController extends Controller
         try {
             $imageUrl = $request->input('url');
             
-            // Upload direct vers Cloudinary depuis l'URL
-            $result = Cloudinary::upload($imageUrl, [
-                'folder' => 'product-sheets',
-            ]);
+            // Télécharger l'image depuis l'URL
+            $imageContent = file_get_contents($imageUrl);
+            $filename = 'product-sheets/' . Str::random(40) . '.jpg';
             
-            $uploadedFileUrl = $result->getSecurePath();
+            // Upload vers Cloudinary
+            Storage::disk('cloudinary')->put($filename, $imageContent, 'public');
+            $uploadedFileUrl = Storage::disk('cloudinary')->url($filename);
 
             return response()->json([
                 'success' => true,
