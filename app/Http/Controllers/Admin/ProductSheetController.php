@@ -95,10 +95,12 @@ class ProductSheetController extends Controller
                 'mime' => $file->getMimeType(),
             ]);
             
-            // Vérifier la configuration Cloudinary
-            \Log::info('Cloudinary config', [
+            // Vérifier la configuration Cloudinary complète
+            \Log::info('Cloudinary config détaillée', [
                 'cloud_name' => config('cloudinary.cloud_name'),
-                'api_key_exists' => !empty(config('cloudinary.api_key')),
+                'api_key' => config('cloudinary.api_key'),
+                'api_secret_exists' => !empty(config('cloudinary.api_secret')),
+                'all_config' => config('cloudinary'),
             ]);
             
             // Upload vers Cloudinary
