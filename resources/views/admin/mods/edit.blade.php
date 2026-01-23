@@ -551,6 +551,10 @@ function loadImageFromBase64(base64) {
         
         drawGrid();
         
+        // Afficher la zone image et masquer la zone emoji
+        document.getElementById('emoji_preview').classList.add('hidden');
+        document.getElementById('image_preview').classList.remove('hidden');
+        
         // Mettre à jour les prévisualisations immédiatement
         document.getElementById('preview_small').src = base64;
         document.getElementById('preview_large').src = base64;
