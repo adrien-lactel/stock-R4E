@@ -162,11 +162,11 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function editArticleFull(Console $console)
     {
-        $console->load(['repairer', 'mods']);
+        $console->load(['repairer', 'mods', 'articleCategory', 'articleSubCategory', 'articleType']);
 
         return view('admin.consoles.edit_full', [
             'console' => $console,
-            'articleCategories' => ArticleCategory::orderBy('name')->get(),
+            'articleCategories' => ArticleCategory::with('subCategories.types')->orderBy('name')->get(),
             'repairers' => Repairer::where('is_active', true)->orderBy('name')->get(),
             'provenances' => Console::whereNotNull('provenance_article')->distinct()->pluck('provenance_article'),
             'allMods' => Mod::orderBy('is_accessory')->orderBy('name')->get(),

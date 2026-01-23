@@ -1,70 +1,85 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="max-w-4xl mx-auto py-10 px-6">
 
     <div class="mb-6">
-        <a href="{{ route('admin.mods.index') }}" class="text-blue-600 hover:underline">
+        <a href="<?php echo e(route('admin.mods.index')); ?>" class="text-blue-600 hover:underline">
             ← Retour à la liste
         </a>
     </div>
 
-    <h1 class="text-3xl font-bold mb-6">✏️ Modifier le Mod #{{ $mod->id }}</h1>
+    <h1 class="text-3xl font-bold mb-6">✏️ Modifier le Mod #<?php echo e($mod->id); ?></h1>
 
     <div class="bg-white shadow rounded-lg p-6">
-        <form method="POST" action="{{ route('admin.mods.update', $mod) }}">
-            @csrf
-            @method('PUT')
+        <form method="POST" action="<?php echo e(route('admin.mods.update', $mod)); ?>">
+            <?php echo csrf_field(); ?>
+            <?php echo method_field('PUT'); ?>
 
-            {{-- Nom --}}
+            
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Nom du Mod *</label>
                 <input type="text" 
                        name="name" 
-                       value="{{ old('name', $mod->name) }}"
+                       value="<?php echo e(old('name', $mod->name)); ?>"
                        required
-                       class="w-full border rounded p-2 @error('name') border-red-500 @enderror"
+                       class="w-full border rounded p-2 <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                        placeholder="Ex: Changement ventilateur, Câble HDMI, etc.">
-                @error('name')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+                <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="text-red-500 text-xs mt-1"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
 
-            {{-- Icône --}}
+            
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Icône personnalisée</label>
                 
-                {{-- Champ caché pour stocker le base64 --}}
-                <input type="hidden" name="icon" id="icon_input" value="{{ old('icon', $mod->icon) }}">
                 
-                {{-- Upload de fichier image (caché) --}}
+                <input type="hidden" name="icon" id="icon_input" value="<?php echo e(old('icon', $mod->icon)); ?>">
+                
+                
                 <input type="file" id="icon_upload" accept="image/png,image/jpeg,image/gif" class="hidden">
                 
-                {{-- Icônes rapides (emojis) --}}
+                
                 <div class="mb-4">
                     <p class="text-sm font-medium mb-2">Icônes rapides :</p>
                     <div class="grid grid-cols-10 gap-2">
-                        @php
+                        <?php
                             $icons = ['🔧', '⚙️', '🔌', '🔋', '📦', '🎮', '💾', '📀', '🖥️', '⌨️', 
                                       '🖱️', '🎧', '🔊', '📱', '📺', '🎨', '🖼️', '✨', '⭐', '💡',
                                       '🔴', '🟢', '🔵', '🟡', '🟣', '🟠', '⚫', '⚪', '🟤', '📍'];
-                        @endphp
-                        @foreach($icons as $emoji)
+                        ?>
+                        <?php $__currentLoopData = $icons; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emoji): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <button type="button" 
-                                    onclick="selectEmoji('{{ $emoji }}')"
+                                    onclick="selectEmoji('<?php echo e($emoji); ?>')"
                                     class="text-2xl hover:bg-gray-100 rounded p-2 transition"
-                                    title="{{ $emoji }}">
-                                {{ $emoji }}
+                                    title="<?php echo e($emoji); ?>">
+                                <?php echo e($emoji); ?>
+
                             </button>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
                 
-                {{-- Galerie des icônes R4E déjà créées --}}
-                @if($r4eIcons->count() > 0)
+                
+                <?php if($r4eIcons->count() > 0): ?>
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm font-medium">✨ Icônes R4E déjà créées ({{ $r4eIcons->count() }}) :</p>
+                            <p class="text-sm font-medium">✨ Icônes R4E déjà créées (<?php echo e($r4eIcons->count()); ?>) :</p>
                             <button type="button" 
                                     onclick="document.getElementById('r4e_gallery').classList.toggle('hidden')"
                                     class="text-xs px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200">
@@ -73,34 +88,35 @@
                         </div>
                         <div id="r4e_gallery" class="hidden bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
                             <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
-                                @foreach($r4eIcons as $existingMod)
+                                <?php $__currentLoopData = $r4eIcons; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $existingMod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <button type="button"
-                                            onclick="selectR4EIcon('{{ addslashes($existingMod->icon) }}', '{{ addslashes($existingMod->name) }}')"
+                                            onclick="selectR4EIcon('<?php echo e(addslashes($existingMod->icon)); ?>', '<?php echo e(addslashes($existingMod->name)); ?>')"
                                             class="group relative bg-white rounded-lg border-2 border-purple-200 p-2 hover:border-purple-500 hover:shadow-lg transition"
-                                            title="Réutiliser l'icône de {{ $existingMod->name }}">
+                                            title="Réutiliser l'icône de <?php echo e($existingMod->name); ?>">
                                         <div class="relative">
-                                            <img src="{{ $existingMod->icon }}" 
-                                                 alt="{{ $existingMod->name }}" 
+                                            <img src="<?php echo e($existingMod->icon); ?>" 
+                                                 alt="<?php echo e($existingMod->name); ?>" 
                                                  class="w-12 h-12 mx-auto" 
                                                  style="image-rendering: pixelated;">
                                             <span class="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">✨</span>
                                         </div>
                                         <p class="text-xs text-center text-gray-600 mt-1 truncate group-hover:text-purple-700">
-                                            {{ Str::limit($existingMod->name, 12) }}
+                                            <?php echo e(Str::limit($existingMod->name, 12)); ?>
+
                                         </p>
                                     </button>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                             <p class="text-xs text-gray-500 mt-3 text-center">
                                 💡 Cliquez sur une icône pour la réutiliser
                             </p>
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
                 
                 <div class="border rounded-lg p-4 bg-gray-50">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {{-- Canvas --}}
+                        
                         <div>
                             <p class="text-sm font-medium mb-2">Éditeur (32×32 pixels)</p>
                             <canvas id="pixel_canvas" 
@@ -129,27 +145,27 @@
                             </div>
                         </div>
                         
-                        {{-- Palette et prévisualisation --}}
+                        
                         <div>
                             <p class="text-sm font-medium mb-2">Palette de couleurs</p>
                             <div class="grid grid-cols-8 gap-1 mb-4">
-                                @php
+                                <?php
                                     $colors = ['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
                                                '#800000', '#808080', '#008000', '#000080', '#808000', '#800080', '#008080', '#C0C0C0',
                                                '#FFA500', '#A52A2A', '#DEB887', '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED'];
-                                @endphp
-                                @foreach($colors as $color)
+                                ?>
+                                <?php $__currentLoopData = $colors; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $color): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <button type="button" 
-                                            onclick="selectColor('{{ $color }}')"
+                                            onclick="selectColor('<?php echo e($color); ?>')"
                                             class="w-8 h-8 border-2 border-gray-400 rounded hover:scale-110 transition"
-                                            style="background-color: {{ $color }}"
-                                            title="{{ $color }}"></button>
-                                @endforeach
+                                            style="background-color: <?php echo e($color); ?>"
+                                            title="<?php echo e($color); ?>"></button>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                             
                             <p class="text-sm font-medium mb-2">Prévisualisation</p>
                             
-                            {{-- Zone d'affichage emoji --}}
+                            
                             <div id="emoji_preview" class="hidden mb-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg text-center">
                                 <p class="text-xs text-gray-600 mb-2">😀 Emoji sélectionné</p>
                                 <div class="text-6xl" id="emoji_display"></div>
@@ -171,76 +187,126 @@
                     </div>
                 </div>
                 
-                @error('icon')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+                <?php $__errorArgs = ['icon'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="text-red-500 text-xs mt-1"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
 
-            {{-- Description --}}
+            
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Description *</label>
                 <textarea name="description" 
                           rows="3"
                           required
-                          class="w-full border rounded p-2 @error('description') border-red-500 @enderror"
-                          placeholder="Description détaillée du mod ou accessoire">{{ old('description', $mod->description) }}</textarea>
-                @error('description')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+                          class="w-full border rounded p-2 <?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                          placeholder="Description détaillée du mod ou accessoire"><?php echo e(old('description', $mod->description)); ?></textarea>
+                <?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="text-red-500 text-xs mt-1"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
 
-            {{-- Prix et quantité --}}
+            
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium mb-2">Prix d'achat (€) *</label>
                     <input type="number" 
                            step="0.01" 
                            name="purchase_price" 
-                           value="{{ old('purchase_price', $mod->purchase_price) }}"
+                           value="<?php echo e(old('purchase_price', $mod->purchase_price)); ?>"
                            required
-                           class="w-full border rounded p-2 @error('purchase_price') border-red-500 @enderror">
-                    @error('purchase_price')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+                           class="w-full border rounded p-2 <?php $__errorArgs = ['purchase_price'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                    <?php $__errorArgs = ['purchase_price'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-red-500 text-xs mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">Quantité en stock *</label>
                     <input type="number" 
                            name="quantity" 
-                           value="{{ old('quantity', $mod->quantity) }}"
+                           value="<?php echo e(old('quantity', $mod->quantity)); ?>"
                            required
                            min="0"
-                           class="w-full border rounded p-2 @error('quantity') border-red-500 @enderror">
-                    @error('quantity')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+                           class="w-full border rounded p-2 <?php $__errorArgs = ['quantity'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                    <?php $__errorArgs = ['quantity'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-red-500 text-xs mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
             </div>
 
-            {{-- Type --}}
+            
             <div class="mb-6">
                 <label class="flex items-center">
                     <input type="checkbox" 
                            name="is_accessory" 
                            value="1"
-                           {{ old('is_accessory', $mod->is_accessory) ? 'checked' : '' }}
+                           <?php echo e(old('is_accessory', $mod->is_accessory) ? 'checked' : ''); ?>
+
                            class="mr-2">
                     <span class="text-sm font-medium">📦 Ceci est un accessoire (câble, boîte, etc.)</span>
                 </label>
             </div>
 
-            {{-- Compatibilité --}}
+            
             <div class="mb-6 border-t pt-4">
                 <h3 class="text-lg font-semibold mb-3">🎯 Compatibilité</h3>
                 <p class="text-sm text-gray-600 mb-4">
                     Sélectionnez les catégories/types compatibles. Laissez vide pour un mod universel.
                 </p>
 
-                @php
+                <?php
                     $selectedCategories = old('compatible_categories', $mod->compatibleCategories->pluck('id')->toArray());
                     $selectedSubCategories = old('compatible_sub_categories', $mod->compatibleSubCategories->pluck('id')->toArray());
                     $selectedTypes = old('compatible_types', $mod->compatibleTypes->pluck('id')->toArray());
-                @endphp
+                ?>
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">Catégories compatibles</label>
@@ -248,12 +314,13 @@
                             multiple
                             class="w-full border rounded p-2"
                             size="5">
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}"
-                                    {{ in_array($category->id, $selectedCategories) ? 'selected' : '' }}>
-                                {{ $category->name }}
+                        <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($category->id); ?>"
+                                    <?php echo e(in_array($category->id, $selectedCategories) ? 'selected' : ''); ?>>
+                                <?php echo e($category->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">Maintenez Ctrl/Cmd pour sélectionner plusieurs</p>
                 </div>
@@ -264,12 +331,13 @@
                             multiple
                             class="w-full border rounded p-2"
                             size="5">
-                        @foreach($subCategories as $subCategory)
-                            <option value="{{ $subCategory->id }}"
-                                    {{ in_array($subCategory->id, $selectedSubCategories) ? 'selected' : '' }}>
-                                {{ $subCategory->name }}
+                        <?php $__currentLoopData = $subCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $subCategory): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($subCategory->id); ?>"
+                                    <?php echo e(in_array($subCategory->id, $selectedSubCategories) ? 'selected' : ''); ?>>
+                                <?php echo e($subCategory->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
@@ -279,19 +347,20 @@
                             multiple
                             class="w-full border rounded p-2"
                             size="5">
-                        @foreach($types as $type)
-                            <option value="{{ $type->id }}"
-                                    {{ in_array($type->id, $selectedTypes) ? 'selected' : '' }}>
-                                {{ $type->name }}
+                        <?php $__currentLoopData = $types; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $type): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($type->id); ?>"
+                                    <?php echo e(in_array($type->id, $selectedTypes) ? 'selected' : ''); ?>>
+                                <?php echo e($type->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
             </div>
 
-            {{-- Boutons --}}
+            
             <div class="flex justify-end space-x-3">
-                <a href="{{ route('admin.mods.index') }}" 
+                <a href="<?php echo e(route('admin.mods.index')); ?>" 
                    class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
                     Annuler
                 </a>
@@ -559,4 +628,6 @@ function loadImageFromBase64(base64) {
     img.src = base64;
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/mods/edit.blade.php ENDPATH**/ ?>

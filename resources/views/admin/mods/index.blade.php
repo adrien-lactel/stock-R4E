@@ -17,6 +17,86 @@
         </div>
     </div>
 
+    {{-- Filtres --}}
+    <div class="mb-6 flex gap-2 items-center">
+        <a href="{{ route('admin.mods.index') }}" 
+           class="px-4 py-2 rounded {{ !request('filter') ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' }} border">
+            🔧 Tous les mods
+        </a>
+        <a href="{{ route('admin.mods.index', ['filter' => 'r4e']) }}" 
+           class="px-4 py-2 rounded {{ request('filter') === 'r4e' ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' }} border">
+            ✨ Mods R4E (icônes personnalisées)
+        </a>
+        <a href="{{ route('admin.mods.index', ['filter' => 'emoji']) }}" 
+           class="px-4 py-2 rounded {{ request('filter') === 'emoji' ? 'bg-yellow-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' }} border">
+            😀 Emojis standards
+        </a>
+        
+        @if(request('filter') === 'r4e')
+            <button onclick="document.getElementById('icon-gallery').classList.toggle('hidden')"
+                    class="ml-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded hover:from-purple-700 hover:to-pink-700 shadow-md">
+                🎨 Galerie d'icônes R4E
+            </button>
+        @endif
+    </div>
+    
+    {{-- Galerie des icônes R4E --}}
+    @if(request('filter') === 'r4e')
+        <div id="icon-gallery" class="hidden mb-6 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300 rounded-lg p-6 shadow-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-purple-800">🎨 Galerie des Icônes R4E Personnalisées</h2>
+                <button onclick="document.getElementById('icon-gallery').classList.add('hidden')"
+                        class="text-gray-500 hover:text-gray-700">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                @forelse($r4eIcons as $mod)
+                    <div class="bg-white rounded-lg border-2 border-purple-200 p-3 hover:border-purple-400 transition group relative">
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="relative">
+                                <img src="{{ $mod->icon }}" 
+                                     alt="{{ $mod->name }}" 
+                                     class="w-16 h-16" 
+                                     style="image-rendering: pixelated;">
+                                <span class="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-md">✨</span>
+                            </div>
+                            <p class="text-xs text-center font-medium text-gray-700 truncate w-full" title="{{ $mod->name }}">
+                                {{ Str::limit($mod->name, 15) }}
+                            </p>
+                            <div class="flex gap-1 w-full">
+                                <button onclick="copyIconToClipboard('{{ $mod->id }}', '{{ addslashes($mod->icon) }}')"
+                                        class="flex-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded hover:bg-blue-200 border border-blue-300"
+                                        title="Copier l'icône">
+                                    📋
+                                </button>
+                                <a href="{{ route('admin.mods.edit', $mod) }}"
+                                   class="flex-1 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded hover:bg-indigo-200 border border-indigo-300 text-center"
+                                   title="Éditer">
+                                    ✏️
+                                </a>
+                                <button onclick="deleteIcon({{ $mod->id }}, '{{ addslashes($mod->name) }}')"
+                                        class="flex-1 px-2 py-1 bg-red-100 text-red-800 text-xs rounded hover:bg-red-200 border border-red-300"
+                                        title="Supprimer l'icône">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-span-full text-center py-8 text-gray-500">
+                        Aucune icône R4E personnalisée trouvée.
+                    </div>
+                @endforelse
+            </div>
+            
+            <div id="copy-feedback" class="hidden mt-4 p-3 bg-green-100 text-green-800 rounded border border-green-300">
+                ✅ Icône copiée dans le presse-papiers !
+            </div>
+        </div>
+    @endif
+
     @if(session('success'))
         <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
             {{ session('success') }}
@@ -27,6 +107,7 @@
         <table class="w-full border-collapse">
             <thead class="bg-pink-100">
                 <tr>
+                    <th class="p-3 text-left">Icône</th>
                     <th class="p-3 text-left">Nom</th>
                     <th class="p-3 text-left">Description</th>
                     <th class="p-3 text-left">Type</th>
@@ -39,6 +120,16 @@
             <tbody>
                 @forelse($mods as $mod)
                     <tr class="border-t border-pink-100 bg-white">
+                        <td class="p-3 text-center bg-gray-50">
+                            @if($mod->icon && str_starts_with($mod->icon, 'data:image'))
+                                <div class="relative inline-block">
+                                    <img src="{{ $mod->icon }}" alt="{{ $mod->name }}" class="w-8 h-8 mx-auto" style="image-rendering: pixelated;">
+                                    <span class="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center" title="Mod R4E personnalisé">✨</span>
+                                </div>
+                            @else
+                                <span class="text-2xl">{{ $mod->icon ?? '🔧' }}</span>
+                            @endif
+                        </td>
                         <td class="p-3 font-semibold bg-blue-50">{{ $mod->name }}</td>
                         <td class="p-3 text-sm text-gray-700 bg-purple-50">{{ Str::limit($mod->description, 60) }}</td>
                         <td class="p-3 bg-green-50">
@@ -164,4 +255,44 @@
     </div>
 
 </div>
+
+<script>
+function copyIconToClipboard(modId, iconBase64) {
+    navigator.clipboard.writeText(iconBase64).then(() => {
+        const feedback = document.getElementById('copy-feedback');
+        feedback.classList.remove('hidden');
+        setTimeout(() => {
+            feedback.classList.add('hidden');
+        }, 2000);
+    }).catch(err => {
+        alert('Erreur lors de la copie: ' + err);
+    });
+}
+
+function deleteIcon(modId, modName) {
+    if (!confirm(`Voulez-vous vraiment supprimer l'icône personnalisée du mod "${modName}" ?\n\nL'icône sera remplacée par 🔧`)) {
+        return;
+    }
+    
+    fetch(`{{ url('admin/mods') }}/${modId}/delete-icon`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur: ' + (data.message || 'Impossible de supprimer l\'icône'));
+        }
+    })
+    .catch(error => {
+        alert('Erreur réseau: ' + error);
+    });
+}
+</script>
+
 @endsection

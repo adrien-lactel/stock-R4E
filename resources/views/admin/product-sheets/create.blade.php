@@ -175,10 +175,39 @@
             {{-- CRITÈRES DE COLLECTION --}}
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">⭐ Critères de collection</h2>
+                <p class="text-sm text-gray-600 mb-4">Cochez les critères que vous souhaitez afficher sur cette fiche produit</p>
+
+                {{-- Sélection des critères --}}
+                <div class="mb-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="box_condition" checked>
+                        <span class="ml-2 text-sm">État de la boîte</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="manual_condition" checked>
+                        <span class="ml-2 text-sm">État du manuel</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="media_condition" checked>
+                        <span class="ml-2 text-sm">État du support</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="completeness" checked>
+                        <span class="ml-2 text-sm">Complétude</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="rarity" checked>
+                        <span class="ml-2 text-sm">Rareté</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="overall_condition" checked>
+                        <span class="ml-2 text-sm">État général</span>
+                    </label>
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{-- Boîte --}}
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="box_condition">
                         <label class="block text-sm font-medium mb-2">État de la boîte</label>
                         <div class="flex gap-1" data-criterion="box_condition">
                             @for($i = 1; $i <= 5; $i++)
@@ -190,7 +219,7 @@
                     </div>
 
                     {{-- Manuel --}}
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="manual_condition">
                         <label class="block text-sm font-medium mb-2">État du manuel</label>
                         <div class="flex gap-1" data-criterion="manual_condition">
                             @for($i = 1; $i <= 5; $i++)
@@ -202,7 +231,7 @@
                     </div>
 
                     {{-- Support physique (jeu/console) --}}
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="media_condition">
                         <label class="block text-sm font-medium mb-2">État du support (jeu/console)</label>
                         <div class="flex gap-1" data-criterion="media_condition">
                             @for($i = 1; $i <= 5; $i++)
@@ -214,7 +243,7 @@
                     </div>
 
                     {{-- Complétude --}}
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="completeness">
                         <label class="block text-sm font-medium mb-2">Complétude</label>
                         <div class="flex gap-1" data-criterion="completeness">
                             @for($i = 1; $i <= 5; $i++)
@@ -226,7 +255,7 @@
                     </div>
 
                     {{-- Rareté --}}
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="rarity">
                         <label class="block text-sm font-medium mb-2">Rareté</label>
                         <div class="flex gap-1" data-criterion="rarity">
                             @for($i = 1; $i <= 5; $i++)
@@ -238,7 +267,7 @@
                     </div>
 
                     {{-- État général --}}
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="overall_condition">
                         <label class="block text-sm font-medium mb-2">État général</label>
                         <div class="flex gap-1" data-criterion="overall_condition">
                             @for($i = 1; $i <= 5; $i++)
@@ -251,6 +280,37 @@
                 </div>
 
                 <input type="hidden" name="condition_criteria" id="condition_criteria_input" value="{}">
+            </div>
+
+            {{-- MODS DISPONIBLES --}}
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">🔧 Mods / Accessoires / Opérations</h2>
+                <p class="text-sm text-gray-600 mb-4">Cochez les mods que vous souhaitez afficher sur la miniature de cette fiche</p>
+
+                @if($mods->count() > 0)
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+                        @foreach($mods as $mod)
+                            <label class="flex items-start border rounded-lg p-3 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" class="mod-checkbox rounded mt-1 mr-2" value="{{ $mod->id }}" data-name="{{ $mod->name }}" data-icon="{{ $mod->icon ?? '🔧' }}">
+                                <div class="flex-1">
+                                    <div class="font-medium text-sm flex items-center gap-2">
+                                        @if($mod->icon && str_starts_with($mod->icon, 'data:image/'))
+                                            <img src="{{ $mod->icon }}" alt="{{ $mod->name }}" class="w-5 h-5" style="image-rendering: pixelated;">
+                                        @else
+                                            <span class="text-lg">{{ $mod->icon ?? '🔧' }}</span>
+                                        @endif
+                                        <span>{{ $mod->name }}</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500">{{ $mod->type }}</div>
+                                </div>
+                            </label>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-sm text-gray-500 italic">Aucun mod disponible. <a href="{{ route('admin.mods.create') }}" class="text-indigo-600 hover:underline">Créer un mod</a></p>
+                @endif
+
+                <input type="hidden" name="featured_mods" id="featured_mods_input" value="[]">
             </div>
 
             {{-- IMAGES --}}
@@ -364,6 +424,47 @@ document.addEventListener('DOMContentLoaded', function() {
         // Mettre à jour le champ hidden
         document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
     };
+
+    // Gestion de l'affichage/masquage des critères
+    document.querySelectorAll('.criterion-toggle').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const criterion = this.value;
+            const container = document.querySelector(`[data-criterion-container="${criterion}"]`);
+            
+            if (this.checked) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                // Supprimer la valeur du critère désactivé
+                delete conditionCriteria[criterion];
+                // Réinitialiser les étoiles
+                const stars = container.querySelectorAll('.star-btn');
+                stars.forEach(star => {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                });
+                // Mettre à jour le champ hidden
+                document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+            }
+        });
+    });
+
+    // Gestion des mods sélectionnés
+    let featuredMods = [];
+    document.querySelectorAll('.mod-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                featuredMods.push({
+                    id: parseInt(this.value),
+                    name: this.dataset.name,
+                    icon: this.dataset.icon || '🔧'
+                });
+            } else {
+                featuredMods = featuredMods.filter(m => m.id !== parseInt(this.value));
+            }
+            document.getElementById('featured_mods_input').value = JSON.stringify(featuredMods);
+        });
+    });
 
     // Cascading selects pour taxonomie
     (function initTaxonomy() {

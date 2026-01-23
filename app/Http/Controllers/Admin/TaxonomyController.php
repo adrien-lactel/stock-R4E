@@ -81,6 +81,12 @@ class TaxonomyController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        // Si la requête demande du JSON, retourner du JSON
+        if (request()->wantsJson() || request()->header('Accept') === 'application/json') {
+            return response()->json($subCategories);
+        }
+
+        // Sinon, retourner du HTML (pour compatibilité)
         $html = '<option value="">-- Sélectionner --</option>';
         foreach ($subCategories as $sub) {
             $html .= '<option value="' . $sub->id . '">' . e($sub->name) . '</option>';
@@ -99,6 +105,12 @@ class TaxonomyController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Si la requête demande du JSON, retourner du JSON
+        if (request()->wantsJson() || request()->header('Accept') === 'application/json') {
+            return response()->json($types);
+        }
+
+        // Sinon, retourner du HTML (pour compatibilité)
         $html = '<option value="">-- Sélectionner --</option>';
         foreach ($types as $type) {
             $html .= '<option value="' . $type->id . '">' . e($type->name) . '</option>';

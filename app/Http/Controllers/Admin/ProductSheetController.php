@@ -9,6 +9,7 @@ use App\Models\GameBoyGame;
 use App\Models\ArticleCategory;
 use App\Models\ArticleSubCategory;
 use App\Models\ArticleType;
+use App\Models\Mod;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -33,6 +34,7 @@ class ProductSheetController extends Controller
     public function create(Request $request)
     {
         $categories = ArticleCategory::with('subCategories.types')->orderBy('name')->get();
+        $mods = Mod::orderBy('name')->get();
         $selectedType = null;
         $selectedSubCategory = null;
         $selectedCategory = null;
@@ -51,6 +53,7 @@ class ProductSheetController extends Controller
         return view('admin.product-sheets.create', [
             'sheet' => new ProductSheet(),
             'categories' => $categories,
+            'mods' => $mods,
             'selectedCategory' => $selectedCategory,
             'selectedSubCategory' => $selectedSubCategory,
             'selectedType' => $selectedType,
@@ -294,6 +297,16 @@ class ProductSheetController extends Controller
             $request->merge(['tags' => json_decode($tags, true) ?: []]);
         }
 
+        $conditionCriteria = $request->input('condition_criteria');
+        if (is_string($conditionCriteria)) {
+            $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
+        }
+
+        $featuredMods = $request->input('featured_mods');
+        if (is_string($featuredMods)) {
+            $request->merge(['featured_mods' => json_decode($featuredMods, true) ?: []]);
+        }
+
         $data = $request->validate([
             'article_type_id' => 'required|exists:article_types,id',
             'name' => 'required|string|max:255',
@@ -305,6 +318,8 @@ class ProductSheetController extends Controller
             'main_image' => 'nullable|url',
             'marketing_description' => 'nullable|string',
             'tags' => 'nullable|array',
+            'condition_criteria' => 'nullable|array',
+            'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
 
@@ -330,6 +345,7 @@ class ProductSheetController extends Controller
     public function edit(ProductSheet $productSheet)
     {
         $categories = ArticleCategory::with('subCategories.types')->orderBy('name')->get();
+        $mods = Mod::orderBy('name')->get();
         $selectedType = null;
         $selectedSubCategory = null;
         $selectedCategory = null;
@@ -347,6 +363,7 @@ class ProductSheetController extends Controller
         return view('admin.product-sheets.edit', [
             'sheet' => $productSheet,
             'categories' => $categories,
+            'mods' => $mods,
             'selectedCategory' => $selectedCategory,
             'selectedSubCategory' => $selectedSubCategory,
             'selectedType' => $selectedType,
@@ -374,6 +391,11 @@ class ProductSheetController extends Controller
             $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
         }
 
+        $featuredMods = $request->input('featured_mods');
+        if (is_string($featuredMods)) {
+            $request->merge(['featured_mods' => json_decode($featuredMods, true) ?: []]);
+        }
+
         $data = $request->validate([
             'article_type_id' => 'required|exists:article_types,id',
             'name' => 'required|string|max:255',
@@ -386,6 +408,7 @@ class ProductSheetController extends Controller
             'marketing_description' => 'nullable|string',
             'tags' => 'nullable|array',
             'condition_criteria' => 'nullable|array',
+            'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
 

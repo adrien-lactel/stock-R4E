@@ -12,6 +12,7 @@ class Mod extends Model
 
     protected $fillable = [
         'name',
+        'icon',
         'description',
         'purchase_price',
         'valorisation',

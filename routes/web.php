@@ -357,6 +357,8 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
             ->name('mods.distribute');
         Route::post('/mods/{mod}/send-to-repairer', [\App\Http\Controllers\Admin\ModAdminController::class, 'sendToRepairer'])
             ->name('mods.send-to-repairer');
+        Route::post('/mods/{mod}/delete-icon', [\App\Http\Controllers\Admin\ModAdminController::class, 'deleteIcon'])
+            ->name('mods.delete-icon');
 
         /* =====================
         | OFFRES DE CONSOLES

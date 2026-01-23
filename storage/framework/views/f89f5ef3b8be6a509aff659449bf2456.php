@@ -178,10 +178,39 @@
             
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">⭐ Critères de collection</h2>
+                <p class="text-sm text-gray-600 mb-4">Cochez les critères que vous souhaitez afficher sur cette fiche produit</p>
+
+                
+                <div class="mb-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="box_condition" checked>
+                        <span class="ml-2 text-sm">État de la boîte</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="manual_condition" checked>
+                        <span class="ml-2 text-sm">État du manuel</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="media_condition" checked>
+                        <span class="ml-2 text-sm">État du support</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="completeness" checked>
+                        <span class="ml-2 text-sm">Complétude</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="rarity" checked>
+                        <span class="ml-2 text-sm">Rareté</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="criterion-toggle rounded" value="overall_condition" checked>
+                        <span class="ml-2 text-sm">État général</span>
+                    </label>
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="box_condition">
                         <label class="block text-sm font-medium mb-2">État de la boîte</label>
                         <div class="flex gap-1" data-criterion="box_condition">
                             <?php for($i = 1; $i <= 5; $i++): ?>
@@ -193,7 +222,7 @@
                     </div>
 
                     
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="manual_condition">
                         <label class="block text-sm font-medium mb-2">État du manuel</label>
                         <div class="flex gap-1" data-criterion="manual_condition">
                             <?php for($i = 1; $i <= 5; $i++): ?>
@@ -205,7 +234,7 @@
                     </div>
 
                     
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="media_condition">
                         <label class="block text-sm font-medium mb-2">État du support (jeu/console)</label>
                         <div class="flex gap-1" data-criterion="media_condition">
                             <?php for($i = 1; $i <= 5; $i++): ?>
@@ -217,7 +246,7 @@
                     </div>
 
                     
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="completeness">
                         <label class="block text-sm font-medium mb-2">Complétude</label>
                         <div class="flex gap-1" data-criterion="completeness">
                             <?php for($i = 1; $i <= 5; $i++): ?>
@@ -229,7 +258,7 @@
                     </div>
 
                     
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="rarity">
                         <label class="block text-sm font-medium mb-2">Rareté</label>
                         <div class="flex gap-1" data-criterion="rarity">
                             <?php for($i = 1; $i <= 5; $i++): ?>
@@ -241,7 +270,7 @@
                     </div>
 
                     
-                    <div class="border rounded-lg p-4">
+                    <div class="border rounded-lg p-4" data-criterion-container="overall_condition">
                         <label class="block text-sm font-medium mb-2">État général</label>
                         <div class="flex gap-1" data-criterion="overall_condition">
                             <?php for($i = 1; $i <= 5; $i++): ?>
@@ -367,6 +396,30 @@ document.addEventListener('DOMContentLoaded', function() {
         // Mettre à jour le champ hidden
         document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
     };
+
+    // Gestion de l'affichage/masquage des critères
+    document.querySelectorAll('.criterion-toggle').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const criterion = this.value;
+            const container = document.querySelector(`[data-criterion-container="${criterion}"]`);
+            
+            if (this.checked) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                // Supprimer la valeur du critère désactivé
+                delete conditionCriteria[criterion];
+                // Réinitialiser les étoiles
+                const stars = container.querySelectorAll('.star-btn');
+                stars.forEach(star => {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                });
+                // Mettre à jour le champ hidden
+                document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+            }
+        });
+    });
 
     // Cascading selects pour taxonomie
     (function initTaxonomy() {

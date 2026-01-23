@@ -33,14 +33,42 @@
                         <?php
                             $displayImage = $sheet->main_image ?: ($sheet->images[0] ?? null);
                         ?>
-                        <?php if($displayImage): ?>
-                            <img src="<?php echo e($displayImage); ?>" alt="<?php echo e($sheet->name); ?>" 
-                                 class="w-full h-48 object-cover">
-                        <?php else: ?>
-                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400">
-                                Aucune image
-                            </div>
-                        <?php endif; ?>
+                        <div class="relative">
+                            <?php if($displayImage): ?>
+                                <img src="<?php echo e($displayImage); ?>" alt="<?php echo e($sheet->name); ?>" 
+                                     class="w-full h-48 object-cover">
+                            <?php else: ?>
+                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400">
+                                    Aucune image
+                                </div>
+                            <?php endif; ?>
+                            
+                            
+                            <?php if($sheet->featured_mods && count($sheet->featured_mods) > 0): ?>
+                                <div class="absolute top-2 right-2 flex flex-wrap gap-1 max-w-[60px]">
+                                    <?php $__currentLoopData = $sheet->featured_mods; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
+                                            // Si l'icône n'est pas dans featured_mods, la récupérer depuis la DB
+                                            $icon = $mod['icon'] ?? null;
+                                            if (!$icon && isset($mod['id'])) {
+                                                $modModel = \App\Models\Mod::find($mod['id']);
+                                                $icon = $modModel?->icon ?? '🔧';
+                                            }
+                                            $icon = $icon ?: '🔧';
+                                            $isBase64 = str_starts_with($icon, 'data:image');
+                                        ?>
+                                        <span class="bg-white/90 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg" 
+                                              title="<?php echo e($mod['name']); ?>">
+                                            <?php if($isBase64): ?>
+                                                <img src="<?php echo e($icon); ?>" alt="<?php echo e($mod['name']); ?>" class="w-6 h-6" style="image-rendering: pixelated;">
+                                            <?php else: ?>
+                                                <span class="text-lg"><?php echo e($icon); ?></span>
+                                            <?php endif; ?>
+                                        </span>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
                         
                         <div class="p-4">
@@ -78,6 +106,62 @@
                             <?php endif; ?>
 
                             
+                            <?php if($sheet->condition_criteria && count($sheet->condition_criteria) > 0): ?>
+                                <div class="mb-3 space-y-1">
+                                    <?php $__currentLoopData = $sheet->condition_criteria; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $criterion => $rating): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
+                                            $labels = [
+                                                'box_condition' => 'Boîte',
+                                                'manual_condition' => 'Manuel',
+                                                'media_condition' => 'Support',
+                                                'completeness' => 'Complet',
+                                                'rarity' => 'Rareté',
+                                                'overall_condition' => 'État général'
+                                            ];
+                                            $label = $labels[$criterion] ?? $criterion;
+                                        ?>
+                                        <div class="flex items-center text-xs">
+                                            <span class="text-gray-600 w-20 flex-shrink-0"><?php echo e($label); ?>:</span>
+                                            <div class="flex gap-0.5">
+                                                <?php for($i = 1; $i <= 5; $i++): ?>
+                                                    <span class="<?php echo e($i <= $rating ? 'text-yellow-400' : 'text-gray-300'); ?>">★</span>
+                                                <?php endfor; ?>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </div>
+                            <?php endif; ?>
+
+                            
+                            <?php if($sheet->featured_mods && count($sheet->featured_mods) > 0): ?>
+                                <div class="mb-3">
+                                    <div class="text-xs font-medium text-gray-700 mb-1">🔧 Inclus:</div>
+                                    <div class="flex flex-wrap gap-1">
+                                        <?php $__currentLoopData = $sheet->featured_mods; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php
+                                                // Si l'icône n'est pas dans featured_mods, la récupérer depuis la DB
+                                                $icon = $mod['icon'] ?? null;
+                                                if (!$icon && isset($mod['id'])) {
+                                                    $modModel = \App\Models\Mod::find($mod['id']);
+                                                    $icon = $modModel?->icon ?? '🔧';
+                                                }
+                                                $icon = $icon ?: '🔧';
+                                                $isBase64 = str_starts_with($icon, 'data:image');
+                                            ?>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                                                <?php if($isBase64): ?>
+                                                    <img src="<?php echo e($icon); ?>" alt="<?php echo e($mod['name']); ?>" class="w-4 h-4" style="image-rendering: pixelated;">
+                                                <?php else: ?>
+                                                    <span><?php echo e($icon); ?></span>
+                                                <?php endif; ?>
+                                                <span><?php echo e($mod['name']); ?></span>
+                                            </span>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            
                             <?php if($sheet->images && count($sheet->images) > 0): ?>
                                 <p class="text-xs text-gray-500 mb-3">
                                     🖼️ <?php echo e(count($sheet->images)); ?> image(s)
@@ -90,16 +174,6 @@
                                    class="flex-1 text-center px-3 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700">
                                     ✏️ Éditer
                                 </a>
-                                
-                                <form method="POST" action="<?php echo e(route('admin.product-sheets.duplicate', $sheet)); ?>"
-                                      class="flex-shrink-0">
-                                    <?php echo csrf_field(); ?>
-                                    <button type="submit" 
-                                            class="px-3 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
-                                            title="Dupliquer cette fiche">
-                                        📋
-                                    </button>
-                                </form>
                                 
                                 <form method="POST" action="<?php echo e(route('admin.product-sheets.destroy', $sheet)); ?>"
                                       onsubmit="return confirm('Supprimer cette fiche produit ?')"

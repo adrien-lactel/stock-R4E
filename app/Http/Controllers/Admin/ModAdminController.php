@@ -16,13 +16,33 @@ class ModAdminController extends Controller
     /**
      * Liste des mods
      */
-    public function index()
+    public function index(Request $request)
     {
-        $mods = Mod::with(['compatibleCategories', 'compatibleSubCategories', 'compatibleTypes'])
-            ->orderBy('name')
-            ->paginate(20);
+        $query = Mod::with(['compatibleCategories', 'compatibleSubCategories', 'compatibleTypes']);
 
-        return view('admin.mods.index', compact('mods'));
+        // Filtrer selon le type d'icône
+        if ($request->get('filter') === 'r4e') {
+            // Uniquement les mods avec icônes personnalisées (base64)
+            $query->where('icon', 'LIKE', 'data:image%');
+        } elseif ($request->get('filter') === 'emoji') {
+            // Uniquement les mods avec emojis (pas de base64)
+            $query->where(function($q) {
+                $q->whereNull('icon')
+                  ->orWhere('icon', 'NOT LIKE', 'data:image%');
+            });
+        }
+
+        $mods = $query->orderBy('name')->paginate(20);
+
+        // Pour la galerie R4E, récupérer tous les mods avec icônes personnalisées
+        $r4eIcons = [];
+        if ($request->get('filter') === 'r4e') {
+            $r4eIcons = Mod::where('icon', 'LIKE', 'data:image%')
+                ->orderBy('name')
+                ->get();
+        }
+
+        return view('admin.mods.index', compact('mods', 'r4eIcons'));
     }
 
     /**
@@ -33,8 +53,13 @@ class ModAdminController extends Controller
         $categories = ArticleCategory::orderBy('name')->get();
         $subCategories = ArticleSubCategory::orderBy('name')->get();
         $types = ArticleType::orderBy('name')->get();
+        
+        // Récupérer toutes les icônes R4E personnalisées pour la galerie
+        $r4eIcons = Mod::where('icon', 'LIKE', 'data:image%')
+            ->orderBy('name')
+            ->get();
 
-        return view('admin.mods.create', compact('categories', 'subCategories', 'types'));
+        return view('admin.mods.create', compact('categories', 'subCategories', 'types', 'r4eIcons'));
     }
 
     /**
@@ -44,6 +69,7 @@ class ModAdminController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'icon' => 'nullable|string',
             'description' => 'required|string',
             'purchase_price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
@@ -58,6 +84,7 @@ class ModAdminController extends Controller
 
         $mod = Mod::create([
             'name' => $validated['name'],
+            'icon' => $validated['icon'] ?? '🔧',
             'description' => $validated['description'],
             'purchase_price' => $validated['purchase_price'],
             'quantity' => $validated['quantity'],
@@ -89,8 +116,14 @@ class ModAdminController extends Controller
         $categories = ArticleCategory::orderBy('name')->get();
         $subCategories = ArticleSubCategory::orderBy('name')->get();
         $types = ArticleType::orderBy('name')->get();
+        
+        // Récupérer toutes les icônes R4E personnalisées pour la galerie
+        $r4eIcons = Mod::where('icon', 'LIKE', 'data:image%')
+            ->where('id', '!=', $mod->id) // Exclure le mod en cours d'édition
+            ->orderBy('name')
+            ->get();
 
-        return view('admin.mods.edit', compact('mod', 'categories', 'subCategories', 'types'));
+        return view('admin.mods.edit', compact('mod', 'categories', 'subCategories', 'types', 'r4eIcons'));
     }
 
     /**
@@ -100,6 +133,7 @@ class ModAdminController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'icon' => 'nullable|string',
             'description' => 'required|string',
             'purchase_price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
@@ -114,6 +148,7 @@ class ModAdminController extends Controller
 
         $mod->update([
             'name' => $validated['name'],
+            'icon' => $validated['icon'] ?? '🔧',
             'description' => $validated['description'],
             'purchase_price' => $validated['purchase_price'],
             'quantity' => $validated['quantity'],
@@ -210,5 +245,18 @@ class ModAdminController extends Controller
 
         return back()->with('success', "{$validated['quantity']} unité(s) de {$mod->name} envoyée(s) à " . 
             Repairer::find($validated['repairer_id'])->name);
+    }
+
+    /**
+     * Supprimer l'icône personnalisée d'un mod (la remplacer par l'icône par défaut)
+     */
+    public function deleteIcon(Mod $mod)
+    {
+        $mod->update(['icon' => '🔧']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Icône supprimée avec succès'
+        ]);
     }
 }

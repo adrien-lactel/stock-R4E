@@ -20,6 +20,7 @@ class ProductSheet extends Model
         'marketing_description',
         'tags',
         'condition_criteria',
+        'featured_mods',
         'is_active',
     ];
 
@@ -27,6 +28,7 @@ class ProductSheet extends Model
         'images' => 'array',
         'tags' => 'array',
         'condition_criteria' => 'array',
+        'featured_mods' => 'array',
         'is_active' => 'boolean',
     ];
 
