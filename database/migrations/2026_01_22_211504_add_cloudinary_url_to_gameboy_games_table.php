@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         // Vérifier si la table existe avant d'essayer de la modifier
-        if (Schema::hasTable('gameboy_games')) {
-            Schema::table('gameboy_games', function (Blueprint $table) {
-                if (!Schema::hasColumn('gameboy_games', 'cloudinary_url')) {
+        if (Schema::hasTable('game_boy_games')) {
+            Schema::table('game_boy_games', function (Blueprint $table) {
+                if (!Schema::hasColumn('game_boy_games', 'cloudinary_url')) {
                     $table->string('cloudinary_url')->nullable()->after('image_url');
                 }
             });
@@ -26,9 +26,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('gameboy_games')) {
-            Schema::table('gameboy_games', function (Blueprint $table) {
-                if (Schema::hasColumn('gameboy_games', 'cloudinary_url')) {
+        if (Schema::hasTable('game_boy_games')) {
+            Schema::table('game_boy_games', function (Blueprint $table) {
+                if (Schema::hasColumn('game_boy_games', 'cloudinary_url')) {
                     $table->dropColumn('cloudinary_url');
                 }
             });
