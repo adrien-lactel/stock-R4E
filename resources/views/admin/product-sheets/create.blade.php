@@ -466,6 +466,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Mettre à jour les champs hidden avant la soumission du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Mettre à jour condition_criteria
+        document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+        // Mettre à jour tags
+        const tagsInput = document.getElementById('tags_input').value;
+        const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
+        document.getElementById('tags_hidden').value = JSON.stringify(tagsArray);
+    });
+
     // Cascading selects pour taxonomie
     (function initTaxonomy() {
         const categorySelect = document.getElementById('category_select');
