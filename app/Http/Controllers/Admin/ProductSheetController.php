@@ -10,6 +10,7 @@ use App\Models\ArticleCategory;
 use App\Models\ArticleSubCategory;
 use App\Models\ArticleType;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class ProductSheetController extends Controller
@@ -214,13 +215,21 @@ class ProductSheetController extends Controller
 
             \Log::info('Image uploadée vers Cloudinary', ['url' => $uploadedFileUrl]);
 
-            // Sauvegarder l'URL Cloudinary dans la BDD pour réutilisation
+            // Sauvegarder l'URL Cloudinary dans la BDD pour réutilisation (si la colonne existe)
             if ($romId) {
-                $game = GameBoyGame::where('rom_id', $romId)->first();
-                if ($game) {
-                    $game->cloudinary_url = $uploadedFileUrl;
-                    $game->save();
-                    \Log::info('URL Cloudinary sauvegardée pour ROM', ['rom_id' => $romId]);
+                try {
+                    $game = GameBoyGame::where('rom_id', $romId)->first();
+                    if ($game && Schema::hasColumn('game_boy_games', 'cloudinary_url')) {
+                        $game->cloudinary_url = $uploadedFileUrl;
+                        $game->save();
+                        \Log::info('URL Cloudinary sauvegardée pour ROM', ['rom_id' => $romId]);
+                    }
+                } catch (\Exception $e) {
+                    // Si la colonne n'existe pas, on ignore l'erreur et on continue
+                    \Log::warning('Impossible de sauvegarder cloudinary_url', [
+                        'rom_id' => $romId,
+                        'error' => $e->getMessage()
+                    ]);
                 }
             }
 
