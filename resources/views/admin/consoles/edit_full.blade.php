@@ -308,10 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchJson(url) { const res = await fetch(url, { headers: { 'Accept': 'application/json' }}); if (!res.ok) throw new Error(`HTTP ${res.status}`); return await res.json(); }
 
-  async function loadSubCategories(categoryId, applyOld = false) {
+  async function loadSubCategories(brandId, applyOld = false) {
     clearSelect(subSelect); clearSelect(typeSelect);
-    if (!categoryId) return;
-    const url = `{{ route('admin.ajax.sub-categories', ['category' => '__ID__']) }}`.replace('__ID__', categoryId);
+    if (!brandId) return;
+    const url = `{{ route('admin.ajax.sub-categories', ['brand' => '__ID__']) }}`.replace('__ID__', brandId);
     const data = await fetchJson(url);
     const list = Array.isArray(data) ? data : (data.data ?? []);
     list.forEach(sc => { const opt = document.createElement('option'); opt.value = sc.id; opt.textContent = sc.name; subSelect.appendChild(opt); });

@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const SUBS_URL_TEMPLATE = `{{ route('admin.ajax.sub-categories', ['category' => '__ID__']) }}`;
+  const SUBS_URL_TEMPLATE = `{{ route('admin.ajax.sub-categories', ['brand' => '__ID__']) }}`;
   const TYPES_URL_TEMPLATE = `{{ route('admin.ajax.types', ['subCategory' => '__ID__']) }}`;
 
   async function loadSubs(catId, applyOld = false) {

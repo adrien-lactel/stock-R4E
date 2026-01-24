@@ -46,6 +46,14 @@
             </select>
         </div>
 
+        {{-- Marque --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Marque</label>
+            <select id="filter_brand" name="brand" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Toutes</option>
+            </select>
+        </div>
+
         {{-- Sous-catégorie --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Sous-catégorie</label>
@@ -109,9 +117,10 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const cat = document.getElementById('filter_category');
+      const brand = document.getElementById('filter_brand');
       const sub = document.getElementById('filter_subcategory');
       const type = document.getElementById('filter_type');
-      if (!cat || !sub || !type) return;
+      if (!cat || !brand || !sub || !type) return;
 
       async function fetchJson(url) {
         try {
@@ -124,14 +133,31 @@
         }
       }
 
-      const SUBS_URL_TEMPLATE = `{{ route('admin.ajax.sub-categories', ['category' => '__ID__']) }}`;
+      const BRANDS_URL_TEMPLATE = `{{ route('admin.ajax.brands', ['category' => '__ID__']) }}`;
+      const SUBS_URL_TEMPLATE = `{{ route('admin.ajax.sub-categories', ['brand' => '__ID__']) }}`;
       const TYPES_URL_TEMPLATE = `{{ route('admin.ajax.types', ['subCategory' => '__ID__']) }}`;
 
-      async function loadSubs(catId, applyOld = false) {
+      async function loadBrands(catId, applyOld = false) {
+        brand.innerHTML = '<option value="">Toutes</option>';
         sub.innerHTML = '<option value="">Toutes</option>';
         type.innerHTML = '<option value="">Tous</option>';
         if (!catId) return;
-        const url = SUBS_URL_TEMPLATE.replace('__ID__', catId);
+        const url = BRANDS_URL_TEMPLATE.replace('__ID__', catId);
+        const data = await fetchJson(url);
+        const list = Array.isArray(data) ? data : (data.data ?? []);
+        list.forEach(b => {
+          const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; brand.appendChild(opt);
+        });
+        if (applyOld && @json(request('brand'))) {
+          try { brand.value = String(@json(request('brand'))); } catch(e){}
+        }
+      }
+
+      async function loadSubs(brandId, applyOld = false) {
+        sub.innerHTML = '<option value="">Toutes</option>';
+        type.innerHTML = '<option value="">Tous</option>';
+        if (!brandId) return;
+        const url = SUBS_URL_TEMPLATE.replace('__ID__', brandId);
         const data = await fetchJson(url);
         const list = Array.isArray(data) ? data : (data.data ?? []);
         list.forEach(s => {
@@ -152,14 +178,18 @@
         if (applyOld && @json(request('type'))) { try { type.value = String(@json(request('type'))); } catch(e){} }
       }
 
-      cat.addEventListener('change', async () => { await loadSubs(cat.value, false); });
+      cat.addEventListener('change', async () => { await loadBrands(cat.value, false); });
+      brand.addEventListener('change', async () => { await loadSubs(brand.value, false); });
       sub.addEventListener('change', async () => { await loadTypes(sub.value, false); });
 
       // Init
       (async () => {
         if (cat.value) {
-          await loadSubs(cat.value, true);
-          if (sub.value) { await loadTypes(sub.value, true); }
+          await loadBrands(cat.value, true);
+          if (brand.value) {
+            await loadSubs(brand.value, true);
+            if (sub.value) { await loadTypes(sub.value, true); }
+          }
         }
       })();
     });
@@ -172,7 +202,7 @@
             <thead class="bg-pink-100">
                 <tr>
                     <th class="px-4 py-3 text-center">ID</th>
-                    <th class="px-4 py-3 text-left">Catégorie / Sous-cat. / Type</th>
+                    <th class="px-4 py-3 text-left">Taxonomie (Catégorie > Marque > Sous-cat. > Type)</th>
                     <th class="px-4 py-3 text-left">Localisation</th>
                     <th class="px-4 py-3 text-center">Statut</th>
                     <th class="px-4 py-3 text-right">Prix achat</th>
@@ -196,12 +226,14 @@
                             @endif
                         </td>
                         <td class="px-4 py-3">
-                            <div>
-                                <span class="font-semibold">{{ $console->articleCategory?->name ?? '—' }}</span>
-                                <span class="text-gray-400"> / </span>
-                                <span>{{ $console->articleSubCategory?->name ?? '—' }}</span>
-                                <span class="text-gray-400"> / </span>
-                                <span>{{ $console->articleType?->name ?? '—' }}</span>
+                            <div class="text-sm">
+                                <span class="font-semibold text-gray-800">{{ $console->articleCategory?->name ?? '—' }}</span>
+                                <span class="text-gray-400"> > </span>
+                                <span class="text-blue-600 font-medium">{{ $console->articleSubCategory?->brand?->name ?? '—' }}</span>
+                                <span class="text-gray-400"> > </span>
+                                <span class="text-gray-700">{{ $console->articleSubCategory?->name ?? '—' }}</span>
+                                <span class="text-gray-400"> > </span>
+                                <span class="text-gray-600">{{ $console->articleType?->name ?? '—' }}</span>
                             </div>
                         </td>
                         <td class="px-4 py-3">

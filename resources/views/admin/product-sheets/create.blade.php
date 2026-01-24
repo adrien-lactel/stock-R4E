@@ -29,7 +29,7 @@
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Type de produit</h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {{-- Catégorie --}}
                     <div>
                         <label class="block text-sm font-medium mb-1">Catégorie *</label>
@@ -45,13 +45,23 @@
                         </select>
                     </div>
 
+                    {{-- Marque --}}
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Marque *</label>
+                        <select name="brand_temp" id="brand_select"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required disabled>
+                            <option value="">-- Sélectionner une catégorie d'abord --</option>
+                        </select>
+                    </div>
+
                     {{-- Sous-catégorie --}}
                     <div>
                         <label class="block text-sm font-medium mb-1">Sous-catégorie *</label>
                         <select name="sub_category_temp" id="sub_category_select"
                                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                required {{ isset($selectedCategory) ? '' : 'disabled' }}>
-                            <option value="">-- Sélectionner une catégorie d'abord --</option>
+                                required disabled>
+                            <option value="">-- Sélectionner une marque d'abord --</option>
                             @if(isset($selectedCategory) && isset($selectedCategory->subCategories))
                                 @foreach($selectedCategory->subCategories as $sub)
                                     <option value="{{ $sub->id }}" {{ isset($selectedSubCategory) && $selectedSubCategory->id == $sub->id ? 'selected' : '' }}>
@@ -479,10 +489,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cascading selects pour taxonomie
     (function initTaxonomy() {
         const categorySelect = document.getElementById('category_select');
+        const brandSelect = document.getElementById('brand_select');
         const subCategorySelect = document.getElementById('sub_category_select');
         const typeSelect = document.getElementById('type_select');
 
-        if (!categorySelect || !subCategorySelect || !typeSelect) {
+        if (!categorySelect || !brandSelect || !subCategorySelect || !typeSelect) {
             console.error('❌ Selects de taxonomie non trouvés');
             return;
         }
@@ -493,19 +504,53 @@ document.addEventListener('DOMContentLoaded', function() {
             const categoryId = this.value;
             console.log('📋 Catégorie sélectionnée:', categoryId);
 
+            brandSelect.disabled = true;
+            subCategorySelect.disabled = true;
+            typeSelect.disabled = true;
+            brandSelect.innerHTML = '<option value="">Chargement...</option>';
+            subCategorySelect.innerHTML = '<option value="">-- Sélectionner une marque d\'abord --</option>';
+            typeSelect.innerHTML = '<option value="">-- Sélectionner une sous-catégorie d\'abord --</option>';
+
+            if (!categoryId) {
+                brandSelect.innerHTML = '<option value="">-- Sélectionner une catégorie d\'abord --</option>';
+                brandSelect.disabled = true;
+                return;
+            }
+
+            try {
+                const url = `{{ url('admin/ajax/brands') }}/${categoryId}`;
+                console.log('🔄 Chargement marques depuis:', url);
+                
+                const response = await fetch(url);
+                const html = await response.text();
+                
+                console.log('✅ Marques reçues:', html.substring(0, 100));
+                
+                brandSelect.innerHTML = html;
+                brandSelect.disabled = false;
+            } catch (error) {
+                console.error('❌ Erreur chargement marques:', error);
+                brandSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+            }
+        });
+
+        brandSelect.addEventListener('change', async function() {
+            const brandId = this.value;
+            console.log('🏷️ Marque sélectionnée:', brandId);
+
             subCategorySelect.disabled = true;
             typeSelect.disabled = true;
             subCategorySelect.innerHTML = '<option value="">Chargement...</option>';
             typeSelect.innerHTML = '<option value="">-- Sélectionner une sous-catégorie d\'abord --</option>';
 
-            if (!categoryId) {
-                subCategorySelect.innerHTML = '<option value="">-- Sélectionner une catégorie d\'abord --</option>';
+            if (!brandId) {
+                subCategorySelect.innerHTML = '<option value="">-- Sélectionner une marque d\'abord --</option>';
                 subCategorySelect.disabled = true;
                 return;
             }
 
             try {
-                const url = `{{ url('admin/ajax/sub-categories') }}/${categoryId}`;
+                const url = `{{ url('admin/ajax/sub-categories') }}/${brandId}`;
                 console.log('🔄 Chargement sous-catégories depuis:', url);
                 
                 const response = await fetch(url);

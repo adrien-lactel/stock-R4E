@@ -25,6 +25,7 @@ class ConsoleAdminController extends Controller
                 'articleType',
                 'articleCategory',
                 'articleSubCategory',
+                'articleSubCategory.brand',
                 'store',
                 'repairer',
                 'mods', // Pour calculer le coût de réparation
@@ -48,6 +49,12 @@ class ConsoleAdminController extends Controller
             $query->where('article_category_id', $request->category);
         }
 
+        if ($request->filled('brand')) {
+            $query->whereHas('articleSubCategory', function($q) use ($request) {
+                $q->where('article_brand_id', $request->brand);
+            });
+        }
+
         if ($request->filled('sub_category')) {
             $query->where('article_sub_category_id', $request->sub_category);
         }
@@ -69,6 +76,7 @@ class ConsoleAdminController extends Controller
 
         $types = \App\Models\ArticleType::orderBy('name')->get();
         $categories = \App\Models\ArticleCategory::orderBy('name')->get();
+        $brands = \App\Models\ArticleBrand::orderBy('name')->get();
         $stores = Store::orderBy('name')->get();
 
         // Charger les fiches produits pour chaque taxonomie présente
@@ -77,7 +85,7 @@ class ConsoleAdminController extends Controller
             ->get()
             ->groupBy('article_type_id');
 
-        return view('admin.consoles.index', compact('consoles', 'types', 'categories', 'stores', 'productSheets'));
+        return view('admin.consoles.index', compact('consoles', 'types', 'categories', 'brands', 'stores', 'productSheets'));
     }
 
     /* =====================================================

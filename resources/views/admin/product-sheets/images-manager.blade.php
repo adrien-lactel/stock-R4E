@@ -33,10 +33,18 @@
                 <select id="category_select" name="category_temp" class="w-full rounded-md border-gray-300">
                     <option value="">-- Sélectionner --</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" @selected($selectedType && $selectedType->subCategory->category->id == $category->id)>
+                        <option value="{{ $category->id }}" @selected($selectedType && $selectedType->subCategory->brand->category->id == $category->id)>
                             {{ $category->name }}
                         </option>
                     @endforeach
+                </select>
+            </div>
+
+            {{-- Marque --}}
+            <div>
+                <label class="block text-sm font-medium mb-1">Marque</label>
+                <select id="brand_select" name="brand_temp" class="w-full rounded-md border-gray-300" disabled>
+                    <option value="">-- Sélectionner une catégorie d'abord --</option>
                 </select>
             </div>
 
@@ -44,7 +52,7 @@
             <div>
                 <label class="block text-sm font-medium mb-1">Sous-catégorie</label>
                 <select id="sub_category_select" name="sub_category_temp" class="w-full rounded-md border-gray-300" disabled>
-                    <option value="">-- Sélectionner une catégorie d'abord --</option>
+                    <option value="">-- Sélectionner une marque d'abord --</option>
                     @if($selectedType)
                         @foreach($selectedType->subCategory->category->subCategories as $sub)
                             <option value="{{ $sub->id }}" @selected($selectedType->subCategory->id == $sub->id)>
@@ -204,22 +212,48 @@ document.addEventListener('keydown', function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category_select');
+    const brandSelect = document.getElementById('brand_select');
     const subCategorySelect = document.getElementById('sub_category_select');
     const typeSelect = document.getElementById('type_select');
 
-    async function loadSubCategories(categoryId) {
+    async function loadBrands(categoryId) {
+        brandSelect.disabled = true;
+        subCategorySelect.disabled = true;
+        typeSelect.disabled = true;
+        brandSelect.innerHTML = '<option value="">Chargement...</option>';
+        subCategorySelect.innerHTML = '<option value="">-- Sélectionner une marque d\'abord --</option>';
+        typeSelect.innerHTML = '<option value="">-- Sélectionner une sous-catégorie --</option>';
+
+        if (!categoryId) {
+            brandSelect.innerHTML = '<option value="">-- Sélectionner une catégorie d\'abord --</option>';
+            return;
+        }
+
+        try {
+            const url = `{{ url('admin/ajax/brands') }}/${categoryId}`;
+            const response = await fetch(url);
+            const html = await response.text();
+            brandSelect.innerHTML = html;
+            brandSelect.disabled = false;
+        } catch (error) {
+            console.error('Erreur:', error);
+            brandSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
+    }
+
+    async function loadSubCategories(brandId) {
         subCategorySelect.disabled = true;
         typeSelect.disabled = true;
         subCategorySelect.innerHTML = '<option value="">Chargement...</option>';
         typeSelect.innerHTML = '<option value="">-- Sélectionner une sous-catégorie --</option>';
 
-        if (!categoryId) {
-            subCategorySelect.innerHTML = '<option value="">-- Sélectionner une catégorie d\'abord --</option>';
+        if (!brandId) {
+            subCategorySelect.innerHTML = '<option value="">-- Sélectionner une marque d\'abord --</option>';
             return;
         }
 
         try {
-            const url = `{{ url('admin/ajax/sub-categories') }}/${categoryId}`;
+            const url = `{{ url('admin/ajax/sub-categories') }}/${brandId}`;
             const response = await fetch(url);
             const html = await response.text();
             subCategorySelect.innerHTML = html;
@@ -251,7 +285,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    categorySelect.addEventListener('change', () => loadSubCategories(categorySelect.value));
+    categorySelect.addEventListener('change', () => loadBrands(categorySelect.value));
+    brandSelect.addEventListener('change', () => loadSubCategories(brandSelect.value));
     subCategorySelect.addEventListener('change', () => loadTypes(subCategorySelect.value));
 
     // Upload d'image
