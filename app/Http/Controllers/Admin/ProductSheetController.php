@@ -73,7 +73,7 @@ class ProductSheetController extends Controller
 
         try {
             $request->validate([
-                'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:5120', // Max 5MB
+                'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:10240', // Max 10MB
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation échouée', ['errors' => $e->validator->errors()->all()]);
@@ -633,7 +633,7 @@ class ProductSheetController extends Controller
     {
         $request->validate([
             'article_type_id' => 'required|exists:article_types,id',
-            'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:5120',
+            'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:10240',
         ]);
 
         try {
