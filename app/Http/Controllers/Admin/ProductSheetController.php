@@ -560,8 +560,28 @@ class ProductSheetController extends Controller
         
         $images = [];
         $selectedType = null;
+        $showAll = $request->has('show_all') && $request->show_all == '1';
         
-        if ($request->has('article_type_id')) {
+        if ($showAll) {
+            // Afficher toutes les images de toutes les taxonomies
+            $sheets = ProductSheet::with(['articleType.subCategory.category'])->whereNotNull('images')->get();
+            
+            foreach ($sheets as $sheet) {
+                $sheetImages = is_string($sheet->images) ? json_decode($sheet->images, true) : $sheet->images;
+                if (is_array($sheetImages)) {
+                    foreach ($sheetImages as $img) {
+                        $images[] = [
+                            'url' => $img,
+                            'sheet_id' => $sheet->id,
+                            'sheet_name' => $sheet->name,
+                            'type_name' => $sheet->articleType->name ?? 'N/A',
+                            'sub_category_name' => $sheet->articleType->subCategory->name ?? 'N/A',
+                            'category_name' => $sheet->articleType->subCategory->category->name ?? 'N/A',
+                        ];
+                    }
+                }
+            }
+        } elseif ($request->has('article_type_id')) {
             $selectedType = ArticleType::with(['subCategory.category'])->find($request->article_type_id);
             
             // Récupérer toutes les images des fiches de cette taxonomie
@@ -583,7 +603,7 @@ class ProductSheetController extends Controller
             }
         }
         
-        return view('admin.product-sheets.images-manager', compact('categories', 'images', 'selectedType'));
+        return view('admin.product-sheets.images-manager', compact('categories', 'images', 'selectedType', 'showAll'));
     }
 
     public function uploadTaxonomyImage(Request $request)
