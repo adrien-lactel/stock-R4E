@@ -218,7 +218,7 @@
     <script>
         function openResponseModal(requestId, title) {
             document.getElementById('responseModalTitle').textContent = title;
-            document.getElementById('responseForm').action = `/admin/feature-requests/${requestId}/response`;
+            document.getElementById('responseForm').action = `{{ url('admin/feature-requests') }}/${requestId}/response`;
             document.getElementById('responseModal').classList.remove('hidden');
         }
 
