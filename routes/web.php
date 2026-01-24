@@ -146,12 +146,18 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::post('/taxonomy/sub-category', [TaxonomyController::class, 'storeSubCategory'])
             ->name('taxonomy.sub-category.store');
 
+        Route::post('/taxonomy/brand', [TaxonomyController::class, 'storeBrand'])
+            ->name('taxonomy.brand.store');
+
         Route::post('/taxonomy/type', [TaxonomyController::class, 'storeType'])
             ->name('taxonomy.type.store');
         
         // UPDATE
         Route::put('/taxonomy/category/{category}', [TaxonomyController::class, 'updateCategory'])
             ->name('taxonomy.category.update');
+
+        Route::put('/taxonomy/brand/{brand}', [TaxonomyController::class, 'updateBrand'])
+            ->name('taxonomy.brand.update');
 
         Route::put('/taxonomy/sub-category/{subCategory}', [TaxonomyController::class, 'updateSubCategory'])
             ->name('taxonomy.sub-category.update');
@@ -163,6 +169,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::delete('/taxonomy/category/{category}', [TaxonomyController::class, 'destroyCategory'])
             ->name('taxonomy.category.destroy');
 
+        Route::delete('/taxonomy/brand/{brand}', [TaxonomyController::class, 'destroyBrand'])
+            ->name('taxonomy.brand.destroy');
+
         Route::delete('/taxonomy/sub-category/{subCategory}', [TaxonomyController::class, 'destroySubCategory'])
             ->name('taxonomy.sub-category.destroy');
 
@@ -172,7 +181,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         /* =====================
         | AJAX TAXONOMIE (🔥 IMPORTANT)
         ===================== */
-        Route::get('/ajax/sub-categories/{category}', [TaxonomyController::class, 'ajaxSubCategories'])
+        Route::get('/ajax/brands/{category}', [TaxonomyController::class, 'ajaxBrands'])
+            ->name('ajax.brands');
+
+        Route::get('/ajax/sub-categories/{brand}', [TaxonomyController::class, 'ajaxSubCategories'])
             ->name('ajax.sub-categories');
 
         Route::get('/ajax/types/{subCategory}', [TaxonomyController::class, 'ajaxTypes'])

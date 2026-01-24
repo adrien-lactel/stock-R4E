@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ArticleCategory;
+use App\Models\ArticleBrand;
 use App\Models\ArticleSubCategory;
 use App\Models\ArticleType;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class TaxonomyController extends Controller
     public function index()
     {
         return view('admin.taxonomy.index', [
-            'categories' => ArticleCategory::with('subCategories.types')->get(),
+            'categories' => ArticleCategory::with(['brands.subCategories.types'])->get(),
         ]);
     }
 
@@ -43,15 +44,35 @@ class TaxonomyController extends Controller
     {
         $request->validate([
             'article_category_id' => 'required|exists:article_categories,id',
+            'article_brand_id' => 'nullable|exists:article_brands,id',
             'name' => 'required|string|max:255',
         ]);
 
         ArticleSubCategory::firstOrCreate([
             'article_category_id' => $request->article_category_id,
+            'article_brand_id' => $request->article_brand_id,
             'name' => $request->name,
         ]);
 
         return back()->with('success', 'Sous-catégorie ajoutée');
+    }
+
+    /* =====================================================
+     | STORE BRAND
+     ===================================================== */
+    public function storeBrand(Request $request)
+    {
+        $request->validate([
+            'article_category_id' => 'required|exists:article_categories,id',
+            'name' => 'required|string|max:255',
+        ]);
+
+        ArticleBrand::firstOrCreate([
+            'article_category_id' => $request->article_category_id,
+            'name' => $request->name,
+        ]);
+
+        return back()->with('success', 'Marque ajoutée');
     }
 
     /* =====================================================
@@ -73,20 +94,39 @@ class TaxonomyController extends Controller
     }
 
     /* =====================================================
-     | AJAX — sous-catégories par catégorie
+     | AJAX — marques par catégorie
      ===================================================== */
-    public function ajaxSubCategories($categoryId)
+    public function ajaxBrands($categoryId)
     {
-        $subCategories = ArticleSubCategory::where('article_category_id', $categoryId)
+        $brands = ArticleBrand::where('article_category_id', $categoryId)
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // Si la requête demande du JSON, retourner du JSON
+        if (request()->wantsJson() || request()->header('Accept') === 'application/json') {
+            return response()->json($brands);
+        }
+
+        $html = '<option value="">-- Sélectionner --</option>';
+        foreach ($brands as $brand) {
+            $html .= '<option value="' . $brand->id . '">' . e($brand->name) . '</option>';
+        }
+
+        return response($html);
+    }
+
+    /* =====================================================
+     | AJAX — sous-catégories par marque
+     ===================================================== */
+    public function ajaxSubCategories($brandId)
+    {
+        $subCategories = ArticleSubCategory::where('article_brand_id', $brandId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         if (request()->wantsJson() || request()->header('Accept') === 'application/json') {
             return response()->json($subCategories);
         }
 
-        // Sinon, retourner du HTML (pour compatibilité)
         $html = '<option value="">-- Sélectionner --</option>';
         foreach ($subCategories as $sub) {
             $html .= '<option value="' . $sub->id . '">' . e($sub->name) . '</option>';
@@ -139,11 +179,24 @@ public function updateSubCategory(Request $request, ArticleSubCategory $subCateg
     $data = $request->validate([
         'name' => 'required|string|max:255',
         'article_category_id' => 'required|exists:article_categories,id',
+        'article_brand_id' => 'nullable|exists:article_brands,id',
     ]);
 
     $subCategory->update($data);
 
     return back()->with('success', 'Sous-catégorie mise à jour.');
+}
+
+public function updateBrand(Request $request, ArticleBrand $brand)
+{
+    $data = $request->validate([
+        'name' => 'required|string|max:255',
+        'article_category_id' => 'required|exists:article_categories,id',
+    ]);
+
+    $brand->update($data);
+
+    return back()->with('success', 'Marque mise à jour.');
 }
 
 public function updateType(Request $request, ArticleType $type)
@@ -164,13 +217,24 @@ public function updateType(Request $request, ArticleType $type)
 public function destroyCategory(ArticleCategory $category)
 {
     // sécurité: empêche suppression si enfants
-    if ($category->subCategories()->exists()) {
-        return back()->with('error', 'Suppression impossible : la catégorie contient des sous-catégories.');
+    if ($category->brands()->exists() || $category->subCategories()->exists()) {
+        return back()->with('error', 'Suppression impossible : la catégorie contient des marques ou sous-catégories.');
     }
 
     $category->delete();
 
     return back()->with('success', 'Catégorie supprimée.');
+}
+
+public function destroyBrand(ArticleBrand $brand)
+{
+    if ($brand->subCategories()->exists()) {
+        return back()->with('error', 'Suppression impossible : la marque contient des sous-catégories.');
+    }
+
+    $brand->delete();
+
+    return back()->with('success', 'Marque supprimée.');
 }
 
 public function destroySubCategory(ArticleSubCategory $subCategory)

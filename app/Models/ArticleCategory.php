@@ -11,10 +11,14 @@ class ArticleCategory extends Model
 
     protected $fillable = ['name'];
 
+    public function brands()
+    {
+        return $this->hasMany(ArticleBrand::class, 'article_category_id');
+    }
+
     public function subCategories()
     {
         return $this->hasMany(ArticleSubCategory::class, 'article_category_id');
     }
-
 
 }
