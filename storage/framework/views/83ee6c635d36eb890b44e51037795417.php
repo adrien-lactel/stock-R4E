@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('content'); ?>
 <div class="max-w-4xl mx-auto py-10 px-6">
 
@@ -9,19 +7,18 @@
         </a>
     </div>
 
-    <h1 class="text-3xl font-bold mb-6">✏️ Modifier le Mod #<?php echo e($mod->id); ?></h1>
+    <h1 class="text-3xl font-bold mb-6">➕ Créer un Mod</h1>
 
     <div class="bg-white shadow rounded-lg p-6">
-        <form method="POST" action="<?php echo e(route('admin.mods.update', $mod)); ?>">
+        <form method="POST" action="<?php echo e(route('admin.mods.store')); ?>">
             <?php echo csrf_field(); ?>
-            <?php echo method_field('PUT'); ?>
 
             
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Nom du Mod *</label>
                 <input type="text" 
                        name="name" 
-                       value="<?php echo e(old('name', $mod->name)); ?>"
+                       value="<?php echo e(old('name')); ?>"
                        required
                        class="w-full border rounded p-2 <?php $__errorArgs = ['name'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -49,7 +46,7 @@ unset($__errorArgs, $__bag); ?>
                 <label class="block text-sm font-medium mb-2">Icône personnalisée</label>
                 
                 
-                <input type="hidden" name="icon" id="icon_input" value="<?php echo e(old('icon', $mod->icon)); ?>">
+                <input type="hidden" name="icon" id="icon_input" value="<?php echo e(old('icon')); ?>">
                 
                 
                 <input type="file" id="icon_upload" accept="image/png,image/jpeg,image/gif" class="hidden">
@@ -142,34 +139,6 @@ unset($__errorArgs, $__bag); ?>
                                         class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
                                     ✏️ Pinceau
                                 </button>
-                                <button type="button" 
-                                        onclick="document.getElementById('text_input_modal').classList.toggle('hidden')"
-                                        class="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600">
-                                    🔤 Ajouter texte
-                                </button>
-                            </div>
-                            
-                            
-                            <div id="text_input_modal" class="hidden mt-3 p-3 bg-purple-50 border-2 border-purple-300 rounded-lg">
-                                <label class="block text-sm font-medium mb-2">Texte à ajouter :</label>
-                                <div class="flex gap-2">
-                                    <input type="text" 
-                                           id="text_to_add" 
-                                           maxlength="5"
-                                           placeholder="Ex: A, 01, ..."
-                                           class="flex-1 border rounded px-2 py-1 text-sm">
-                                    <button type="button" 
-                                            onclick="addTextToCanvas()"
-                                            class="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">
-                                        ✅ Ajouter
-                                    </button>
-                                    <button type="button" 
-                                            onclick="document.getElementById('text_input_modal').classList.add('hidden')"
-                                            class="px-3 py-1 bg-gray-400 text-white text-sm rounded hover:bg-gray-500">
-                                        ✕
-                                    </button>
-                                </div>
-                                <p class="text-xs text-purple-700 mt-1">💡 Maximum 5 caractères. Le texte sera centré dans le canvas.</p>
                             </div>
                         </div>
                         
@@ -241,7 +210,7 @@ $message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($messag
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>"
-                          placeholder="Description détaillée du mod ou accessoire"><?php echo e(old('description', $mod->description)); ?></textarea>
+                          placeholder="Description détaillée du mod ou accessoire"><?php echo e(old('description')); ?></textarea>
                 <?php $__errorArgs = ['description'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -261,7 +230,7 @@ unset($__errorArgs, $__bag); ?>
                     <input type="number" 
                            step="0.01" 
                            name="purchase_price" 
-                           value="<?php echo e(old('purchase_price', $mod->purchase_price)); ?>"
+                           value="<?php echo e(old('purchase_price')); ?>"
                            required
                            class="w-full border rounded p-2 <?php $__errorArgs = ['purchase_price'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -286,7 +255,7 @@ unset($__errorArgs, $__bag); ?>
                     <label class="block text-sm font-medium mb-2">Quantité en stock *</label>
                     <input type="number" 
                            name="quantity" 
-                           value="<?php echo e(old('quantity', $mod->quantity)); ?>"
+                           value="<?php echo e(old('quantity', 0)); ?>"
                            required
                            min="0"
                            class="w-full border rounded p-2 <?php $__errorArgs = ['quantity'];
@@ -316,7 +285,7 @@ unset($__errorArgs, $__bag); ?>
                     <input type="checkbox" 
                            name="is_accessory" 
                            value="1"
-                           <?php echo e(old('is_accessory', $mod->is_accessory) ? 'checked' : ''); ?>
+                           <?php echo e(old('is_accessory') ? 'checked' : ''); ?>
 
                            class="mr-2">
                     <span class="text-sm font-medium">📦 Ceci est un accessoire (câble, boîte, etc.)</span>
@@ -330,12 +299,6 @@ unset($__errorArgs, $__bag); ?>
                     Sélectionnez les catégories/types compatibles. Laissez vide pour un mod universel.
                 </p>
 
-                <?php
-                    $selectedCategories = old('compatible_categories', $mod->compatibleCategories->pluck('id')->toArray());
-                    $selectedSubCategories = old('compatible_sub_categories', $mod->compatibleSubCategories->pluck('id')->toArray());
-                    $selectedTypes = old('compatible_types', $mod->compatibleTypes->pluck('id')->toArray());
-                ?>
-
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">Catégories compatibles</label>
                     <select name="compatible_categories[]" 
@@ -344,7 +307,7 @@ unset($__errorArgs, $__bag); ?>
                             size="5">
                         <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <option value="<?php echo e($category->id); ?>"
-                                    <?php echo e(in_array($category->id, $selectedCategories) ? 'selected' : ''); ?>>
+                                    <?php echo e(in_array($category->id, old('compatible_categories', [])) ? 'selected' : ''); ?>>
                                 <?php echo e($category->name); ?>
 
                             </option>
@@ -361,7 +324,7 @@ unset($__errorArgs, $__bag); ?>
                             size="5">
                         <?php $__currentLoopData = $subCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $subCategory): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <option value="<?php echo e($subCategory->id); ?>"
-                                    <?php echo e(in_array($subCategory->id, $selectedSubCategories) ? 'selected' : ''); ?>>
+                                    <?php echo e(in_array($subCategory->id, old('compatible_sub_categories', [])) ? 'selected' : ''); ?>>
                                 <?php echo e($subCategory->name); ?>
 
                             </option>
@@ -377,7 +340,7 @@ unset($__errorArgs, $__bag); ?>
                             size="5">
                         <?php $__currentLoopData = $types; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $type): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <option value="<?php echo e($type->id); ?>"
-                                    <?php echo e(in_array($type->id, $selectedTypes) ? 'selected' : ''); ?>>
+                                    <?php echo e(in_array($type->id, old('compatible_types', [])) ? 'selected' : ''); ?>>
                                 <?php echo e($type->name); ?>
 
                             </option>
@@ -394,11 +357,12 @@ unset($__errorArgs, $__bag); ?>
                 </a>
                 <button type="submit" 
                         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    💾 Enregistrer
+                    ✅ Créer le Mod
                 </button>
             </div>
         </form>
     </div>
+
 </div>
 
 <script>
@@ -421,6 +385,9 @@ document.addEventListener('DOMContentLoaded', function() {
         pixels[i] = null;
     }
     
+    // Dessiner la grille initiale
+    drawGrid();
+    
     // Event listeners pour le dessin
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
@@ -431,42 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const existingIcon = document.getElementById('icon_input').value;
     if (existingIcon && existingIcon.startsWith('data:image')) {
         loadImageFromBase64(existingIcon);
-        document.getElementById('emoji_preview').classList.add('hidden');
-        document.getElementById('image_preview').classList.remove('hidden');
-    } else if (existingIcon) {
-        // C'est un emoji - le convertir en pixels pour l'afficher dans l'éditeur
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = GRID_SIZE;
-        tempCanvas.height = GRID_SIZE;
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        // Dessiner l'emoji centré dans le canvas
-        tempCtx.font = '28px Arial';
-        tempCtx.textAlign = 'center';
-        tempCtx.textBaseline = 'middle';
-        tempCtx.fillText(existingIcon, GRID_SIZE / 2, GRID_SIZE / 2);
-        
-        // Extraire les pixels et les afficher dans l'éditeur
-        const imageData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
-        for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-            const r = imageData.data[i * 4];
-            const g = imageData.data[i * 4 + 1];
-            const b = imageData.data[i * 4 + 2];
-            const a = imageData.data[i * 4 + 3];
-            
-            if (a > 0) {
-                pixels[i] = `rgb(${r}, ${g}, ${b})`;
-            } else {
-                pixels[i] = null;
-            }
-        }
-        
-        drawGrid();
-        document.getElementById('emoji_preview').classList.add('hidden');
-        document.getElementById('image_preview').classList.remove('hidden');
-    } else {
-        // Aucune icône existante - dessiner la grille vide
-        drawGrid();
     }
     
     // Listener pour l'upload d'image
@@ -557,38 +488,19 @@ function selectColor(color) {
 }
 
 function selectEmoji(emoji) {
-    // Créer un canvas temporaire pour convertir l'emoji en image
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = GRID_SIZE;
-    tempCanvas.height = GRID_SIZE;
-    const tempCtx = tempCanvas.getContext('2d');
+    // Stocker directement l'emoji (pas de conversion en base64)
+    document.getElementById('icon_input').value = emoji;
     
-    // Dessiner l'emoji centré dans le canvas
-    tempCtx.font = '28px Arial'; // Taille pour que l'emoji remplisse bien le canvas 32x32
-    tempCtx.textAlign = 'center';
-    tempCtx.textBaseline = 'middle';
-    tempCtx.fillText(emoji, GRID_SIZE / 2, GRID_SIZE / 2);
-    
-    // Extraire les pixels et les afficher dans l'éditeur
-    const imageData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
-    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-        const r = imageData.data[i * 4];
-        const g = imageData.data[i * 4 + 1];
-        const b = imageData.data[i * 4 + 2];
-        const a = imageData.data[i * 4 + 3];
-        
-        if (a > 0) {
-            pixels[i] = `rgb(${r}, ${g}, ${b})`;
-        } else {
-            pixels[i] = null;
-        }
+    // Effacer le canvas pour éviter la confusion
+    for (let i = 0; i < pixels.length; i++) {
+        pixels[i] = null;
     }
-    
     drawGrid();
     
-    // Masquer l'emoji preview et afficher l'image preview
-    document.getElementById('emoji_preview').classList.add('hidden');
-    document.getElementById('image_preview').classList.remove('hidden');
+    // Afficher l'emoji dans la zone de prévisualisation
+    document.getElementById('emoji_display').textContent = emoji;
+    document.getElementById('emoji_preview').classList.remove('hidden');
+    document.getElementById('image_preview').classList.add('hidden');
 }
 
 function selectR4EIcon(iconBase64, modName) {
@@ -597,12 +509,14 @@ function selectR4EIcon(iconBase64, modName) {
     
     // Notification visuelle
     const gallery = document.getElementById('r4e_gallery');
-    const originalBg = gallery.className;
-    gallery.className = gallery.className.replace('from-purple-50', 'from-green-50').replace('to-pink-50', 'to-green-100');
-    
-    setTimeout(() => {
-        gallery.className = originalBg;
-    }, 500);
+    if (gallery) {
+        const originalBg = gallery.className;
+        gallery.className = gallery.className.replace('from-purple-50', 'from-green-50').replace('to-pink-50', 'to-green-100');
+        
+        setTimeout(() => {
+            gallery.className = originalBg;
+        }, 500);
+    }
 }
 
 function toggleTool() {
@@ -628,47 +542,6 @@ function clearCanvas() {
         }
         drawGrid();
     }
-}
-
-function addTextToCanvas() {
-    const text = document.getElementById('text_to_add').value.trim();
-    if (!text) {
-        alert('Veuillez saisir du texte');
-        return;
-    }
-    
-    // Créer un canvas temporaire pour convertir le texte en pixels
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = GRID_SIZE;
-    tempCanvas.height = GRID_SIZE;
-    const tempCtx = tempCanvas.getContext('2d');
-    
-    // Dessiner le texte centré dans le canvas avec la couleur actuelle
-    tempCtx.fillStyle = currentColor;
-    tempCtx.font = 'bold 20px Arial';
-    tempCtx.textAlign = 'center';
-    tempCtx.textBaseline = 'middle';
-    tempCtx.fillText(text, GRID_SIZE / 2, GRID_SIZE / 2);
-    
-    // Extraire les pixels et les afficher dans l'éditeur
-    const imageData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
-    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-        const r = imageData.data[i * 4];
-        const g = imageData.data[i * 4 + 1];
-        const b = imageData.data[i * 4 + 2];
-        const a = imageData.data[i * 4 + 3];
-        
-        if (a > 0) {
-            pixels[i] = `rgb(${r}, ${g}, ${b})`;
-        }
-        // Ne pas effacer les pixels existants si alpha = 0
-    }
-    
-    drawGrid();
-    
-    // Masquer le modal et vider le champ
-    document.getElementById('text_input_modal').classList.add('hidden');
-    document.getElementById('text_to_add').value = '';
 }
 
 function updatePreview() {
@@ -748,4 +621,4 @@ function loadImageFromBase64(base64) {
 </script>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/mods/edit.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/mods/create.blade.php ENDPATH**/ ?>

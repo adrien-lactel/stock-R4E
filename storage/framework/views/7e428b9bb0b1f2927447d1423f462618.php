@@ -1,0 +1,72 @@
+
+
+<?php $__env->startSection('header'); ?>
+    <div class="flex items-center justify-between">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            ➕ Nouvelle Opération
+        </h2>
+        <a href="<?php echo e(route('admin.operations.index')); ?>" class="text-sm text-indigo-600 hover:text-indigo-800">
+            ← Retour à la liste
+        </a>
+    </div>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('content'); ?>
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <?php if($errors->any()): ?>
+        <div class="mb-4 p-4 bg-red-50 text-red-800 rounded border border-red-200">
+            <ul class="list-disc pl-5 space-y-1 text-sm">
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $err): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($err); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <form method="POST" action="<?php echo e(route('admin.operations.store')); ?>">
+            <?php echo csrf_field(); ?>
+
+            <div class="mb-4">
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                    Nom de l'opération *
+                </label>
+                <input type="text" name="name" id="name" required
+                       value="<?php echo e(old('name')); ?>"
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                       placeholder="Ex: Nettoyage complet, Retrobright coque...">
+            </div>
+
+            <div class="mb-6">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                </label>
+                <textarea name="description" id="description" rows="3"
+                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          placeholder="Description optionnelle..."><?php echo e(old('description')); ?></textarea>
+            </div>
+
+            <div class="p-4 bg-orange-50 border border-orange-200 rounded-lg mb-6">
+                <p class="text-sm text-orange-800">
+                    💡 Les opérations n'ont pas de coût de pièces. Seul le temps de travail (20€/h) est comptabilisé.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit"
+                        class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition">
+                    Créer l'opération
+                </button>
+                <a href="<?php echo e(route('admin.operations.index')); ?>"
+                   class="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+
+</div>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/operations/create.blade.php ENDPATH**/ ?>

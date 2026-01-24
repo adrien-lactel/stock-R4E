@@ -126,6 +126,34 @@
                                         class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
                                     ✏️ Pinceau
                                 </button>
+                                <button type="button" 
+                                        onclick="document.getElementById('text_input_modal').classList.toggle('hidden')"
+                                        class="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600">
+                                    🔤 Ajouter texte
+                                </button>
+                            </div>
+                            
+                            {{-- Modal pour ajouter du texte --}}
+                            <div id="text_input_modal" class="hidden mt-3 p-3 bg-purple-50 border-2 border-purple-300 rounded-lg">
+                                <label class="block text-sm font-medium mb-2">Texte à ajouter :</label>
+                                <div class="flex gap-2">
+                                    <input type="text" 
+                                           id="text_to_add" 
+                                           maxlength="5"
+                                           placeholder="Ex: A, 01, ..."
+                                           class="flex-1 border rounded px-2 py-1 text-sm">
+                                    <button type="button" 
+                                            onclick="addTextToCanvas()"
+                                            class="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">
+                                        ✅ Ajouter
+                                    </button>
+                                    <button type="button" 
+                                            onclick="document.getElementById('text_input_modal').classList.add('hidden')"
+                                            class="px-3 py-1 bg-gray-400 text-white text-sm rounded hover:bg-gray-500">
+                                        ✕
+                                    </button>
+                                </div>
+                                <p class="text-xs text-purple-700 mt-1">💡 Maximum 5 caractères. Le texte sera centré dans le canvas.</p>
                             </div>
                         </div>
                         
@@ -324,9 +352,6 @@ document.addEventListener('DOMContentLoaded', function() {
         pixels[i] = null;
     }
     
-    // Dessiner la grille initiale
-    drawGrid();
-    
     // Event listeners pour le dessin
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
@@ -340,10 +365,39 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('emoji_preview').classList.add('hidden');
         document.getElementById('image_preview').classList.remove('hidden');
     } else if (existingIcon) {
-        // C'est un emoji
-        document.getElementById('emoji_display').textContent = existingIcon;
-        document.getElementById('emoji_preview').classList.remove('hidden');
-        document.getElementById('image_preview').classList.add('hidden');
+        // C'est un emoji - le convertir en pixels pour l'afficher dans l'éditeur
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = GRID_SIZE;
+        tempCanvas.height = GRID_SIZE;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Dessiner l'emoji centré dans le canvas
+        tempCtx.font = '28px Arial';
+        tempCtx.textAlign = 'center';
+        tempCtx.textBaseline = 'middle';
+        tempCtx.fillText(existingIcon, GRID_SIZE / 2, GRID_SIZE / 2);
+        
+        // Extraire les pixels et les afficher dans l'éditeur
+        const imageData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
+        for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+            const r = imageData.data[i * 4];
+            const g = imageData.data[i * 4 + 1];
+            const b = imageData.data[i * 4 + 2];
+            const a = imageData.data[i * 4 + 3];
+            
+            if (a > 0) {
+                pixels[i] = `rgb(${r}, ${g}, ${b})`;
+            } else {
+                pixels[i] = null;
+            }
+        }
+        
+        drawGrid();
+        document.getElementById('emoji_preview').classList.add('hidden');
+        document.getElementById('image_preview').classList.remove('hidden');
+    } else {
+        // Aucune icône existante - dessiner la grille vide
+        drawGrid();
     }
     
     // Listener pour l'upload d'image
@@ -434,19 +488,38 @@ function selectColor(color) {
 }
 
 function selectEmoji(emoji) {
-    // Stocker directement l'emoji (pas de conversion en base64)
-    document.getElementById('icon_input').value = emoji;
+    // Créer un canvas temporaire pour convertir l'emoji en image
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = GRID_SIZE;
+    tempCanvas.height = GRID_SIZE;
+    const tempCtx = tempCanvas.getContext('2d');
     
-    // Effacer le canvas pour éviter la confusion
-    for (let i = 0; i < pixels.length; i++) {
-        pixels[i] = null;
+    // Dessiner l'emoji centré dans le canvas
+    tempCtx.font = '28px Arial'; // Taille pour que l'emoji remplisse bien le canvas 32x32
+    tempCtx.textAlign = 'center';
+    tempCtx.textBaseline = 'middle';
+    tempCtx.fillText(emoji, GRID_SIZE / 2, GRID_SIZE / 2);
+    
+    // Extraire les pixels et les afficher dans l'éditeur
+    const imageData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
+    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+        const r = imageData.data[i * 4];
+        const g = imageData.data[i * 4 + 1];
+        const b = imageData.data[i * 4 + 2];
+        const a = imageData.data[i * 4 + 3];
+        
+        if (a > 0) {
+            pixels[i] = `rgb(${r}, ${g}, ${b})`;
+        } else {
+            pixels[i] = null;
+        }
     }
+    
     drawGrid();
     
-    // Afficher l'emoji dans la zone de prévisualisation
-    document.getElementById('emoji_display').textContent = emoji;
-    document.getElementById('emoji_preview').classList.remove('hidden');
-    document.getElementById('image_preview').classList.add('hidden');
+    // Masquer l'emoji preview et afficher l'image preview
+    document.getElementById('emoji_preview').classList.add('hidden');
+    document.getElementById('image_preview').classList.remove('hidden');
 }
 
 function selectR4EIcon(iconBase64, modName) {
@@ -486,6 +559,47 @@ function clearCanvas() {
         }
         drawGrid();
     }
+}
+
+function addTextToCanvas() {
+    const text = document.getElementById('text_to_add').value.trim();
+    if (!text) {
+        alert('Veuillez saisir du texte');
+        return;
+    }
+    
+    // Créer un canvas temporaire pour convertir le texte en pixels
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = GRID_SIZE;
+    tempCanvas.height = GRID_SIZE;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // Dessiner le texte centré dans le canvas avec la couleur actuelle
+    tempCtx.fillStyle = currentColor;
+    tempCtx.font = 'bold 20px Arial';
+    tempCtx.textAlign = 'center';
+    tempCtx.textBaseline = 'middle';
+    tempCtx.fillText(text, GRID_SIZE / 2, GRID_SIZE / 2);
+    
+    // Extraire les pixels et les afficher dans l'éditeur
+    const imageData = tempCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE);
+    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+        const r = imageData.data[i * 4];
+        const g = imageData.data[i * 4 + 1];
+        const b = imageData.data[i * 4 + 2];
+        const a = imageData.data[i * 4 + 3];
+        
+        if (a > 0) {
+            pixels[i] = `rgb(${r}, ${g}, ${b})`;
+        }
+        // Ne pas effacer les pixels existants si alpha = 0
+    }
+    
+    drawGrid();
+    
+    // Masquer le modal et vider le champ
+    document.getElementById('text_input_modal').classList.add('hidden');
+    document.getElementById('text_to_add').value = '';
 }
 
 function updatePreview() {
