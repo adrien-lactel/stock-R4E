@@ -123,7 +123,112 @@
     </section>
 
     {{-- =====================
-         SECTION 2 : SOUS-CATÉGORIES
+         SECTION 2 : MARQUES
+    ===================== --}}
+    <section id="brands" class="bg-white shadow rounded-lg p-6 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+            <h2 class="text-xl font-semibold">🏷️ Marques</h2>
+
+            <div class="flex items-center gap-2">
+                <input id="filter-brands"
+                       type="text"
+                       placeholder="Filtrer les marques…"
+                       class="w-full md:w-80 rounded border-gray-300" />
+                <button type="button"
+                        class="px-3 py-2 rounded border hover:bg-gray-50"
+                        onclick="document.getElementById('filter-brands').value=''; document.getElementById('filter-brands').dispatchEvent(new Event('input'));">
+                    ✕
+                </button>
+            </div>
+        </div>
+
+        {{-- CREATE --}}
+        <form method="POST" action="{{ route('admin.taxonomy.brand.store') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-2">
+            @csrf
+            <select name="article_category_id" class="w-full border rounded p-2" required>
+                <option value="">— Catégorie —</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                @endforeach
+            </select>
+
+            <input name="name" placeholder="Ex : Nintendo, Sony…"
+                   class="w-full border rounded p-2" required>
+
+            <button class="bg-indigo-600 text-white px-4 py-2 rounded">➕ Ajouter</button>
+        </form>
+
+        {{-- LIST --}}
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm divide-y divide-gray-200" data-filter-table="brands">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-3 py-2 text-left">Nom</th>
+                        <th class="px-3 py-2 text-left">Catégorie</th>
+                        <th class="px-3 py-2 text-center w-20">Sous-cat.</th>
+                        <th class="px-3 py-2 text-center w-40">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($categories as $category)
+                        @foreach($category->brands as $brand)
+                            @php
+                                $filterText = strtolower($brand->name.' '.$category->name);
+                            @endphp
+                            <tr data-filter-row data-filter-text="{{ $filterText }}">
+                                <td class="px-3 py-2">
+                                    <form method="POST" action="{{ route('admin.taxonomy.brand.update', $brand) }}" class="flex gap-2">
+                                        @csrf
+                                        @method('PUT')
+                                        <input name="name"
+                                               value="{{ $brand->name }}"
+                                               class="w-full rounded border-gray-300"
+                                               required>
+                                        <input type="hidden" name="article_category_id" value="{{ $brand->article_category_id }}">
+                                        <button class="px-3 py-2 rounded bg-indigo-600 text-white whitespace-nowrap">
+                                            💾
+                                        </button>
+                                    </form>
+                                </td>
+
+                                <td class="px-3 py-2 text-gray-600">
+                                    {{ $category->name }}
+                                </td>
+
+                                <td class="px-3 py-2 text-center text-gray-600">
+                                    {{ $brand->subCategories->count() }}
+                                </td>
+
+                                <td class="px-3 py-2">
+                                    <div class="flex items-center justify-center gap-2">
+                                        @if($brand->subCategories->count() > 0)
+                                            <span class="text-gray-400 cursor-not-allowed"
+                                                  title="Suppression impossible : contient des sous-catégories">
+                                                🗑️ Supprimer
+                                            </span>
+                                        @else
+                                            <form method="POST"
+                                                  action="{{ route('admin.taxonomy.brand.destroy', $brand) }}"
+                                                  onsubmit="return confirm('Supprimer cette marque ?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="text-red-600 hover:text-red-700">
+                                                    🗑️ Supprimer
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {{-- =====================
+         SECTION 3 : SOUS-CATÉGORIES
     ===================== --}}
     <section id="subcategories" class="bg-white shadow rounded-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
@@ -143,13 +248,17 @@
         </div>
 
         {{-- CREATE --}}
-        <form method="POST" action="{{ route('admin.taxonomy.sub-category.store') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-2">
+        <form method="POST" action="{{ route('admin.taxonomy.sub-category.store') }}" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-2">
             @csrf
-            <select name="article_category_id" class="w-full border rounded p-2" required>
+            <select name="article_category_id" id="subcat-category-select" class="w-full border rounded p-2" required onchange="loadBrandsForSubcat(this.value)">
                 <option value="">— Catégorie —</option>
                 @foreach($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                 @endforeach
+            </select>
+
+            <select name="article_brand_id" id="subcat-brand-select" class="w-full border rounded p-2">
+                <option value="">— Marque (opt.) —</option>
             </select>
 
             <input name="name" placeholder="Ex : Console portable"
@@ -165,73 +274,87 @@
                     <tr>
                         <th class="px-3 py-2 text-left">Nom</th>
                         <th class="px-3 py-2 text-left">Catégorie</th>
+                        <th class="px-3 py-2 text-left">Marque</th>
                         <th class="px-3 py-2 text-center w-20">Types</th>
                         <th class="px-3 py-2 text-center w-40">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @foreach($categories as $category)
-                        @foreach($category->subCategories as $sub)
-                            @php
-                                $filterText = strtolower($sub->name.' '.$category->name);
-                            @endphp
-                            <tr data-filter-row data-filter-text="{{ $filterText }}">
-                                <td class="px-3 py-2">
-                                    <form method="POST" action="{{ route('admin.taxonomy.sub-category.update', $sub) }}" class="flex gap-2">
-                                        @csrf
-                                        @method('PUT')
-                                        <input name="name"
-                                               value="{{ $sub->name }}"
-                                               class="w-full rounded border-gray-300"
-                                               required>
-                                </td>
+                        @foreach($category->brands as $brand)
+                            @foreach($brand->subCategories as $sub)
+                                @php
+                                    $filterText = strtolower($sub->name.' '.$category->name.' '.($brand->name ?? ''));
+                                @endphp
+                                <tr data-filter-row data-filter-text="{{ $filterText }}">
+                                    <td class="px-3 py-2">
+                                        <form method="POST" action="{{ route('admin.taxonomy.sub-category.update', $sub) }}" class="flex gap-2">
+                                            @csrf
+                                            @method('PUT')
+                                            <input name="name"
+                                                   value="{{ $sub->name }}"
+                                                   class="w-full rounded border-gray-300"
+                                                   required>
+                                    </td>
 
-                                <td class="px-3 py-2">
-                                        <select name="article_category_id" class="w-full rounded border-gray-300" required>
-                                            @foreach($categories as $c2)
-                                                <option value="{{ $c2->id }}" @selected($sub->article_category_id == $c2->id)>
-                                                    {{ $c2->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                </td>
+                                    <td class="px-3 py-2">
+                                            <select name="article_category_id" class="w-full rounded border-gray-300" required>
+                                                @foreach($categories as $c2)
+                                                    <option value="{{ $c2->id }}" @selected($sub->article_category_id == $c2->id)>
+                                                        {{ $c2->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                    </td>
 
-                                <td class="px-3 py-2 text-center text-gray-600">
-                                    {{ $sub->types->count() }}
-                                </td>
+                                    <td class="px-3 py-2 text-gray-600">
+                                            <select name="article_brand_id" class="w-full rounded border-gray-300">
+                                                <option value="">— Aucune —</option>
+                                                @foreach($category->brands as $b)
+                                                    <option value="{{ $b->id }}" @selected($sub->article_brand_id == $b->id)>
+                                                        {{ $b->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                    </td>
 
-                                <td class="px-3 py-2">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <button class="px-3 py-2 rounded bg-indigo-600 text-white whitespace-nowrap">
-                                                💾
-                                            </button>
-                                    </form>
+                                    <td class="px-3 py-2 text-center text-gray-600">
+                                        {{ $sub->types->count() }}
+                                    </td>
 
-                                            @if($sub->types->count() > 0)
-                                                <span class="text-gray-400 cursor-not-allowed"
-                                                      title="Suppression impossible : contient des types">
-                                                    🗑️ Supprimer
-                                                </span>
-                                            @else
-                                                <form method="POST"
-                                                      action="{{ route('admin.taxonomy.sub-category.destroy', $sub) }}"
-                                                      onsubmit="return confirm('Supprimer cette sous-catégorie ?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="px-3 py-2 rounded bg-red-600 text-white whitespace-nowrap">
+                                    <td class="px-3 py-2">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button class="px-3 py-2 rounded bg-indigo-600 text-white whitespace-nowrap">
+                                                    💾
+                                                </button>
+                                        </form>
+
+                                                @if($sub->types->count() > 0)
+                                                    <span class="text-gray-400 cursor-not-allowed"
+                                                          title="Suppression impossible : contient des types">
                                                         🗑️ Supprimer
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                </td>
-                            </tr>
+                                                    </span>
+                                                @else
+                                                    <form method="POST"
+                                                          action="{{ route('admin.taxonomy.sub-category.destroy', $sub) }}"
+                                                          onsubmit="return confirm('Supprimer cette sous-catégorie ?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button class="px-3 py-2 rounded bg-red-600 text-white whitespace-nowrap">
+                                                            🗑️ Supprimer
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                    </td>
+                                </tr>
+                            @endforeach
                         @endforeach
                     @endforeach
 
-                    @if($categories->sum(fn($c) => $c->subCategories->count()) === 0)
+                    @if($categories->sum(fn($c) => $c->brands->sum(fn($b) => $b->subCategories->count())) === 0)
                         <tr>
-                            <td colspan="4" class="px-3 py-6 text-center text-gray-500">
+                            <td colspan="5" class="px-3 py-6 text-center text-gray-500">
                                 Aucune sous-catégorie
                             </td>
                         </tr>
@@ -242,7 +365,7 @@
     </section>
 
     {{-- =====================
-         SECTION 3 : TYPES
+         SECTION 4 : TYPES
     ===================== --}}
     <section id="types" class="bg-white shadow rounded-lg p-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
@@ -389,8 +512,29 @@
   }
 
   wireFilter('filter-categories', 'categories');
+  wireFilter('filter-brands', 'brands');
   wireFilter('filter-subcategories', 'subcategories');
   wireFilter('filter-types', 'types');
 })();
+
+// Cascade dropdown pour sous-catégories : Catégorie → Marque
+function loadBrandsForSubcat(categoryId) {
+  const brandSelect = document.getElementById('subcat-brand-select');
+  brandSelect.innerHTML = '<option value="">— Chargement… —</option>';
+  
+  if (!categoryId) {
+    brandSelect.innerHTML = '<option value="">— Marque (opt.) —</option>';
+    return;
+  }
+
+  fetch(`/admin/ajax/brands/${categoryId}`)
+    .then(res => res.text())
+    .then(html => {
+      brandSelect.innerHTML = html;
+    })
+    .catch(() => {
+      brandSelect.innerHTML = '<option value="">Erreur</option>';
+    });
+}
 </script>
 @endsection
