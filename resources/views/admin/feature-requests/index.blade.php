@@ -130,6 +130,7 @@
                                         </div>
                                     @else
                                         <button onclick="openResponseModal({{ $req->id }}, '{{ addslashes($req->title) }}')" 
+                                                data-url="{{ route('admin.feature-requests.add-response', $req) }}"
                                                 class="text-xs text-blue-400 hover:text-blue-300">
                                             ➕ Répondre
                                         </button>
@@ -217,8 +218,10 @@
 
     <script>
         function openResponseModal(requestId, title) {
+            const button = event.target;
+            const url = button.getAttribute('data-url');
             document.getElementById('responseModalTitle').textContent = title;
-            document.getElementById('responseForm').action = `{{ url('admin/feature-requests') }}/${requestId}/response`;
+            document.getElementById('responseForm').action = url;
             document.getElementById('responseModal').classList.remove('hidden');
         }
 
