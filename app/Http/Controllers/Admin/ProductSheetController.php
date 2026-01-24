@@ -97,8 +97,17 @@ class ProductSheetController extends Controller
             \Log::info('Fichier reçu', [
                 'name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
+                'size_mb' => round($file->getSize() / 1024 / 1024, 2),
                 'mime' => $file->getMimeType(),
             ]);
+            
+            // Vérifier la taille (10MB max)
+            if ($file->getSize() > 10 * 1024 * 1024) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le fichier est trop volumineux (' . round($file->getSize() / 1024 / 1024, 2) . ' MB). Maximum autorisé : 10 MB.'
+                ], 413);
+            }
             
             // Upload vers Cloudinary via Storage disk dans R4E/products/images
             $path = Storage::disk('cloudinary')->putFileAs(
