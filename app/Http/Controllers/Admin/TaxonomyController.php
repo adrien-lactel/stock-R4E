@@ -43,13 +43,15 @@ class TaxonomyController extends Controller
     public function storeSubCategory(Request $request)
     {
         $request->validate([
-            'article_category_id' => 'required|exists:article_categories,id',
-            'article_brand_id' => 'nullable|exists:article_brands,id',
+            'article_brand_id' => 'required|exists:article_brands,id',
             'name' => 'required|string|max:255',
         ]);
 
+        // Récupérer la catégorie à partir de la marque
+        $brand = ArticleBrand::findOrFail($request->article_brand_id);
+
         ArticleSubCategory::firstOrCreate([
-            'article_category_id' => $request->article_category_id,
+            'article_category_id' => $brand->article_category_id,
             'article_brand_id' => $request->article_brand_id,
             'name' => $request->name,
         ]);

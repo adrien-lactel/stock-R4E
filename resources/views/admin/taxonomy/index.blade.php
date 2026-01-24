@@ -248,17 +248,17 @@
         </div>
 
         {{-- CREATE --}}
-        <form method="POST" action="{{ route('admin.taxonomy.sub-category.store') }}" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-2">
+        <form method="POST" action="{{ route('admin.taxonomy.sub-category.store') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-2">
             @csrf
-            <select name="article_category_id" id="subcat-category-select" class="w-full border rounded p-2" required onchange="loadBrandsForSubcat(this.value)">
-                <option value="">— Catégorie —</option>
+            <select name="article_brand_id" id="subcat-brand-select" class="w-full border rounded p-2" required>
+                <option value="">— Marque —</option>
                 @foreach($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    <optgroup label="{{ $category->name }}">
+                        @foreach($category->brands as $brand)
+                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                        @endforeach
+                    </optgroup>
                 @endforeach
-            </select>
-
-            <select name="article_brand_id" id="subcat-brand-select" class="w-full border rounded p-2">
-                <option value="">— Marque (opt.) —</option>
             </select>
 
             <input name="name" placeholder="Ex : Console portable"
@@ -272,9 +272,9 @@
             <table class="min-w-full text-sm divide-y divide-gray-200" data-filter-table="subcategories">
                 <thead class="bg-gray-100">
                     <tr>
-                        <th class="px-3 py-2 text-left">Nom</th>
                         <th class="px-3 py-2 text-left">Catégorie</th>
                         <th class="px-3 py-2 text-left">Marque</th>
+                        <th class="px-3 py-2 text-left">Nom</th>
                         <th class="px-3 py-2 text-center w-20">Types</th>
                         <th class="px-3 py-2 text-center w-40">Actions</th>
                     </tr>
@@ -291,13 +291,6 @@
                                         <form method="POST" action="{{ route('admin.taxonomy.sub-category.update', $sub) }}" class="flex gap-2">
                                             @csrf
                                             @method('PUT')
-                                            <input name="name"
-                                                   value="{{ $sub->name }}"
-                                                   class="w-full rounded border-gray-300"
-                                                   required>
-                                    </td>
-
-                                    <td class="px-3 py-2">
                                             <select name="article_category_id" class="w-full rounded border-gray-300" required>
                                                 @foreach($categories as $c2)
                                                     <option value="{{ $c2->id }}" @selected($sub->article_category_id == $c2->id)>
@@ -307,8 +300,13 @@
                                             </select>
                                     </td>
 
-                                    <td class="px-3 py-2 text-gray-600">
-                                            <select name="article_brand_id" class="w-full rounded border-gray-300">
+                                    <td class="px-3 py-2 text-gray-600">                                            <input name="name"
+                                                   value="{{ $sub->name }}"
+                                                   class="w-full rounded border-gray-300"
+                                                   required>
+                                    </td>
+
+                                    <td class="px-3 py-2">                                            <select name="article_brand_id" class="w-full rounded border-gray-300">
                                                 <option value="">— Aucune —</option>
                                                 @foreach($category->brands as $b)
                                                     <option value="{{ $b->id }}" @selected($sub->article_brand_id == $b->id)>
@@ -521,9 +519,11 @@
 function loadBrandsForSubcat(categoryId) {
   const brandSelect = document.getElementById('subcat-brand-select');
   brandSelect.innerHTML = '<option value="">— Chargement… —</option>';
+  brandSelect.disabled = true;
   
   if (!categoryId) {
-    brandSelect.innerHTML = '<option value="">— Marque (opt.) —</option>';
+    brandSelect.innerHTML = '<option value="">— Sélectionner une catégorie d\'abord —</option>';
+    brandSelect.disabled = true;
     return;
   }
 
@@ -531,9 +531,11 @@ function loadBrandsForSubcat(categoryId) {
     .then(res => res.text())
     .then(html => {
       brandSelect.innerHTML = html;
+      brandSelect.disabled = false;
     })
     .catch(() => {
       brandSelect.innerHTML = '<option value="">Erreur</option>';
+      brandSelect.disabled = true;
     });
 }
 </script>
