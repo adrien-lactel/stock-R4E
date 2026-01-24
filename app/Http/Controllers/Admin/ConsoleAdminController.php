@@ -581,4 +581,18 @@ class ConsoleAdminController extends Controller
 
         return back()->with('success', "Mod \"{$mod->name}\" retiré de l'article #{$console->id}.");
     }
+
+    /**
+     * Supprimer un article (console).
+     */
+    public function destroyArticle(Console $console)
+    {
+        $articleId = $console->id;
+        
+        // Soft delete si configuré, sinon suppression complète
+        $console->delete();
+
+        return redirect()->route('admin.articles.recent')
+            ->with('success', "Article #{$articleId} supprimé avec succès.");
+    }
 }

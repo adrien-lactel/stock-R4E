@@ -264,6 +264,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::put('/articles/{console}', [ConsoleAdminController::class, 'updateArticle'])
             ->name('articles.update');
 
+        Route::delete('/articles/{console}', [ConsoleAdminController::class, 'destroyArticle'])
+            ->name('articles.destroy');
+
         /* =====================
         | CONSOLES
         ===================== */
