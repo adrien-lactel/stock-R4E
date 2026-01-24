@@ -187,6 +187,13 @@ class DashboardController extends Controller
                         'icon' => '🧑‍🔧',
                         'route' => 'admin.repairers.create',
                     ],
+                    [
+                        'title' => 'Bugs & Évolutions',
+                        'subtitle' => 'Support',
+                        'description' => 'Reporter des bugs et demander des évolutions.',
+                        'icon' => '🐛',
+                        'route' => 'admin.feature-requests.index',
+                    ],
                 ],
             ],
             [

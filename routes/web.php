@@ -22,6 +22,7 @@ use App\Http\Controllers\Store\DashboardController as StoreDashboardController;
 use App\Http\Controllers\Store\StoreOfferController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\Admin\RepairerAdminController;
+use App\Http\Controllers\Admin\FeatureRequestController;
 
 
 
@@ -182,6 +183,21 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         ===================== */
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        /* =====================
+        | BUGS & DEMANDES D'ÉVOLUTION
+        ===================== */
+        Route::get('/feature-requests', [FeatureRequestController::class, 'index'])
+            ->name('feature-requests.index');
+        
+        Route::post('/feature-requests', [FeatureRequestController::class, 'store'])
+            ->name('feature-requests.store');
+        
+        Route::patch('/feature-requests/{featureRequest}/status', [FeatureRequestController::class, 'updateStatus'])
+            ->name('feature-requests.update-status');
+        
+        Route::delete('/feature-requests/{featureRequest}', [FeatureRequestController::class, 'destroy'])
+            ->name('feature-requests.destroy');
 
         /* =====================
         | FICHES PRODUITS
