@@ -9,11 +9,6 @@
         </h1>
 
         <div class="flex items-center gap-2">
-            <a href="<?php echo e(route('admin.product-sheets.index')); ?>" 
-               class="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
-                🖼️ Fiches produits
-            </a>
-            
             <?php if($console->exists): ?>
                 <a href="<?php echo e(route('admin.articles.edit_full', $console)); ?>" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
                     ✍️ Édition complète

@@ -27,14 +27,14 @@
                 </p>
             </a>
 
-            <!-- Gérer les prix -->
-            <a href="{{ route('admin.prices.index') }}"
+            {{-- DÉSACTIVÉ - Vue prix console retirée --}}
+            {{-- <a href="{{ route('admin.prices.index') }}"
                class="bg-white shadow rounded-lg p-6 hover:shadow-lg transition border-l-4 border-green-500">
                 <h2 class="text-xl font-semibold mb-2">Prix des consoles</h2>
                 <p class="text-gray-600">
                     Définir les prix de vente par magasin.
                 </p>
-            </a>
+            </a> --}}
 
             <!-- Dashboard admin -->
             <a href="{{ route('admin.dashboard') }}"

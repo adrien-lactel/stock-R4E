@@ -8,6 +8,7 @@ use App\Models\Mod;
 use App\Models\Repairer;
 use App\Models\ConsoleReturn;
 use App\Models\StoreLotRequest;
+use App\Models\Console;
 
 class DashboardController extends Controller
 {
@@ -37,6 +38,12 @@ class DashboardController extends Controller
         $savPendingCount = ConsoleReturn::whereIn('status', ['pending', 'accepted', 'sent_to_repairer'])
             ->where('acknowledged', false)
             ->count();
+
+        // Statistiques articles
+        $totalArticles = Console::count();
+        $articlesStock = Console::whereIn('status', ['stock', 'repaired'])->count();
+        $articlesDefectueux = Console::where('status', 'defective')->count();
+        $articlesModes = Console::has('mods')->count();
 
         $sections = [
             [
@@ -83,7 +90,7 @@ class DashboardController extends Controller
                         'route' => 'admin.product-sheets.images-manager',                    ],                ],
             ],
             [
-                'title' => 'Gestion réparateurs',
+                'title' => 'Réseau réparateurs',
                 'cards' => [
                     [
                         'title' => 'Réparateurs',
@@ -91,13 +98,6 @@ class DashboardController extends Controller
                         'description' => 'Suivre les partenaires SAV et leurs charges.',
                         'icon' => '🔧',
                         'route' => 'admin.repairers.index',
-                    ],
-                    [
-                        'title' => 'Ajouter un réparateur',
-                        'subtitle' => 'Onboarding',
-                        'description' => 'Créer un nouveau partenaire et définir ses capacités.',
-                        'icon' => '🧑‍🔧',
-                        'route' => 'admin.repairers.create',
                     ],
                 ],
             ],
@@ -119,18 +119,6 @@ class DashboardController extends Controller
                         'route' => 'admin.lot-requests.index',
                     ],
                     [
-                        'title' => 'Prix consoles',
-                        'subtitle' => 'Tarifs',
-                        'description' => 'Synchroniser les prix par magasin et par article.',
-                        'icon' => '💰',
-                        'route' => 'admin.prices.index',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'SAV & devis',
-                'cards' => [
-                    [
                         'title' => 'SAV & retours',
                         'subtitle' => 'Support',
                         'description' => 'Valider dossiers SAV, devis et affectations réparateurs.',
@@ -138,6 +126,40 @@ class DashboardController extends Controller
                         'route' => 'admin.returns.index',
                         'badge' => $savPendingCount > 0 ? $savPendingCount . ' en attente' : null,
                         'badge_style' => 'bg-red-100 text-red-700',
+                    ],
+                    // DÉSACTIVÉ - Vue prix console retirée
+                    // [
+                    //     'title' => 'Prix consoles',
+                    //     'subtitle' => 'Tarifs',
+                    //     'description' => 'Synchroniser les prix par magasin et par article.',
+                    //     'icon' => '💰',
+                    //     'route' => 'admin.prices.index',
+                    // ],
+                ],
+            ],
+            [
+                'title' => 'Modifications et accessoires',
+                'cards' => [
+                    [
+                        'title' => 'Catalogue Mods',
+                        'subtitle' => 'Stock',
+                        'description' => 'Gérer accessoires, quantités et affectations.',
+                        'icon' => '🧰',
+                        'route' => 'admin.mods.index',
+                    ],
+                    [
+                        'title' => 'Bilan accessoires',
+                        'subtitle' => 'Inventaire',
+                        'description' => 'Vue d\'ensemble des stocks et valorisation accessoires.',
+                        'icon' => '📦',
+                        'route' => 'admin.accessories.report',
+                    ],
+                    [
+                        'title' => 'Opérations',
+                        'subtitle' => 'Catalogue',
+                        'description' => 'Gérer les opérations techniques disponibles.',
+                        'icon' => '⚙️',
+                        'route' => 'admin.operations.index',
                     ],
                 ],
             ],
@@ -160,24 +182,10 @@ class DashboardController extends Controller
                     ],
                     [
                         'title' => 'Créer un réparateur',
-                        'subtitle' => 'Réseau',
-                        'description' => 'Onboarder un partenaire SAV supplémentaire.',
-                        'icon' => '🧑‍🏭',
+                        'subtitle' => 'Onboarding',
+                        'description' => 'Créer un nouveau partenaire et définir ses capacités.',
+                        'icon' => '🧑‍🔧',
                         'route' => 'admin.repairers.create',
-                    ],
-                    [
-                        'title' => 'Catalogue Mods',
-                        'subtitle' => 'Stock',
-                        'description' => 'Gérer accessoires, quantités et affectations.',
-                        'icon' => '🧰',
-                        'route' => 'admin.mods.index',
-                    ],
-                    [
-                        'title' => 'Bilan accessoires',
-                        'subtitle' => 'Inventaire',
-                        'description' => 'Vue d\'ensemble des stocks et valorisation accessoires.',
-                        'icon' => '📦',
-                        'route' => 'admin.accessories.report',
                     ],
                 ],
             ],
@@ -197,6 +205,6 @@ class DashboardController extends Controller
             ],
         ];
 
-        return view('admin.dashboard', compact('mods', 'repairers', 'savPendingCount', 'lotRequests', 'sections'));
+        return view('admin.dashboard', compact('mods', 'repairers', 'savPendingCount', 'lotRequests', 'sections', 'totalArticles', 'articlesStock', 'articlesDefectueux', 'articlesModes'));
     }
 }

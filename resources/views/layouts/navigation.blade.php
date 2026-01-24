@@ -18,7 +18,7 @@
                         @else
                             <a href="{{ route('dashboard') }}">
                         @endif
-                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                            <img src="{{ asset('images/r4e-logo.png') }}" alt="R4E" class="h-12 w-auto">
                         </a>
                     @endauth
                 </div>
@@ -44,38 +44,10 @@
                             Dashboard admin
                         </x-nav-link>
 
-                        <x-nav-link :href="route('admin.stores.create')" :active="request()->routeIs('admin.stores.create')">
-                            ➕ Créer un magasin
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.prices.index')" :active="request()->routeIs('admin.prices.*')">
+                        {{-- DÉSACTIVÉ - Vue prix console retirée --}}
+                        {{-- <x-nav-link :href="route('admin.prices.index')" :active="request()->routeIs('admin.prices.*')">
                             💰 Prix consoles
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.mods.index')" :active="request()->routeIs('admin.mods.*')">
-                            🔧 Catalogue Mods
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.accessories.index')" :active="request()->routeIs('admin.accessories.*')">
-                            📦 Accessoires
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.operations.index')" :active="request()->routeIs('admin.operations.*')">
-                            ⚙️ Opérations
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.repairers.index')" :active="request()->routeIs('admin.repairers.*')">
-                            👨‍🔧 Réparateurs
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('admin.product-sheets.index')" :active="request()->routeIs('admin.product-sheets.*')">
-                            🖼️ Fiches produits
-                        </x-nav-link>
-
-                        {{-- ✅ AJOUT : SAV --}}
-                        <x-nav-link :href="route('admin.lot-requests.index')" :active="request()->routeIs('admin.lot-requests.*')">
-                            📦 Demandes de lots
-                        </x-nav-link>
+                        </x-nav-link> --}}
 
                     @endif
                     @endauth
@@ -197,13 +169,10 @@
                     Dashboard admin
                 </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('admin.stores.create')">
-                    ➕ Créer un magasin
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link :href="route('admin.prices.index')">
+                {{-- DÉSACTIVÉ - Vue prix console retirée --}}
+                {{-- <x-responsive-nav-link :href="route('admin.prices.index')">
                     💰 Prix consoles
-                </x-responsive-nav-link>
+                </x-responsive-nav-link> --}}
 
                 {{-- ✅ AJOUT : SAV --}}
                 <x-responsive-nav-link :href="route('admin.returns.index')" class="flex items-center gap-2 @if($savPendingCount>0) text-red-600 animate-pulse @endif">

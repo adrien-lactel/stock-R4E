@@ -10,7 +10,7 @@ use App\Http\Controllers\ProfileController;
 */
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ConsoleAdminController;
-use App\Http\Controllers\Admin\ConsolePriceController;
+// use App\Http\Controllers\Admin\ConsolePriceController; // DÉSACTIVÉ - Vue prix console retirée
 use App\Http\Controllers\Admin\StoreAdminController;
 use App\Http\Controllers\Admin\StoreStockController;
 use App\Http\Controllers\Admin\ConsoleReturnController;
@@ -295,13 +295,13 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
             ->name('consoles.update-valorisation');
 
         /* =====================
-        | PRIX / MAGASINS
+        | PRIX / MAGASINS - DÉSACTIVÉ
         ===================== */
-        Route::get('/prices', [ConsolePriceController::class, 'index'])
-            ->name('prices.index');
+        // Route::get('/prices', [ConsolePriceController::class, 'index'])
+        //     ->name('prices.index');
 
-        Route::post('/prices/{console}', [ConsolePriceController::class, 'store'])
-            ->name('prices.store');
+        // Route::post('/prices/{console}', [ConsolePriceController::class, 'store'])
+        //     ->name('prices.store');
 
         /* =====================
         | MAGASINS
