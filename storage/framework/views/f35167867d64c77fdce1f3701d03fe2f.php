@@ -1,39 +1,38 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-800">
-            {{ $console->exists ? "✏️ Édition complète article #{$console->id}" : "➕ Nouvelle fiche article" }}
+            <?php echo e($console->exists ? "✏️ Édition complète article #{$console->id}" : "➕ Nouvelle fiche article"); ?>
+
         </h1>
         <div class="flex items-center gap-2">
-            @if($console->exists && $console->product_sheet_id)
-                <a href="{{ route('admin.product-sheets.edit', $console->product_sheet_id) }}" 
+            <?php if($console->exists && $console->product_sheet_id): ?>
+                <a href="<?php echo e(route('admin.product-sheets.edit', $console->product_sheet_id)); ?>" 
                    class="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
                     🖼️ Fiche produit
                 </a>
-            @endif
-            <a href="{{ route('admin.consoles.index') }}" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour stock</a>
+            <?php endif; ?>
+            <a href="<?php echo e(route('admin.consoles.index')); ?>" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour stock</a>
         </div>
     </div>
 
-    @if ($errors->any())
+    <?php if($errors->any()): ?>
         <div class="mb-6 p-4 bg-red-50 text-red-800 rounded border border-red-200">
             <ul class="list-disc pl-5 space-y-1 text-sm">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $err): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($err); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
     <div class="bg-white shadow rounded-lg p-6">
-        <form method="POST" action="{{ $console->exists ? route('admin.articles.update', $console) : route('admin.articles.store') }}">
-            @csrf
-            @if($console->exists)
-                @method('PUT')
-            @endif
+        <form method="POST" action="<?php echo e($console->exists ? route('admin.articles.update', $console) : route('admin.articles.store')); ?>">
+            <?php echo csrf_field(); ?>
+            <?php if($console->exists): ?>
+                <?php echo method_field('PUT'); ?>
+            <?php endif; ?>
 
             <h2 class="text-lg font-semibold text-gray-800">Taxonomie</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
@@ -41,9 +40,9 @@
                     <label class="block text-sm font-medium">Catégorie *</label>
                     <select id="article_category_id" name="article_category_id" class="w-full rounded border-gray-300" required>
                         <option value="">— Choisir —</option>
-                        @foreach($articleCategories as $cat)
-                            <option value="{{ $cat->id }}" @selected(old('article_category_id', $console->article_category_id) == $cat->id)>{{ $cat->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $articleCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($cat->id); ?>" <?php if(old('article_category_id', $console->article_category_id) == $cat->id): echo 'selected'; endif; ?>><?php echo e($cat->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
@@ -66,16 +65,16 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                 <div>
                     <label class="block text-sm font-medium">Numéro de série</label>
-                    <input name="serial_number" class="w-full rounded border-gray-300" value="{{ old('serial_number', $console->serial_number) }}">
+                    <input name="serial_number" class="w-full rounded border-gray-300" value="<?php echo e(old('serial_number', $console->serial_number)); ?>">
                 </div>
                 <div>
                     <label class="block text-sm font-medium">Catégorie interne</label>
-                    <input name="category" class="w-full rounded border-gray-300" value="{{ old('category', $console->category) }}">
+                    <input name="category" class="w-full rounded border-gray-300" value="<?php echo e(old('category', $console->category)); ?>">
                 </div>
                 <div>
                     <label class="block text-sm font-medium">Provenance</label>
-                    <input name="provenance_article" list="provenances-list" class="w-full rounded border-gray-300" value="{{ old('provenance_article', $console->provenance_article) }}">
-                    <datalist id="provenances-list">@foreach($provenances as $p)<option value="{{ $p }}">@endforeach</datalist>
+                    <input name="provenance_article" list="provenances-list" class="w-full rounded border-gray-300" value="<?php echo e(old('provenance_article', $console->provenance_article)); ?>">
+                    <datalist id="provenances-list"><?php $__currentLoopData = $provenances; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($p); ?>"><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></datalist>
                 </div>
             </div>
 
@@ -83,12 +82,12 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
                 <div>
                     <label class="block text-sm font-medium">Statut *</label>
-                    @php $st = old('status', $console->status); @endphp
+                    <?php $st = old('status', $console->status); ?>
                     <select name="status" class="w-full rounded border-gray-300" required>
-                        <option value="stock" @selected($st==='stock')>Stock</option>
-                        <option value="defective" @selected($st==='defective')>Défectueuse</option>
-                        <option value="repair" @selected($st==='repair')>En réparation</option>
-                        <option value="disabled" @selected($st==='disabled')>Désactivée</option>
+                        <option value="stock" <?php if($st==='stock'): echo 'selected'; endif; ?>>Stock</option>
+                        <option value="defective" <?php if($st==='defective'): echo 'selected'; endif; ?>>Défectueuse</option>
+                        <option value="repair" <?php if($st==='repair'): echo 'selected'; endif; ?>>En réparation</option>
+                        <option value="disabled" <?php if($st==='disabled'): echo 'selected'; endif; ?>>Désactivée</option>
                     </select>
                 </div>
 
@@ -96,28 +95,28 @@
                     <label class="block text-sm font-medium">Réparateur</label>
                     <select name="repairer_id" class="w-full rounded border-gray-300">
                         <option value="">— Aucun —</option>
-                        @foreach($repairers as $rep)
-                            <option value="{{ $rep->id }}" @selected(old('repairer_id', $console->repairer_id) == $rep->id)>{{ $rep->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $repairers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rep): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($rep->id); ?>" <?php if(old('repairer_id', $console->repairer_id) == $rep->id): echo 'selected'; endif; ?>><?php echo e($rep->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium">Prix d’achat (€)</label>
-                    <input type="number" step="0.01" min="0" name="prix_achat" value="{{ old('prix_achat', $console->prix_achat) }}" class="w-full rounded border-gray-300">
+                    <input type="number" step="0.01" min="0" name="prix_achat" value="<?php echo e(old('prix_achat', $console->prix_achat)); ?>" class="w-full rounded border-gray-300">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium">Valorisation (€)</label>
-                    <input type="number" step="0.01" min="0" name="valorisation" value="{{ old('valorisation', $console->valorisation) }}" class="w-full rounded border-gray-300">
+                    <input type="number" step="0.01" min="0" name="valorisation" value="<?php echo e(old('valorisation', $console->valorisation)); ?>" class="w-full rounded border-gray-300">
                 </div>
             </div>
 
             <h2 class="text-lg font-semibold text-gray-800 mt-8">Modifications (Mods & Accessoires)</h2>
             
-            {{-- Mods actuellement associés + Coût de réparation --}}
-            @if($console->mods->count())
-                @php
+            
+            <?php if($console->mods->count()): ?>
+                <?php
                     $totalMinutes = $console->mods->sum('pivot.work_time_minutes');
                     $hours = floor($totalMinutes / 60);
                     $minutes = $totalMinutes % 60;
@@ -126,74 +125,74 @@
                     $coutTotalReparation = $coutMods + $coutMainOeuvre;
                     $prixAchat = $console->prix_achat ?? 0;
                     $coutRevient = $prixAchat + $coutTotalReparation;
-                @endphp
+                ?>
                 
-                {{-- Bloc coût de réparation + coût de revient --}}
+                
                 <div class="mt-3 mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
                     <h4 class="text-sm font-semibold text-indigo-800 mb-3">💰 Coûts</h4>
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         <div class="text-center p-3 bg-white rounded-lg shadow-sm">
                             <div class="text-xs text-gray-500 uppercase">Prix d'achat</div>
-                            <div class="text-xl font-bold text-gray-700">{{ number_format($prixAchat, 2) }} €</div>
+                            <div class="text-xl font-bold text-gray-700"><?php echo e(number_format($prixAchat, 2)); ?> €</div>
                         </div>
                         <div class="text-center p-3 bg-white rounded-lg shadow-sm">
                             <div class="text-xs text-gray-500 uppercase">Coût Mods</div>
-                            <div class="text-xl font-bold text-blue-600">{{ number_format($coutMods, 2) }} €</div>
+                            <div class="text-xl font-bold text-blue-600"><?php echo e(number_format($coutMods, 2)); ?> €</div>
                         </div>
                         <div class="text-center p-3 bg-white rounded-lg shadow-sm">
                             <div class="text-xs text-gray-500 uppercase">Temps travail</div>
                             <div class="text-xl font-bold text-orange-600">
-                                {{ $hours > 0 ? $hours.'h ' : '' }}{{ $minutes }}min
+                                <?php echo e($hours > 0 ? $hours.'h ' : ''); ?><?php echo e($minutes); ?>min
                             </div>
                         </div>
                         <div class="text-center p-3 bg-white rounded-lg shadow-sm">
                             <div class="text-xs text-gray-500 uppercase">Main d'œuvre (20€/h)</div>
-                            <div class="text-xl font-bold text-orange-600">{{ number_format($coutMainOeuvre, 2) }} €</div>
+                            <div class="text-xl font-bold text-orange-600"><?php echo e(number_format($coutMainOeuvre, 2)); ?> €</div>
                         </div>
                         <div class="text-center p-3 bg-indigo-100 rounded-lg shadow-sm border border-indigo-300">
                             <div class="text-xs text-indigo-700 uppercase font-semibold">Coût Réparation</div>
-                            <div class="text-xl font-bold text-indigo-700">{{ number_format($coutTotalReparation, 2) }} €</div>
+                            <div class="text-xl font-bold text-indigo-700"><?php echo e(number_format($coutTotalReparation, 2)); ?> €</div>
                         </div>
                         <div class="text-center p-3 bg-green-100 rounded-lg shadow-sm border-2 border-green-400">
                             <div class="text-xs text-green-700 uppercase font-semibold">Coût de Revient</div>
-                            <div class="text-2xl font-bold text-green-700">{{ number_format($coutRevient, 2) }} €</div>
+                            <div class="text-2xl font-bold text-green-700"><?php echo e(number_format($coutRevient, 2)); ?> €</div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Liste des mods associés --}}
+                
                 <div class="mb-4 p-4 bg-gray-50 rounded-lg">
                     <h4 class="text-sm font-medium text-gray-700 mb-2">Mods, Accessoires & Opérations associés :</h4>
                     <div class="flex flex-wrap gap-2">
-                        @foreach($console->mods as $mod)
-                            @php
+                        <?php $__currentLoopData = $console->mods; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php
                                 $badgeClass = $mod->is_operation 
                                     ? 'bg-orange-100 text-orange-800 hover:bg-orange-200' 
                                     : ($mod->is_accessory ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' : 'bg-blue-100 text-blue-800 hover:bg-blue-200');
                                 $icon = $mod->is_operation ? '🔧' : ($mod->is_accessory ? '📦' : '🔩');
-                            @endphp
-                            <form method="POST" action="{{ route('admin.consoles.remove-mod', [$console, $mod]) }}" class="inline" onsubmit="return confirm('Retirer ce mod ?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="inline-flex items-center px-3 py-1 rounded-full text-sm {{ $badgeClass }} cursor-pointer transition-all group">
-                                    <span class="group-hover:hidden">{{ $icon }} {{ $mod->name }}</span>
+                            ?>
+                            <form method="POST" action="<?php echo e(route('admin.consoles.remove-mod', [$console, $mod])); ?>" class="inline" onsubmit="return confirm('Retirer ce mod ?')">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('DELETE'); ?>
+                                <button type="submit" class="inline-flex items-center px-3 py-1 rounded-full text-sm <?php echo e($badgeClass); ?> cursor-pointer transition-all group">
+                                    <span class="group-hover:hidden"><?php echo e($icon); ?> <?php echo e($mod->name); ?></span>
                                     <span class="hidden group-hover:inline text-red-600">🗑️ Retirer</span>
-                                    @if($mod->pivot->price_applied && !$mod->is_operation)
-                                        <span class="ml-1 text-xs opacity-75 group-hover:hidden">({{ number_format($mod->pivot->price_applied, 2) }}€)</span>
-                                    @endif
-                                    @if($mod->pivot->work_time_minutes)
-                                        <span class="ml-1 text-xs opacity-75 group-hover:hidden">· {{ $mod->pivot->work_time_minutes }}min</span>
-                                    @endif
+                                    <?php if($mod->pivot->price_applied && !$mod->is_operation): ?>
+                                        <span class="ml-1 text-xs opacity-75 group-hover:hidden">(<?php echo e(number_format($mod->pivot->price_applied, 2)); ?>€)</span>
+                                    <?php endif; ?>
+                                    <?php if($mod->pivot->work_time_minutes): ?>
+                                        <span class="ml-1 text-xs opacity-75 group-hover:hidden">· <?php echo e($mod->pivot->work_time_minutes); ?>min</span>
+                                    <?php endif; ?>
                                 </button>
                             </form>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="mt-3 mb-4 p-4 bg-gray-50 rounded-lg text-center text-gray-500">
                     Aucun mod associé — Coût de réparation: <strong>0,00 €</strong>
                 </div>
-            @endif
+            <?php endif; ?>
 
             <div class="mt-3 max-w-md">
                 <div class="p-4 border rounded-lg bg-white">
@@ -201,25 +200,26 @@
                     <select name="console_mods[0][mod_id]" class="w-full rounded border-gray-300 text-sm">
                         <option value="">— Aucun —</option>
                         <optgroup label="🔧 Opérations (temps uniquement)">
-                            @foreach($allMods->where('is_operation', true) as $mod)
-                                <option value="{{ $mod->id }}" data-price="0">
-                                    {{ $mod->name }}
+                            <?php $__currentLoopData = $allMods->where('is_operation', true); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($mod->id); ?>" data-price="0">
+                                    <?php echo e($mod->name); ?>
+
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </optgroup>
                         <optgroup label="🔩 Mods (pièces)">
-                            @foreach($allMods->where('is_accessory', false)->where('is_operation', false) as $mod)
-                                <option value="{{ $mod->id }}" data-price="{{ $mod->purchase_price }}">
-                                    {{ $mod->name }} ({{ number_format($mod->purchase_price, 2) }}€)
+                            <?php $__currentLoopData = $allMods->where('is_accessory', false)->where('is_operation', false); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($mod->id); ?>" data-price="<?php echo e($mod->purchase_price); ?>">
+                                    <?php echo e($mod->name); ?> (<?php echo e(number_format($mod->purchase_price, 2)); ?>€)
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </optgroup>
                         <optgroup label="📦 Accessoires">
-                            @foreach($allMods->where('is_accessory', true)->where('is_operation', false) as $mod)
-                                <option value="{{ $mod->id }}" data-price="{{ $mod->purchase_price }}">
-                                    {{ $mod->name }} ({{ number_format($mod->purchase_price, 2) }}€)
+                            <?php $__currentLoopData = $allMods->where('is_accessory', true)->where('is_operation', false); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($mod->id); ?>" data-price="<?php echo e($mod->purchase_price); ?>">
+                                    <?php echo e($mod->name); ?> (<?php echo e(number_format($mod->purchase_price, 2)); ?>€)
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </optgroup>
                     </select>
                     <div class="grid grid-cols-2 gap-2 mt-3">
@@ -247,17 +247,17 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                 <div>
                     <label class="block text-sm font-medium">Lieu de stockage</label>
-                    <input name="lieu_stockage" list="lieux-list" class="w-full rounded border-gray-300" value="{{ old('lieu_stockage', $console->lieu_stockage) }}">
-                    <datalist id="lieux-list">@foreach($lieux as $l)<option value="{{ $l }}">@endforeach</datalist>
+                    <input name="lieu_stockage" list="lieux-list" class="w-full rounded border-gray-300" value="<?php echo e(old('lieu_stockage', $console->lieu_stockage)); ?>">
+                    <datalist id="lieux-list"><?php $__currentLoopData = $lieux; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($l); ?>"><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></datalist>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium">Magasin</label>
                     <select name="store_id" class="w-full rounded border-gray-300">
                         <option value="">— Choisir —</option>
-                        @foreach($stores as $s)
-                            <option value="{{ $s->id }}" @selected(old('store_id', $console->store_id) == $s->id)>{{ $s->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $stores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($s->id); ?>" <?php if(old('store_id', $console->store_id) == $s->id): echo 'selected'; endif; ?>><?php echo e($s->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
@@ -268,22 +268,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                 <div>
                     <label class="block text-sm font-medium">Commentaire produit</label>
-                    <textarea name="product_comment" rows="4" class="w-full rounded border-gray-300">{{ old('product_comment', $console->product_comment) }}</textarea>
+                    <textarea name="product_comment" rows="4" class="w-full rounded border-gray-300"><?php echo e(old('product_comment', $console->product_comment)); ?></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium">Commentaire réparateur</label>
-                    <textarea name="commentaire_reparateur" rows="4" class="w-full rounded border-gray-300">{{ old('commentaire_reparateur', $console->commentaire_reparateur) }}</textarea>
+                    <textarea name="commentaire_reparateur" rows="4" class="w-full rounded border-gray-300"><?php echo e(old('commentaire_reparateur', $console->commentaire_reparateur)); ?></textarea>
                 </div>
             </div>
 
             <div class="mt-4">
                 <label class="block text-sm font-medium">Commentaire admin</label>
-                <textarea name="admin_comment" rows="4" class="w-full rounded border-gray-300">{{ old('admin_comment', $console->admin_comment) }}</textarea>
+                <textarea name="admin_comment" rows="4" class="w-full rounded border-gray-300"><?php echo e(old('admin_comment', $console->admin_comment)); ?></textarea>
             </div>
 
             <div class="mt-6 flex gap-3">
                 <button class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">💾 Enregistrer</button>
-                <a href="{{ route('admin.consoles.index') }}" class="px-6 py-2 rounded border hover:bg-gray-50">Annuler</a>
+                <a href="<?php echo e(route('admin.consoles.index')); ?>" class="px-6 py-2 rounded border hover:bg-gray-50">Annuler</a>
             </div>
         </form>
     </div>
@@ -298,8 +298,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const typeSelect = document.getElementById('article_type_id');
   if (!catSelect || !subSelect || !typeSelect) return;
 
-  const oldSub  = @json(old('article_sub_category_id', $console->article_sub_category_id));
-  const oldType = @json(old('article_type_id', $console->article_type_id));
+  const oldSub  = <?php echo json_encode(old('article_sub_category_id', $console->article_sub_category_id), 512) ?>;
+  const oldType = <?php echo json_encode(old('article_type_id', $console->article_type_id), 512) ?>;
 
   function clearSelect(sel, placeholder = '— Choisir —') {
     sel.innerHTML = '';
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadSubCategories(categoryId, applyOld = false) {
     clearSelect(subSelect); clearSelect(typeSelect);
     if (!categoryId) return;
-    const url = `{{ route('admin.ajax.sub-categories', ['category' => '__ID__']) }}`.replace('__ID__', categoryId);
+    const url = `<?php echo e(route('admin.ajax.sub-categories', ['category' => '__ID__'])); ?>`.replace('__ID__', categoryId);
     const data = await fetchJson(url);
     const list = Array.isArray(data) ? data : (data.data ?? []);
     list.forEach(sc => { const opt = document.createElement('option'); opt.value = sc.id; opt.textContent = sc.name; subSelect.appendChild(opt); });
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadTypes(subCategoryId, applyOld = false) {
     clearSelect(typeSelect);
     if (!subCategoryId) return;
-    const url = `{{ route('admin.ajax.types', ['subCategory' => '__ID__']) }}`.replace('__ID__', subCategoryId);
+    const url = `<?php echo e(route('admin.ajax.types', ['subCategory' => '__ID__'])); ?>`.replace('__ID__', subCategoryId);
     const data = await fetchJson(url);
     const list = Array.isArray(data) ? data : (data.data ?? []);
     list.forEach(t => { const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.name; typeSelect.appendChild(opt); });
@@ -338,4 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/consoles/edit_full.blade.php ENDPATH**/ ?>

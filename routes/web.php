@@ -294,6 +294,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::patch('/consoles/{console}/valorisation', [ConsoleAdminController::class, 'updateValorisation'])
             ->name('consoles.update-valorisation');
 
+        Route::delete('/consoles/{console}/mods/{mod}', [ConsoleAdminController::class, 'removeMod'])
+            ->name('consoles.remove-mod');
+
         /* =====================
         | PRIX / MAGASINS - DÉSACTIVÉ
         ===================== */

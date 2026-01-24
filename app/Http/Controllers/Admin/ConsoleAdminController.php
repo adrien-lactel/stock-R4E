@@ -565,4 +565,20 @@ class ConsoleAdminController extends Controller
         return redirect()->route('admin.consoles.disabled')
             ->with('success', "Console #{$console->id} valorisée avec succès. {$totalCreated} accessoire(s) / pièce(s) détachée(s) ajouté(es) au stock.");
     }
+
+    /* =====================================================
+     | RETIRER UN MOD D'UNE CONSOLE
+     ===================================================== */
+    public function removeMod(Console $console, Mod $mod)
+    {
+        // Vérifier que le mod est bien attaché à la console
+        if (!$console->mods->contains($mod->id)) {
+            return back()->with('error', 'Ce mod n\'est pas associé à cet article.');
+        }
+
+        // Détacher le mod de la console (supprime l'entrée de la table pivot)
+        $console->mods()->detach($mod->id);
+
+        return back()->with('success', "Mod \"{$mod->name}\" retiré de l'article #{$console->id}.");
+    }
 }

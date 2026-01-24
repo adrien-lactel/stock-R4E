@@ -345,7 +345,6 @@ class ProductSheetController extends Controller
     public function edit(ProductSheet $productSheet)
     {
         $categories = ArticleCategory::with('subCategories.types')->orderBy('name')->get();
-        $mods = Mod::orderBy('name')->get();
         $selectedType = null;
         $selectedSubCategory = null;
         $selectedCategory = null;
@@ -360,6 +359,25 @@ class ProductSheetController extends Controller
             }
         }
 
+        // Vérifier si une console est associée à cette fiche
+        $associatedConsole = \App\Models\Console::where('product_sheet_id', $productSheet->id)->first();
+        
+        // Si une console est associée, utiliser uniquement ses mods
+        if ($associatedConsole) {
+            $mods = $associatedConsole->mods()->orderBy('name')->get();
+            $consoleMods = $mods->map(function($mod) {
+                return [
+                    'id' => $mod->id,
+                    'name' => $mod->name,
+                    'icon' => $mod->icon ?? '🔧'
+                ];
+            })->toArray();
+            $productSheet->featured_mods = $consoleMods;
+        } else {
+            // Sinon, afficher tous les mods disponibles
+            $mods = Mod::orderBy('name')->get();
+        }
+
         return view('admin.product-sheets.edit', [
             'sheet' => $productSheet,
             'categories' => $categories,
@@ -367,6 +385,7 @@ class ProductSheetController extends Controller
             'selectedCategory' => $selectedCategory,
             'selectedSubCategory' => $selectedSubCategory,
             'selectedType' => $selectedType,
+            'associatedConsole' => $associatedConsole ?? null,
         ]);
     }
 
@@ -535,6 +554,10 @@ class ProductSheetController extends Controller
         // Créer une copie
         $duplicate = $original->replicate();
         $duplicate->name = $original->name . ' (Copie)';
+        
+        // Réinitialiser les champs propres à un article spécifique
+        $duplicate->featured_mods = null;
+        
         $duplicate->save();
         
         // Si un console_id est fourni, lier la fiche à l'article
