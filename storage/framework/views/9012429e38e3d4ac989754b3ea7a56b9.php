@@ -73,10 +73,10 @@
             <select name="status"
                     class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Tous</option>
-                <option value="stock" <?php if(request('status')==='stock'): echo 'selected'; endif; ?>>stock</option>
-                <option value="defective" <?php if(request('status')==='defective'): echo 'selected'; endif; ?>>defective</option>
-                <option value="repair" <?php if(request('status')==='repair'): echo 'selected'; endif; ?>>repair</option>
-                <option value="disabled" <?php if(request('status')==='disabled'): echo 'selected'; endif; ?>>disabled</option>
+                <option value="stock" <?php if(request('status')==='stock'): echo 'selected'; endif; ?>>En stock</option>
+                <option value="defective" <?php if(request('status')==='defective'): echo 'selected'; endif; ?>>Défectueuse</option>
+                <option value="repair" <?php if(request('status')==='repair'): echo 'selected'; endif; ?>>En réparation</option>
+                <option value="disabled" <?php if(request('status')==='disabled'): echo 'selected'; endif; ?>>Désactivée</option>
             </select>
         </div>
 
@@ -229,8 +229,13 @@
                                 <?php elseif($console->status === 'disabled'): ?> bg-red-100 text-red-800 border border-red-200
                                 <?php else: ?> bg-gray-100 text-gray-800 border border-gray-200
                                 <?php endif; ?>">
-                                <?php echo e($console->status ? ucfirst($console->status) : '—'); ?>
+                                <?php if($console->status === 'stock'): ?> En stock
+                                <?php elseif($console->status === 'defective'): ?> Défectueuse
+                                <?php elseif($console->status === 'repair'): ?> En réparation
+                                <?php elseif($console->status === 'disabled'): ?> Désactivée
+                                <?php else: ?> <?php echo e(ucfirst($console->status)); ?>
 
+                                <?php endif; ?>
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right">

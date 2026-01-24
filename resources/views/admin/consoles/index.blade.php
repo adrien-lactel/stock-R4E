@@ -73,10 +73,10 @@
             <select name="status"
                     class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Tous</option>
-                <option value="stock" @selected(request('status')==='stock')>stock</option>
-                <option value="defective" @selected(request('status')==='defective')>defective</option>
-                <option value="repair" @selected(request('status')==='repair')>repair</option>
-                <option value="disabled" @selected(request('status')==='disabled')>disabled</option>
+                <option value="stock" @selected(request('status')==='stock')>En stock</option>
+                <option value="defective" @selected(request('status')==='defective')>Défectueuse</option>
+                <option value="repair" @selected(request('status')==='repair')>En réparation</option>
+                <option value="disabled" @selected(request('status')==='disabled')>Désactivée</option>
             </select>
         </div>
 
@@ -225,7 +225,12 @@
                                 @elseif($console->status === 'disabled') bg-red-100 text-red-800 border border-red-200
                                 @else bg-gray-100 text-gray-800 border border-gray-200
                                 @endif">
-                                {{ $console->status ? ucfirst($console->status) : '—' }}
+                                @if($console->status === 'stock') En stock
+                                @elseif($console->status === 'defective') Défectueuse
+                                @elseif($console->status === 'repair') En réparation
+                                @elseif($console->status === 'disabled') Désactivée
+                                @else {{ ucfirst($console->status) }}
+                                @endif
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right">
