@@ -196,6 +196,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::patch('/feature-requests/{featureRequest}/status', [FeatureRequestController::class, 'updateStatus'])
             ->name('feature-requests.update-status');
         
+        Route::post('/feature-requests/{featureRequest}/response', [FeatureRequestController::class, 'addResponse'])
+            ->name('feature-requests.add-response');
+        
         Route::delete('/feature-requests/{featureRequest}', [FeatureRequestController::class, 'destroy'])
             ->name('feature-requests.destroy');
 

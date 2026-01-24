@@ -94,6 +94,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Titre</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Réponse Admin</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">Priorité</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">Statut</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">Créé par</th>
@@ -120,6 +121,19 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="text-sm text-gray-400 max-w-md truncate">{{ $req->description }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($req->admin_response)
+                                        <div class="text-sm text-green-400">
+                                            <div class="font-medium">💬 {{ Str::limit($req->admin_response, 80) }}</div>
+                                            <div class="text-xs text-gray-500 mt-1">{{ $req->responded_at?->diffForHumans() }}</div>
+                                        </div>
+                                    @else
+                                        <button onclick="openResponseModal({{ $req->id }}, '{{ addslashes($req->title) }}')" 
+                                                class="text-xs text-blue-400 hover:text-blue-300">
+                                            ➕ Répondre
+                                        </button>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     @if($req->priority === 'high')
@@ -164,7 +178,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     Aucune demande pour le moment
                                 </td>
                             </tr>
@@ -174,4 +188,47 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal de réponse --}}
+    <div id="responseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-lg w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-200 mb-4">💬 Répondre à la demande</h3>
+            <div class="text-sm text-gray-400 mb-4" id="responseModalTitle"></div>
+            
+            <form id="responseForm" method="POST">
+                @csrf
+                <textarea name="admin_response" rows="4" required
+                          class="w-full rounded-md bg-gray-700 border-gray-600 text-gray-200 mb-4"
+                          placeholder="Votre réponse..."></textarea>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeResponseModal()" 
+                            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md">
+                        Annuler
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+                        Envoyer la réponse
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openResponseModal(requestId, title) {
+            document.getElementById('responseModalTitle').textContent = title;
+            document.getElementById('responseForm').action = `/admin/feature-requests/${requestId}/response`;
+            document.getElementById('responseModal').classList.remove('hidden');
+        }
+
+        function closeResponseModal() {
+            document.getElementById('responseModal').classList.add('hidden');
+        }
+
+        // Fermer avec Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeResponseModal();
+        });
+    </script>
 @endsection

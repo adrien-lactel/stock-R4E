@@ -94,6 +94,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Titre</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Réponse Admin</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">Priorité</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">Statut</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase">Créé par</th>
@@ -120,6 +121,19 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="text-sm text-gray-400 max-w-md truncate"><?php echo e($req->description); ?></div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <?php if($req->admin_response): ?>
+                                        <div class="text-sm text-green-400">
+                                            <div class="font-medium">💬 <?php echo e(Str::limit($req->admin_response, 80)); ?></div>
+                                            <div class="text-xs text-gray-500 mt-1"><?php echo e($req->responded_at?->diffForHumans()); ?></div>
+                                        </div>
+                                    <?php else: ?>
+                                        <button onclick="openResponseModal(<?php echo e($req->id); ?>, '<?php echo e(addslashes($req->title)); ?>')" 
+                                                class="text-xs text-blue-400 hover:text-blue-300">
+                                            ➕ Répondre
+                                        </button>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <?php if($req->priority === 'high'): ?>
@@ -166,7 +180,7 @@
                             </tr>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     Aucune demande pour le moment
                                 </td>
                             </tr>
@@ -176,6 +190,49 @@
             </div>
         </div>
     </div>
+
+    
+    <div id="responseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-lg w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-200 mb-4">💬 Répondre à la demande</h3>
+            <div class="text-sm text-gray-400 mb-4" id="responseModalTitle"></div>
+            
+            <form id="responseForm" method="POST">
+                <?php echo csrf_field(); ?>
+                <textarea name="admin_response" rows="4" required
+                          class="w-full rounded-md bg-gray-700 border-gray-600 text-gray-200 mb-4"
+                          placeholder="Votre réponse..."></textarea>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeResponseModal()" 
+                            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md">
+                        Annuler
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+                        Envoyer la réponse
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openResponseModal(requestId, title) {
+            document.getElementById('responseModalTitle').textContent = title;
+            document.getElementById('responseForm').action = `/admin/feature-requests/${requestId}/response`;
+            document.getElementById('responseModal').classList.remove('hidden');
+        }
+
+        function closeResponseModal() {
+            document.getElementById('responseModal').classList.add('hidden');
+        }
+
+        // Fermer avec Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeResponseModal();
+        });
+    </script>
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/feature-requests/index.blade.php ENDPATH**/ ?>

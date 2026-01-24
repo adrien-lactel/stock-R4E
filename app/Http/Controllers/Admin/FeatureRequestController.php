@@ -57,6 +57,20 @@ class FeatureRequestController extends Controller
         return back()->with('success', 'Statut mis à jour !');
     }
 
+    public function addResponse(FeatureRequest $featureRequest)
+    {
+        $validated = request()->validate([
+            'admin_response' => 'required|string',
+        ]);
+
+        $featureRequest->update([
+            'admin_response' => $validated['admin_response'],
+            'responded_at' => now(),
+        ]);
+
+        return back()->with('success', 'Réponse ajoutée !');
+    }
+
     public function destroy(FeatureRequest $featureRequest)
     {
         $featureRequest->delete();

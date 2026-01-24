@@ -13,14 +13,17 @@ class FeatureRequest extends Model
         'type',
         'title',
         'description',
+        'admin_response',
         'status',
         'priority',
         'created_by',
         'completed_at',
+        'responded_at',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'responded_at' => 'datetime',
     ];
 
     public function creator()
