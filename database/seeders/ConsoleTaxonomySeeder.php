@@ -16,14 +16,14 @@ class ConsoleTaxonomySeeder extends Seeder
     public function run(): void
     {
         // Catégorie principale
-        $consoleCategory = ArticleCategory::create([
+        $consoleCategory = ArticleCategory::updateOrCreate([
             'name' => 'Consoles'
         ]);
 
         // ========================================
         // NINTENDO
         // ========================================
-        $nintendo = ArticleBrand::create([
+        $nintendo = ArticleBrand::updateOrCreate([
             'name' => 'Nintendo',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -330,14 +330,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($nintendoConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $nintendo->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -347,7 +347,7 @@ class ConsoleTaxonomySeeder extends Seeder
         // ========================================
         // SONY
         // ========================================
-        $sony = ArticleBrand::create([
+        $sony = ArticleBrand::updateOrCreate([
             'name' => 'Sony',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -458,14 +458,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($sonyConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $sony->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -475,7 +475,7 @@ class ConsoleTaxonomySeeder extends Seeder
         // ========================================
         // MICROSOFT
         // ========================================
-        $microsoft = ArticleBrand::create([
+        $microsoft = ArticleBrand::updateOrCreate([
             'name' => 'Microsoft',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -539,14 +539,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($microsoftConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $microsoft->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -556,7 +556,7 @@ class ConsoleTaxonomySeeder extends Seeder
         // ========================================
         // SEGA
         // ========================================
-        $sega = ArticleBrand::create([
+        $sega = ArticleBrand::updateOrCreate([
             'name' => 'Sega',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -615,14 +615,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($segaConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $sega->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -632,7 +632,7 @@ class ConsoleTaxonomySeeder extends Seeder
         // ========================================
         // ATARI
         // ========================================
-        $atari = ArticleBrand::create([
+        $atari = ArticleBrand::updateOrCreate([
             'name' => 'Atari',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -663,14 +663,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($atariConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $atari->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -680,7 +680,7 @@ class ConsoleTaxonomySeeder extends Seeder
         // ========================================
         // NEC
         // ========================================
-        $nec = ArticleBrand::create([
+        $nec = ArticleBrand::updateOrCreate([
             'name' => 'NEC',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -711,14 +711,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($necConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $nec->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -728,7 +728,7 @@ class ConsoleTaxonomySeeder extends Seeder
         // ========================================
         // SNK
         // ========================================
-        $snk = ArticleBrand::create([
+        $snk = ArticleBrand::updateOrCreate([
             'name' => 'SNK',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -757,14 +757,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($snkConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $snk->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -774,7 +774,7 @@ class ConsoleTaxonomySeeder extends Seeder
         // ========================================
         // AUTRES MARQUES
         // ========================================
-        $autres = ArticleBrand::create([
+        $autres = ArticleBrand::updateOrCreate([
             'name' => 'Autres',
             'article_category_id' => $consoleCategory->id
         ]);
@@ -818,14 +818,14 @@ class ConsoleTaxonomySeeder extends Seeder
         ];
 
         foreach ($autresConsoles as $consoleName => $variants) {
-            $subCat = ArticleSubCategory::create([
+            $subCat = ArticleSubCategory::updateOrCreate([
                 'name' => $consoleName,
                 'article_category_id' => $consoleCategory->id,
                 'article_brand_id' => $autres->id
             ]);
 
             foreach ($variants as $variant) {
-                ArticleType::create([
+                ArticleType::updateOrCreate([
                     'name' => $variant,
                     'article_sub_category_id' => $subCat->id
                 ]);
@@ -839,3 +839,4 @@ class ConsoleTaxonomySeeder extends Seeder
         $this->command->info('   - ' . ArticleType::count() . ' variantes avec symboles Ⓢ (standard) et Ⓒ (collector)');
     }
 }
+
