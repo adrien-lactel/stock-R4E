@@ -166,9 +166,9 @@
 </div>
 
             {{-- =====================
-                 RÉGION
+                 RÉGION & LANGUE
             ===================== --}}
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Région</label>
                     <select name="region" class="w-full rounded border-gray-300">
@@ -190,6 +190,22 @@
                         <option value="Complète en boîte" @selected(old('completeness', $console->completeness) === 'Complète en boîte')>📦📄🎮 Complète en boîte</option>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">Console seule, avec sa boîte, ou complète avec accessoires</p>
+                </div>
+
+                <div id="language_field" style="display: none;">
+                    <label class="block text-sm font-medium mb-1">Langue</label>
+                    <select name="language" class="w-full rounded border-gray-300">
+                        <option value="">— Non spécifiée —</option>
+                        <option value="Français" @selected(old('language', $console->language) === 'Français')>🇫🇷 Français</option>
+                        <option value="Anglais" @selected(old('language', $console->language) === 'Anglais')>🇬🇧 Anglais</option>
+                        <option value="Japonais" @selected(old('language', $console->language) === 'Japonais')>🇯🇵 Japonais</option>
+                        <option value="Allemand" @selected(old('language', $console->language) === 'Allemand')>🇩🇪 Allemand</option>
+                        <option value="Italien" @selected(old('language', $console->language) === 'Italien')>🇮🇹 Italien</option>
+                        <option value="Espagnol" @selected(old('language', $console->language) === 'Espagnol')>🇪🇸 Espagnol</option>
+                        <option value="Coréen" @selected(old('language', $console->language) === 'Coréen')>🇰🇷 Coréen</option>
+                        <option value="Chinois" @selected(old('language', $console->language) === 'Chinois')>🇨🇳 Chinois</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Pour les cartes à collectionner uniquement</p>
                 </div>
             </div>
 
@@ -358,6 +374,16 @@
   async function loadBrands(catId) {
     clear(brand); clear(sub); clear(type);
     if (!catId) return;
+    
+    // Afficher/masquer le champ langue selon la catégorie
+    const languageField = document.getElementById('language_field');
+    const selectedCategory = cat.options[cat.selectedIndex].text;
+    if (selectedCategory.includes('Cartes à collectionner')) {
+      languageField.style.display = 'block';
+    } else {
+      languageField.style.display = 'none';
+    }
+    
     try {
       const url = `{{ url('admin/ajax/brands') }}/${catId}`;
       const response = await fetch(url);
@@ -402,6 +428,15 @@
   sub.addEventListener('change', e => loadTypes(e.target.value));
 
   if (cat.value) loadBrands(cat.value);
+  
+  // Afficher le champ langue si la catégorie est déjà "Cartes à collectionner" (édition)
+  window.addEventListener('DOMContentLoaded', () => {
+    const languageField = document.getElementById('language_field');
+    const selectedCategory = cat.options[cat.selectedIndex]?.text || '';
+    if (selectedCategory.includes('Cartes à collectionner')) {
+      languageField.style.display = 'block';
+    }
+  });
 })();
 </script>
 @endsection

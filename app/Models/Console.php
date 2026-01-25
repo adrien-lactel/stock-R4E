@@ -16,6 +16,7 @@ class Console extends Model
         'article_type_id',
         'region',
         'completeness',
+        'language',
         'sub_category',
         'initial_status',
         'store_id',

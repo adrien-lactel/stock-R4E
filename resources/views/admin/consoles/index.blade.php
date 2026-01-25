@@ -113,6 +113,23 @@
             </select>
         </div>
 
+        {{-- Langue --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Langue</label>
+            <select name="language"
+                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Toutes</option>
+                <option value="Français" @selected(request('language')==='Français')>🇫🇷 Français</option>
+                <option value="Anglais" @selected(request('language')==='Anglais')>🇬🇧 Anglais</option>
+                <option value="Japonais" @selected(request('language')==='Japonais')>🇯🇵 Japonais</option>
+                <option value="Allemand" @selected(request('language')==='Allemand')>🇩🇪 Allemand</option>
+                <option value="Italien" @selected(request('language')==='Italien')>🇮🇹 Italien</option>
+                <option value="Espagnol" @selected(request('language')==='Espagnol')>🇪🇸 Espagnol</option>
+                <option value="Coréen" @selected(request('language')==='Coréen')>🇰🇷 Coréen</option>
+                <option value="Chinois" @selected(request('language')==='Chinois')>🇨🇳 Chinois</option>
+            </select>
+        </div>
+
         {{-- Magasin (optionnel si tu passes $stores depuis le controller) --}}
         @isset($stores)
         <div>
@@ -277,6 +294,20 @@
                                         @else 📦📄🎮
                                         @endif
                                         {{ $console->completeness }}
+                                    </span>
+                                @endif
+                                @if($console->language)
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800">
+                                        @if($console->language === 'Français') 🇫🇷
+                                        @elseif($console->language === 'Anglais') 🇬🇧
+                                        @elseif($console->language === 'Japonais') 🇯🇵
+                                        @elseif($console->language === 'Allemand') 🇩🇪
+                                        @elseif($console->language === 'Italien') 🇮🇹
+                                        @elseif($console->language === 'Espagnol') 🇪🇸
+                                        @elseif($console->language === 'Coréen') 🇰🇷
+                                        @elseif($console->language === 'Chinois') 🇨🇳
+                                        @endif
+                                        {{ $console->language }}
                                     </span>
                                 @endif
                             </div>

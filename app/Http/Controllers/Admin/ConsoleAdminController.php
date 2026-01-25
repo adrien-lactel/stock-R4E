@@ -75,6 +75,10 @@ class ConsoleAdminController extends Controller
             $query->where('completeness', $request->completeness);
         }
 
+        if ($request->filled('language')) {
+            $query->where('language', $request->language);
+        }
+
         if ($request->filled('store_id')) {
             $query->where('store_id', $request->store_id);
         }
