@@ -832,11 +832,187 @@ class ConsoleTaxonomySeeder extends Seeder
             }
         }
 
+        // ========================================
+        // CARTES À COLLECTIONNER
+        // ========================================
+        $cartesCategory = ArticleCategory::updateOrCreate(
+            ['name' => 'Cartes à collectionner'],
+            ['name' => 'Cartes à collectionner']
+        );
+
+        // ========================================
+        // POKÉMON
+        // ========================================
+        $pokemon = ArticleBrand::updateOrCreate(
+            ['name' => 'Pokémon', 'article_category_id' => $cartesCategory->id],
+            ['name' => 'Pokémon', 'article_category_id' => $cartesCategory->id]
+        );
+
+        $pokemonEditions = [
+            // 2016
+            'XY12 - Évolutions (2016)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Méga Coffret Dracaufeu-EX',
+                'Booster individuel',
+            ],
+            
+            // 2019-2020
+            'SL - Soleil et Lune (2019-2020)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Booster individuel',
+            ],
+            
+            // 2020-2022
+            'EB - Épée et Bouclier (2020-2022)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            
+            // 2023
+            'EV1 - Écarlate et Violet (2023)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            'EV2.5 - 151 (2023)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Ultra-Premium',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            'EV3 - Couronne Zénith (2023)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Ultra-Premium',
+                'Booster individuel',
+            ],
+            
+            // 2024
+            'EV3.5 - Flammes Obsidiennes (2024)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Booster individuel',
+            ],
+            'EV4 - Paradoxe des Forces (2024)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            'EV4.5 - Évolutions à Kitakami (2024)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Booster individuel',
+            ],
+            'EV5 - Destinées à Paldea (2024)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            'EV5.5 - Fables Nébuleuses (2024)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Booster individuel',
+            ],
+            'EV6 - Couronne Stellaire (2024)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            
+            // 2025
+            'EV6.5 - Voyage Ensemble (2025)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Booster individuel',
+            ],
+            'EV7 - Mega Evolution (2025)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            'EV7.5 - Évolutions Prismatiques (2025)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Ultra-Premium',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            'EV8 - Étincelles Déferlantes (2025)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Dresseur d\'Elite',
+                'Portfolio',
+                'Booster individuel',
+            ],
+            
+            // 2026
+            'EV9 - Celebration 30 ans (2026)' => [
+                'ETB (Elite Trainer Box)',
+                'Display (Booster Box)',
+                'Tripack',
+                'Coffret Ultra-Premium',
+                'Portfolio',
+                'Booster individuel',
+            ],
+        ];
+
+        foreach ($pokemonEditions as $editionName => $products) {
+            $subCat = ArticleSubCategory::updateOrCreate([
+                'name' => $editionName,
+                'article_category_id' => $cartesCategory->id,
+                'article_brand_id' => $pokemon->id
+            ]);
+
+            foreach ($products as $product) {
+                ArticleType::updateOrCreate([
+                    'name' => $product,
+                    'article_sub_category_id' => $subCat->id
+                ]);
+            }
+        }
+
         $this->command->info('✅ Taxonomie des consoles créée avec succès !');
-        $this->command->info('   - 1 catégorie : Consoles');
-        $this->command->info('   - 8 marques : Nintendo, Sony, Microsoft, Sega, Atari, NEC, SNK, Autres');
-        $this->command->info('   - ' . ArticleSubCategory::count() . ' modèles de consoles');
-        $this->command->info('   - ' . ArticleType::count() . ' variantes avec symboles Ⓢ (standard) et Ⓒ (collector)');
+        $this->command->info('   - 2 catégories : Consoles, Cartes à collectionner');
+        $this->command->info('   - 9 marques : Nintendo, Sony, Microsoft, Sega, Atari, NEC, SNK, Autres, Pokémon');
+        $this->command->info('   - ' . ArticleSubCategory::count() . ' modèles/éditions');
+        $this->command->info('   - ' . ArticleType::count() . ' variantes/produits');
     }
 }
 
