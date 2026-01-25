@@ -459,25 +459,41 @@ function drawCropOverlay() {
 }
 
 function drawHandle(x, y, size) {
-    ctx.fillRect(x - size/2, y - size/2, size, size);
-    ctx.strokeRect(x - size/2, y - size/2, size, size);
+    // Poignées plus grandes sur mobile pour faciliter la manipulation
+    const isMobile = window.innerWidth < 768;
+    const actualSize = isMobile ? size * 1.5 : size;
+    
+    ctx.fillRect(x - actualSize/2, y - actualSize/2, actualSize, actualSize);
+    ctx.strokeRect(x - actualSize/2, y - actualSize/2, actualSize, actualSize);
 }
 
 function attachCropEvents() {
+    // Événements souris
     canvas.addEventListener('mousedown', onCropMouseDown);
     canvas.addEventListener('mousemove', onCropMouseMove);
     canvas.addEventListener('mouseup', onCropMouseUp);
+    
+    // Événements tactiles (mobile)
+    canvas.addEventListener('touchstart', onCropTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onCropTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onCropTouchEnd);
 }
 
 function detachCropEvents() {
+    // Événements souris
     canvas.removeEventListener('mousedown', onCropMouseDown);
     canvas.removeEventListener('mousemove', onCropMouseMove);
     canvas.removeEventListener('mouseup', onCropMouseUp);
+    
+    // Événements tactiles
+    canvas.removeEventListener('touchstart', onCropTouchStart);
+    canvas.removeEventListener('touchmove', onCropTouchMove);
+    canvas.removeEventListener('touchend', onCropTouchEnd);
 }
 
 function getHandleAtPosition(x, y) {
     const handleSize = 12;
-    const threshold = handleSize;
+    const threshold = window.innerWidth < 768 ? handleSize * 2 : handleSize; // Zone plus large sur mobile
     
     // Vérifier les coins
     if (Math.abs(x - cropRect.x) < threshold && Math.abs(y - cropRect.y) < threshold) return 'nw';
@@ -607,6 +623,112 @@ function onCropMouseMove(e) {
 }
 
 function onCropMouseUp() {
+    isDragging = false;
+    isResizing = false;
+    resizeHandle = null;
+    initialCropRect = null;
+}
+
+// ========================================
+// SUPPORT TACTILE (MOBILE)
+// ========================================
+function getCoordinatesFromTouch(e) {
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    return { x, y };
+}
+
+function onCropTouchStart(e) {
+    e.preventDefault(); // Empêcher le scroll
+    const { x, y } = getCoordinatesFromTouch(e);
+    
+    // Vérifier si on touche une poignée (zone plus large sur mobile)
+    const handle = getHandleAtPosition(x, y);
+    
+    if (handle) {
+        isResizing = true;
+        resizeHandle = handle;
+        initialCropRect = { ...cropRect };
+        dragStart = { x, y };
+    } else if (x >= cropRect.x && x <= cropRect.x + cropRect.width &&
+               y >= cropRect.y && y <= cropRect.y + cropRect.height) {
+        isDragging = true;
+        dragStart = { x: x - cropRect.x, y: y - cropRect.y };
+    }
+}
+
+function onCropTouchMove(e) {
+    e.preventDefault(); // Empêcher le scroll
+    
+    if (!isDragging && !isResizing) return;
+    
+    const { x, y } = getCoordinatesFromTouch(e);
+    
+    if (isResizing) {
+        // Même logique de redimensionnement que pour la souris
+        const dx = x - dragStart.x;
+        const dy = y - dragStart.y;
+        
+        switch (resizeHandle) {
+            case 'nw':
+                cropRect.x = Math.max(0, initialCropRect.x + dx);
+                cropRect.y = Math.max(0, initialCropRect.y + dy);
+                cropRect.width = Math.max(20, initialCropRect.width - dx);
+                cropRect.height = Math.max(20, initialCropRect.height - dy);
+                break;
+            case 'ne':
+                cropRect.y = Math.max(0, initialCropRect.y + dy);
+                cropRect.width = Math.max(20, initialCropRect.width + dx);
+                cropRect.height = Math.max(20, initialCropRect.height - dy);
+                break;
+            case 'sw':
+                cropRect.x = Math.max(0, initialCropRect.x + dx);
+                cropRect.width = Math.max(20, initialCropRect.width - dx);
+                cropRect.height = Math.max(20, initialCropRect.height + dy);
+                break;
+            case 'se':
+                cropRect.width = Math.max(20, initialCropRect.width + dx);
+                cropRect.height = Math.max(20, initialCropRect.height + dy);
+                break;
+            case 'n':
+                cropRect.y = Math.max(0, initialCropRect.y + dy);
+                cropRect.height = Math.max(20, initialCropRect.height - dy);
+                break;
+            case 's':
+                cropRect.height = Math.max(20, initialCropRect.height + dy);
+                break;
+            case 'w':
+                cropRect.x = Math.max(0, initialCropRect.x + dx);
+                cropRect.width = Math.max(20, initialCropRect.width - dx);
+                break;
+            case 'e':
+                cropRect.width = Math.max(20, initialCropRect.width + dx);
+                break;
+        }
+        
+        // Limiter aux dimensions du canvas
+        if (cropRect.x + cropRect.width > canvas.width) {
+            cropRect.width = canvas.width - cropRect.x;
+        }
+        if (cropRect.y + cropRect.height > canvas.height) {
+            cropRect.height = canvas.height - cropRect.y;
+        }
+        
+        drawCropOverlay();
+        hasChanges = true;
+        updateSaveButton();
+    } else if (isDragging) {
+        // Déplacement
+        cropRect.x = Math.max(0, Math.min(x - dragStart.x, canvas.width - cropRect.width));
+        cropRect.y = Math.max(0, Math.min(y - dragStart.y, canvas.height - cropRect.height));
+        
+        drawCropOverlay();
+    }
+}
+
+function onCropTouchEnd(e) {
     isDragging = false;
     isResizing = false;
     resizeHandle = null;
