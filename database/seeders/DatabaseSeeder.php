@@ -38,12 +38,8 @@ class DatabaseSeeder extends Seeder
             ]);
         });
 
-        // 5. Créer des mods pour les consoles
-        Console::all()->each(function ($console) {
-            Mod::factory()->count(2)->create([
-                'console_id' => $console->id,
-            ]);
-        });
+        // 5. Les mods sont gérés via la table console_mod (voir ModFactory)
+        // Ne pas créer de mods ici car console_id n'existe plus dans la table mods
 
         // 6. Les factures sont automatiquement créées via ConsoleFactory après création d'une console vendue
         // donc pas besoin de créer séparément ici.
