@@ -1,54 +1,53 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
-    {{-- HEADER --}}
+    
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-800">
-            {{ $console->exists ? "✏️ Modifier l'article #{$console->id}" : "➕ Créer un article" }}
+            <?php echo e($console->exists ? "✏️ Modifier l'article #{$console->id}" : "➕ Créer un article"); ?>
+
         </h1>
 
         <div class="flex items-center gap-2">
-            @if($console->exists)
-                <a href="{{ route('admin.articles.edit_full', $console) }}" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
+            <?php if($console->exists): ?>
+                <a href="<?php echo e(route('admin.articles.edit_full', $console)); ?>" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
                     ✍️ Édition complète
                 </a>
-            @endif
+            <?php endif; ?>
 
-            <a href="{{ route('admin.consoles.index') }}" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour stock</a>
+            <a href="<?php echo e(route('admin.consoles.index')); ?>" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour stock</a>
         </div>
     </div>
 
 
-    {{-- MESSAGES --}}
-    @if ($errors->any())
+    
+    <?php if($errors->any()): ?>
         <div class="mb-6 p-4 bg-red-50 text-red-800 rounded border border-red-200">
             <ul class="list-disc pl-5 space-y-1 text-sm">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $err): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($err); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- FORMULAIRE --}}
+    
     <div class="bg-white shadow rounded-lg p-6">
         <form method="POST"
-              action="{{ $console->exists ? route('admin.articles.update', $console) : route('admin.articles.store') }}">
-            @csrf
-            @if($console->exists)
-                @method('PUT')
-            @endif
+              action="<?php echo e($console->exists ? route('admin.articles.update', $console) : route('admin.articles.store')); ?>">
+            <?php echo csrf_field(); ?>
+            <?php if($console->exists): ?>
+                <?php echo method_field('PUT'); ?>
+            <?php endif; ?>
 
-            {{-- =====================
-     CLASSIFICATION
-===================== --}}
+            
 <div class="flex items-center justify-between mb-4">
     <h2 class="text-lg font-semibold text-gray-800">Classification</h2>
 
-    {{-- Bouton global gestion taxonomie --}}
-    <a href="{{ route('admin.taxonomy.index') }}"
+    
+    <a href="<?php echo e(route('admin.taxonomy.index')); ?>"
        target="_blank"
        class="inline-flex items-center gap-2 px-3 py-2 rounded bg-gray-900 text-white text-sm hover:bg-black"
        title="Gérer catégories, sous-catégories et types">
@@ -65,14 +64,12 @@
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-    {{-- =====================
-         CATÉGORIE
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Catégorie *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#categories"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#categories"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer une catégorie">
@@ -85,23 +82,22 @@
                 class="w-full rounded border-gray-300"
                 required>
             <option value="">— Choisir —</option>
-            @foreach($articleCategories as $cat)
-                <option value="{{ $cat->id }}"
-                    @selected(old('article_category_id', $console->article_category_id) == $cat->id)>
-                    {{ $cat->name }}
+            <?php $__currentLoopData = $articleCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($cat->id); ?>"
+                    <?php if(old('article_category_id', $console->article_category_id) == $cat->id): echo 'selected'; endif; ?>>
+                    <?php echo e($cat->name); ?>
+
                 </option>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </select>
     </div>
 
-    {{-- =====================
-         MARQUE
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Marque *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#brands"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#brands"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer une marque">
@@ -117,14 +113,12 @@
         </select>
     </div>
 
-    {{-- =====================
-         SOUS-CATÉGORIE
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Sous-catégorie *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#subcategories"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#subcategories"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer une sous-catégorie">
@@ -140,14 +134,12 @@
         </select>
     </div>
 
-    {{-- =====================
-         TYPE
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Type *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#types"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#types"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer un type">
@@ -165,18 +157,16 @@
 
 </div>
 
-            {{-- =====================
-                 RÉGION
-            ===================== --}}
+            
             <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Région</label>
                     <select name="region" class="w-full rounded border-gray-300">
                         <option value="">— Non spécifiée —</option>
-                        <option value="PAL" @selected(old('region', $console->region) === 'PAL')>🇪🇺 PAL (Europe)</option>
-                        <option value="NTSC-U" @selected(old('region', $console->region) === 'NTSC-U')>🇺🇸 NTSC-U (USA)</option>
-                        <option value="NTSC-J" @selected(old('region', $console->region) === 'NTSC-J')>🇯🇵 NTSC-J (Japon)</option>
-                        <option value="Région libre" @selected(old('region', $console->region) === 'Région libre')>🌍 Région libre</option>
+                        <option value="PAL" <?php if(old('region', $console->region) === 'PAL'): echo 'selected'; endif; ?>>🇪🇺 PAL (Europe)</option>
+                        <option value="NTSC-U" <?php if(old('region', $console->region) === 'NTSC-U'): echo 'selected'; endif; ?>>🇺🇸 NTSC-U (USA)</option>
+                        <option value="NTSC-J" <?php if(old('region', $console->region) === 'NTSC-J'): echo 'selected'; endif; ?>>🇯🇵 NTSC-J (Japon)</option>
+                        <option value="Région libre" <?php if(old('region', $console->region) === 'Région libre'): echo 'selected'; endif; ?>>🌍 Région libre</option>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">Important pour N64, SNES, GameCube, etc.</p>
                 </div>
@@ -185,105 +175,102 @@
                     <label class="block text-sm font-medium mb-1">État de complétude</label>
                     <select name="completeness" class="w-full rounded border-gray-300">
                         <option value="">— Non spécifié —</option>
-                        <option value="Console seule" @selected(old('completeness', $console->completeness) === 'Console seule')>📦 Console seule</option>
-                        <option value="Avec boîte" @selected(old('completeness', $console->completeness) === 'Avec boîte')>📦📄 Avec boîte</option>
-                        <option value="Complète en boîte" @selected(old('completeness', $console->completeness) === 'Complète en boîte')>📦📄🎮 Complète en boîte</option>
+                        <option value="Console seule" <?php if(old('completeness', $console->completeness) === 'Console seule'): echo 'selected'; endif; ?>>📦 Console seule</option>
+                        <option value="Avec boîte" <?php if(old('completeness', $console->completeness) === 'Avec boîte'): echo 'selected'; endif; ?>>📦📄 Avec boîte</option>
+                        <option value="Complète en boîte" <?php if(old('completeness', $console->completeness) === 'Complète en boîte'): echo 'selected'; endif; ?>>📦📄🎮 Complète en boîte</option>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">Console seule, avec sa boîte, ou complète avec accessoires</p>
                 </div>
             </div>
 
-            {{-- =====================
-                 STOCK / RÉPARATION
-            ===================== --}}
+            
             <h2 class="text-lg font-semibold text-gray-800 mt-8 mb-4">Stock & Réparation</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {{-- Quantité (uniquement en création) --}}
-                @if(!$console->exists)
+                
+                <?php if(!$console->exists): ?>
                 <div>
                     <label class="block text-sm font-medium mb-1">Quantité</label>
                     <input type="number" min="1" max="100" name="quantity"
-                           value="{{ old('quantity', 1) }}"
+                           value="<?php echo e(old('quantity', 1)); ?>"
                            class="w-full rounded border-gray-300">
                     <p class="text-xs text-gray-500 mt-1">Créer plusieurs articles identiques (max 100)</p>
                 </div>
-                @endif
+                <?php endif; ?>
 
-                {{-- Statut --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Statut *</label>
                     <select name="status" class="w-full rounded border-gray-300" required>
-                        @php $st = old('status', $console->status); @endphp
-                        <option value="stock" @selected($st==='stock')>Stock</option>
-                        <option value="defective" @selected($st==='defective')>Défectueuse</option>
-                        <option value="repair" @selected($st==='repair')>En réparation</option>
-                        <option value="disabled" @selected($st==='disabled')>Désactivée</option>
+                        <?php $st = old('status', $console->status); ?>
+                        <option value="stock" <?php if($st==='stock'): echo 'selected'; endif; ?>>Stock</option>
+                        <option value="defective" <?php if($st==='defective'): echo 'selected'; endif; ?>>Défectueuse</option>
+                        <option value="repair" <?php if($st==='repair'): echo 'selected'; endif; ?>>En réparation</option>
+                        <option value="disabled" <?php if($st==='disabled'): echo 'selected'; endif; ?>>Désactivée</option>
                     </select>
                 </div>
 
-                {{-- Réparateur --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Réparateur</label>
                     <select name="repairer_id" class="w-full rounded border-gray-300">
                         <option value="">— Aucun —</option>
-                        @foreach($repairers as $rep)
-                            <option value="{{ $rep->id }}"
-                                @selected(old('repairer_id', $console->repairer_id) == $rep->id)>
-                                {{ $rep->name }}
+                        <?php $__currentLoopData = $repairers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rep): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($rep->id); ?>"
+                                <?php if(old('repairer_id', $console->repairer_id) == $rep->id): echo 'selected'; endif; ?>>
+                                <?php echo e($rep->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">
                         Obligatoire si statut = <strong>repair</strong>
                     </p>
                 </div>
 
-                {{-- Prix achat --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Prix d’achat (€)</label>
                     <input type="number" step="0.01" min="0" name="prix_achat"
-                           value="{{ old('prix_achat', $console->prix_achat) }}"
+                           value="<?php echo e(old('prix_achat', $console->prix_achat)); ?>"
                            class="w-full rounded border-gray-300">
                 </div>
 
-                {{-- Valorisation --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Valorisation (€)</label>
                     <input type="number" step="0.01" min="0" name="valorisation"
-                           value="{{ old('valorisation', $console->valorisation) }}"
+                           value="<?php echo e(old('valorisation', $console->valorisation)); ?>"
                            class="w-full rounded border-gray-300">
                 </div>
             </div>
 
-            {{-- =====================
-                 COMMENTAIRES
-            ===================== --}}
+            
             <h2 class="text-lg font-semibold text-gray-800 mt-8 mb-4">Commentaires</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Commentaire produit</label>
                     <textarea name="product_comment" rows="3"
-                              class="w-full rounded border-gray-300">{{ old('product_comment', $console->product_comment) }}</textarea>
+                              class="w-full rounded border-gray-300"><?php echo e(old('product_comment', $console->product_comment)); ?></textarea>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium mb-1">Commentaire réparateur</label>
                     <textarea name="commentaire_reparateur" rows="3"
-                              class="w-full rounded border-gray-300">{{ old('commentaire_reparateur', $console->commentaire_reparateur) }}</textarea>
+                              class="w-full rounded border-gray-300"><?php echo e(old('commentaire_reparateur', $console->commentaire_reparateur)); ?></textarea>
                 </div>
             </div>
 
             
 
-            {{-- ACTIONS --}}
+            
             <div class="mt-6 flex gap-3">
                 <button class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
                     💾 Enregistrer
                 </button>
 
-                <a href="{{ route('admin.consoles.index') }}"
+                <a href="<?php echo e(route('admin.consoles.index')); ?>"
                    class="px-6 py-2 rounded border hover:bg-gray-50">
                     Annuler
                 </a>
@@ -291,9 +278,7 @@
         </form>
     </div>
 
-    {{-- =====================
-         15 DERNIÈRES ENTRÉES
-    ===================== --}}
+    
     <div class="mt-10 bg-white shadow rounded-lg p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">
             🕒 15 dernières entrées en stock
@@ -311,23 +296,24 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse($lastConsoles as $c)
+                    <?php $__empty_1 = true; $__currentLoopData = $lastConsoles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td class="px-3 py-2">#{{ $c->id }}</td>
-                            <td class="px-3 py-2">{{ $c->articleCategory?->name ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ $c->articleType?->name ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ ucfirst($c->status) }}</td>
+                            <td class="px-3 py-2">#<?php echo e($c->id); ?></td>
+                            <td class="px-3 py-2"><?php echo e($c->articleCategory?->name ?? '—'); ?></td>
+                            <td class="px-3 py-2"><?php echo e($c->articleType?->name ?? '—'); ?></td>
+                            <td class="px-3 py-2"><?php echo e(ucfirst($c->status)); ?></td>
                             <td class="px-3 py-2">
-                                {{ $c->repairer?->name ?? '—' }}
+                                <?php echo e($c->repairer?->name ?? '—'); ?>
+
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="5" class="px-3 py-6 text-center text-gray-500">
                                 Aucune entrée récente
                             </td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -335,9 +321,7 @@
 
 </div>
 
-{{-- =====================
-     JS CLASSIFICATION
-===================== --}}
+
 <script>
 (function() {
   const cat = document.getElementById('article_category_id');
@@ -347,9 +331,9 @@
 
   if (!cat || !brand || !sub || !type) return;
 
-  const oldBrand = @json(old('article_brand_id', $console->article_brand_id ?? null));
-  const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id));
-  const oldType = @json(old('article_type_id', $console->article_type_id));
+  const oldBrand = <?php echo json_encode(old('article_brand_id', $console->article_brand_id ?? null), 512) ?>;
+  const oldSub = <?php echo json_encode(old('article_sub_category_id', $console->article_sub_category_id), 512) ?>;
+  const oldType = <?php echo json_encode(old('article_type_id', $console->article_type_id), 512) ?>;
 
   function clear(sel, placeholder = '— Choisir —') {
     sel.innerHTML = `<option value="">${placeholder}</option>`;
@@ -359,7 +343,7 @@
     clear(brand); clear(sub); clear(type);
     if (!catId) return;
     try {
-      const url = `{{ url('admin/ajax/brands') }}/${catId}`;
+      const url = `<?php echo e(url('admin/ajax/brands')); ?>/${catId}`;
       const response = await fetch(url);
       const html = await response.text();
       brand.innerHTML = html;
@@ -373,7 +357,7 @@
     clear(sub); clear(type);
     if (!brandId) return;
     try {
-      const url = `{{ url('admin/ajax/sub-categories') }}/${brandId}`;
+      const url = `<?php echo e(url('admin/ajax/sub-categories')); ?>/${brandId}`;
       const response = await fetch(url);
       const html = await response.text();
       sub.innerHTML = html;
@@ -387,7 +371,7 @@
     clear(type);
     if (!subId) return;
     try {
-      const url = `{{ url('admin/ajax/types') }}/${subId}`;
+      const url = `<?php echo e(url('admin/ajax/types')); ?>/${subId}`;
       const response = await fetch(url);
       const html = await response.text();
       type.innerHTML = html;
@@ -404,4 +388,6 @@
   if (cat.value) loadBrands(cat.value);
 })();
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/consoles/form.blade.php ENDPATH**/ ?>

@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
         // Créer un utilisateur admin
         $this->call(CreateAdminUser::class);
 
+        // Créer la taxonomie des consoles
+        $this->call(ConsoleTaxonomySeeder::class);
+
         // 1. Créer quelques magasins
         Store::factory()->count(5)->create();
 

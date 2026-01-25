@@ -1,46 +1,48 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
-    {{-- HEADER --}}
+    
     <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">📸 Gestionnaire d'images par catégorie</h1>
+        <h1 class="text-2xl font-bold text-gray-800">📸 Gestionnaire d'images par taxonomie</h1>
         <div class="flex items-center gap-2">
-            <a href="{{ route('admin.product-sheets.images-manager', ['show_all' => '1']) }}" 
-               class="px-4 py-2 rounded {{ request('show_all') == '1' ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300' }}">
+            <a href="<?php echo e(route('admin.product-sheets.images-manager', ['show_all' => '1'])); ?>" 
+               class="px-4 py-2 rounded <?php echo e(request('show_all') == '1' ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300'); ?>">
                 🖼️ Toutes les images
             </a>
-            <a href="{{ route('admin.product-sheets.index') }}" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour</a>
+            <a href="<?php echo e(route('admin.product-sheets.index')); ?>" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour</a>
         </div>
     </div>
 
-    {{-- MESSAGES --}}
-    @if(session('success'))
+    
+    <?php if(session('success')): ?>
         <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    {{-- SÉLECTION CATÉGORIE --}}
+        </div>
+    <?php endif; ?>
+
+    
     <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Sélectionner une catégorie</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Sélectionner une taxonomie</h2>
         
         <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {{-- Catégorie --}}
+            
             <div>
                 <label class="block text-sm font-medium mb-1">Catégorie</label>
                 <select id="category_select" name="category_temp" class="w-full rounded-md border-gray-300">
                     <option value="">-- Sélectionner --</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}" @selected($selectedType && $selectedType->subCategory->brand->category->id == $category->id)>
-                            {{ $category->name }}
+                    <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($category->id); ?>" <?php if($selectedType && $selectedType->subCategory->brand->category->id == $category->id): echo 'selected'; endif; ?>>
+                            <?php echo e($category->name); ?>
+
                         </option>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
 
-            {{-- Marque --}}
+            
             <div>
                 <label class="block text-sm font-medium mb-1">Marque</label>
                 <select id="brand_select" name="brand_temp" class="w-full rounded-md border-gray-300" disabled>
@@ -48,37 +50,39 @@
                 </select>
             </div>
 
-            {{-- Sous-catégorie --}}
+            
             <div>
                 <label class="block text-sm font-medium mb-1">Sous-catégorie</label>
                 <select id="sub_category_select" name="sub_category_temp" class="w-full rounded-md border-gray-300" disabled>
                     <option value="">-- Sélectionner une marque d'abord --</option>
-                    @if($selectedType)
-                        @foreach($selectedType->subCategory->category->subCategories as $sub)
-                            <option value="{{ $sub->id }}" @selected($selectedType->subCategory->id == $sub->id)>
-                                {{ $sub->name }}
+                    <?php if($selectedType): ?>
+                        <?php $__currentLoopData = $selectedType->subCategory->category->subCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($sub->id); ?>" <?php if($selectedType->subCategory->id == $sub->id): echo 'selected'; endif; ?>>
+                                <?php echo e($sub->name); ?>
+
                             </option>
-                        @endforeach
-                    @endif
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php endif; ?>
                 </select>
             </div>
 
-            {{-- Type --}}
+            
             <div>
                 <label class="block text-sm font-medium mb-1">Type</label>
                 <select id="type_select" name="article_type_id" class="w-full rounded-md border-gray-300" disabled>
                     <option value="">-- Sélectionner une sous-catégorie d'abord --</option>
-                    @if($selectedType)
-                        @foreach($selectedType->subCategory->types as $type)
-                            <option value="{{ $type->id }}" @selected($selectedType->id == $type->id)>
-                                {{ $type->name }}
+                    <?php if($selectedType): ?>
+                        <?php $__currentLoopData = $selectedType->subCategory->types; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $type): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($type->id); ?>" <?php if($selectedType->id == $type->id): echo 'selected'; endif; ?>>
+                                <?php echo e($type->name); ?>
+
                             </option>
-                        @endforeach
-                    @endif
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php endif; ?>
                 </select>
             </div>
 
-            {{-- Bouton --}}
+            
             <div class="flex items-end">
                 <button type="submit" class="w-full px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
                     🔍 Afficher les images
@@ -87,9 +91,9 @@
         </form>
     </div>
 
-    @if($selectedType || $showAll ?? false)
-        {{-- UPLOAD NOUVELLE IMAGE --}}
-        @if($selectedType)
+    <?php if($selectedType || $showAll ?? false): ?>
+        
+        <?php if($selectedType): ?>
         <div class="bg-white shadow rounded-lg p-6 mb-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Ajouter une image</h2>
             
@@ -108,34 +112,35 @@
 
             <div id="upload_status" class="mt-4 hidden text-sm"></div>
         </div>
-        @endif
+        <?php endif; ?>
 
-        {{-- GALERIE D'IMAGES --}}
+        
         <div class="bg-white shadow rounded-lg p-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">
-                {{ $showAll ?? false ? 'Toutes les images' : 'Images existantes' }} ({{ count($images) }})
+                <?php echo e($showAll ?? false ? 'Toutes les images' : 'Images existantes'); ?> (<?php echo e(count($images)); ?>)
             </h2>
             
-            @if(count($images) > 0)
+            <?php if(count($images) > 0): ?>
                 <div id="images_grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    @foreach($images as $image)
-                        <div class="relative group" data-image-url="{{ $image['url'] }}" data-sheet-id="{{ $image['sheet_id'] }}">
-                            <img src="{{ $image['url'] }}" 
-                                 alt="Image de {{ $image['sheet_name'] }}"
+                    <?php $__currentLoopData = $images; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $image): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="relative group" data-image-url="<?php echo e($image['url']); ?>" data-sheet-id="<?php echo e($image['sheet_id']); ?>">
+                            <img src="<?php echo e($image['url']); ?>" 
+                                 alt="Image de <?php echo e($image['sheet_name']); ?>"
                                  class="w-full h-32 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-90 transition"
-                                 onclick="openLightbox('{{ $image['url'] }}', '{{ addslashes($image['sheet_name']) }}', @if($showAll ?? false)'{{ $image['category_name'] ?? '' }} › {{ $image['sub_category_name'] ?? '' }} › {{ $image['type_name'] ?? '' }}'@else null @endif)">
+                                 onclick="openLightbox('<?php echo e($image['url']); ?>', '<?php echo e(addslashes($image['sheet_name'])); ?>', <?php if($showAll ?? false): ?>'<?php echo e($image['category_name'] ?? ''); ?> › <?php echo e($image['sub_category_name'] ?? ''); ?> › <?php echo e($image['type_name'] ?? ''); ?>'<?php else: ?> null <?php endif; ?>)">
                             
                             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-[10px] px-1 py-0.5">
-                                <div class="truncate">{{ $image['sheet_name'] }}</div>
-                                @if($showAll ?? false)
+                                <div class="truncate"><?php echo e($image['sheet_name']); ?></div>
+                                <?php if($showAll ?? false): ?>
                                     <div class="text-gray-300 text-[10px] truncate">
-                                        {{ $image['category_name'] ?? '' }} › {{ $image['sub_category_name'] ?? '' }} › {{ $image['type_name'] ?? '' }}
+                                        <?php echo e($image['category_name'] ?? ''); ?> › <?php echo e($image['sub_category_name'] ?? ''); ?> › <?php echo e($image['type_name'] ?? ''); ?>
+
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
                             
                             <button type="button" 
-                                    onclick="deleteImage('{{ $image['url'] }}', {{ $image['sheet_id'] }})"
+                                    onclick="deleteImage('<?php echo e($image['url']); ?>', <?php echo e($image['sheet_id']); ?>)"
                                     class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition"
                                     title="Supprimer cette image">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,29 +148,29 @@
                                 </svg>
                             </button>
                         </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="text-center py-12 text-gray-500">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
-                    <p class="mt-4">Aucune image pour cette catégorie</p>
+                    <p class="mt-4">Aucune image pour cette taxonomie</p>
                     <p class="mt-1 text-sm">Ajoutez-en une ci-dessus !</p>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
-    @else
+    <?php else: ?>
         <div class="bg-white shadow rounded-lg p-12 text-center text-gray-500">
             <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
             </svg>
-            <p class="mt-4 text-lg font-medium">Sélectionnez une catégorie pour gérer ses images</p>
+            <p class="mt-4 text-lg font-medium">Sélectionnez une taxonomie pour gérer ses images</p>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
 
-{{-- LIGHTBOX MODAL --}}
+
 <div id="lightbox" class="hidden fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4" onclick="closeLightbox()">
     <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white text-4xl font-bold hover:text-gray-300 z-10">
         &times;
@@ -174,7 +179,7 @@
     <div id="lightbox-caption" class="absolute bottom-4 left-0 right-0 text-center text-white text-lg bg-black bg-opacity-50 py-2"></div>
 </div>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 function openLightbox(url, caption, taxonomy = null) {
     const lightbox = document.getElementById('lightbox');
@@ -230,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const url = `{{ url('admin/ajax/brands') }}/${categoryId}`;
+            const url = `<?php echo e(url('admin/ajax/brands')); ?>/${categoryId}`;
             const response = await fetch(url);
             const html = await response.text();
             brandSelect.innerHTML = html;
@@ -253,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const url = `{{ url('admin/ajax/sub-categories') }}/${brandId}`;
+            const url = `<?php echo e(url('admin/ajax/sub-categories')); ?>/${brandId}`;
             const response = await fetch(url);
             const html = await response.text();
             subCategorySelect.innerHTML = html;
@@ -274,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const url = `{{ url('admin/ajax/types') }}/${subCategoryId}`;
+            const url = `<?php echo e(url('admin/ajax/types')); ?>/${subCategoryId}`;
             const response = await fetch(url);
             const html = await response.text();
             typeSelect.innerHTML = html;
@@ -300,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const typeId = typeSelect.value;
             if (!typeId) {
-                alert('Veuillez d\'abord sélectionner une catégorie');
+                alert('Veuillez d\'abord sélectionner une taxonomie');
                 return;
             }
 
@@ -313,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('image', file);
                 formData.append('article_type_id', typeId);
 
-                const response = await fetch('{{ route("admin.product-sheets.images-manager.upload") }}', {
+                const response = await fetch('<?php echo e(route("admin.product-sheets.images-manager.upload")); ?>', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -351,7 +356,7 @@ async function deleteImage(url, sheetId) {
     if (!confirm('Supprimer cette image ?')) return;
 
     try {
-        const response = await fetch('{{ route("admin.product-sheets.images-manager.delete") }}', {
+        const response = await fetch('<?php echo e(route("admin.product-sheets.images-manager.delete")); ?>', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -383,5 +388,7 @@ async function deleteImage(url, sheetId) {
     }
 }
 </script>
-@endpush
-@endsection
+<?php $__env->stopPush(); ?>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/product-sheets/images-manager.blade.php ENDPATH**/ ?>

@@ -1,52 +1,51 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-800">📦 Liste stock</h1>
 
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.product-sheets.index') }}"
+            <a href="<?php echo e(route('admin.product-sheets.index')); ?>"
                class="inline-flex items-center px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700">
                 🖼️ Fiches produits
             </a>
-            <a href="{{ route('admin.articles.create') }}"
+            <a href="<?php echo e(route('admin.articles.create')); ?>"
                class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
                 ➕ Ajouter un article
             </a>
         </div>
     </div>
 
-    {{-- MESSAGE SUCCÈS --}}
-    @if(session('success'))
+    
+    <?php if(session('success')): ?>
         <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    {{-- FILTRES --}}
+        </div>
+    <?php endif; ?>
+
+    
     <form method="GET" class="mb-6 flex flex-wrap gap-3 items-end">
-        {{-- Recherche --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
-            <input type="text" name="q" value="{{ request('q') }}"
+            <input type="text" name="q" value="<?php echo e(request('q')); ?>"
                    placeholder="Serial, provenance, stockage…"
                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
         </div>
 
-        {{-- Catégorie --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
             <select id="filter_category" name="category" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Toutes</option>
-                @foreach($categories as $cat)
-                    <option value="{{ $cat->id }}" @selected((string)request('category') === (string)$cat->id)>{{ $cat->name }}</option>
-                @endforeach
+                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($cat->id); ?>" <?php if((string)request('category') === (string)$cat->id): echo 'selected'; endif; ?>><?php echo e($cat->name); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </div>
 
-        {{-- Marque --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Marque</label>
             <select id="filter_brand" name="brand" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -54,7 +53,7 @@
             </select>
         </div>
 
-        {{-- Sous-catégorie --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Sous-catégorie</label>
             <select id="filter_subcategory" name="sub_category" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -62,78 +61,55 @@
             </select>
         </div>
 
-        {{-- Type --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
             <select id="filter_type" name="type" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Tous</option>
-                @foreach($types as $type)
-                    <option value="{{ $type->id }}" @selected((string)request('type') === (string)$type->id)>
-                        {{ $type->name }}
+                <?php $__currentLoopData = $types; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $type): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($type->id); ?>" <?php if((string)request('type') === (string)$type->id): echo 'selected'; endif; ?>>
+                        <?php echo e($type->name); ?>
+
                     </option>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </div>
 
-        {{-- Statut --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
             <select name="status"
                     class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Tous</option>
-                <option value="stock" @selected(request('status')==='stock')>En stock</option>
-                <option value="defective" @selected(request('status')==='defective')>Défectueuse</option>
-                <option value="repair" @selected(request('status')==='repair')>En réparation</option>
-                <option value="disabled" @selected(request('status')==='disabled')>Désactivée</option>
+                <option value="stock" <?php if(request('status')==='stock'): echo 'selected'; endif; ?>>En stock</option>
+                <option value="defective" <?php if(request('status')==='defective'): echo 'selected'; endif; ?>>Défectueuse</option>
+                <option value="repair" <?php if(request('status')==='repair'): echo 'selected'; endif; ?>>En réparation</option>
+                <option value="disabled" <?php if(request('status')==='disabled'): echo 'selected'; endif; ?>>Désactivée</option>
             </select>
         </div>
 
-        {{-- Région --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Région</label>
-            <select name="region"
-                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">Toutes</option>
-                <option value="PAL" @selected(request('region')==='PAL')>🇪🇺 PAL</option>
-                <option value="NTSC-U" @selected(request('region')==='NTSC-U')>🇺🇸 NTSC-U</option>
-                <option value="NTSC-J" @selected(request('region')==='NTSC-J')>🇯🇵 NTSC-J</option>
-                <option value="Région libre" @selected(request('region')==='Région libre')>🌍 Région libre</option>
-            </select>
-        </div>
-
-        {{-- Complétude --}}
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Complétude</label>
-            <select name="completeness"
-                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">Toutes</option>
-                <option value="Console seule" @selected(request('completeness')==='Console seule')>📦 Console seule</option>
-                <option value="Avec boîte" @selected(request('completeness')==='Avec boîte')>📦📄 Avec boîte</option>
-                <option value="Complète en boîte" @selected(request('completeness')==='Complète en boîte')>📦📄🎮 Complète</option>
-            </select>
-        </div>
-
-        {{-- Magasin (optionnel si tu passes $stores depuis le controller) --}}
-        @isset($stores)
+        
+        <?php if(isset($stores)): ?>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Magasin</label>
             <select name="store_id"
                     class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Tous</option>
-                @foreach($stores as $s)
-                    <option value="{{ $s->id }}" @selected((string)request('store_id') === (string)$s->id)>
-                        {{ $s->name }}
+                <?php $__currentLoopData = $stores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($s->id); ?>" <?php if((string)request('store_id') === (string)$s->id): echo 'selected'; endif; ?>>
+                        <?php echo e($s->name); ?>
+
                     </option>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </div>
-        @endisset
+        <?php endif; ?>
 
         <div class="flex gap-2">
             <button class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">
                 Filtrer
             </button>
-            <a href="{{ route('admin.consoles.index') }}" class="px-4 py-2 rounded border">
+            <a href="<?php echo e(route('admin.consoles.index')); ?>" class="px-4 py-2 rounded border">
                 Reset
             </a>
         </div>
@@ -158,9 +134,9 @@
         }
       }
 
-      const BRANDS_URL_TEMPLATE = `{{ route('admin.ajax.brands', ['category' => '__ID__']) }}`;
-      const SUBS_URL_TEMPLATE = `{{ route('admin.ajax.sub-categories', ['brand' => '__ID__']) }}`;
-      const TYPES_URL_TEMPLATE = `{{ route('admin.ajax.types', ['subCategory' => '__ID__']) }}`;
+      const BRANDS_URL_TEMPLATE = `<?php echo e(route('admin.ajax.brands', ['category' => '__ID__'])); ?>`;
+      const SUBS_URL_TEMPLATE = `<?php echo e(route('admin.ajax.sub-categories', ['brand' => '__ID__'])); ?>`;
+      const TYPES_URL_TEMPLATE = `<?php echo e(route('admin.ajax.types', ['subCategory' => '__ID__'])); ?>`;
 
       async function loadBrands(catId, applyOld = false) {
         brand.innerHTML = '<option value="">Toutes</option>';
@@ -173,8 +149,8 @@
         list.forEach(b => {
           const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; brand.appendChild(opt);
         });
-        if (applyOld && @json(request('brand'))) {
-          try { brand.value = String(@json(request('brand'))); } catch(e){}
+        if (applyOld && <?php echo json_encode(request('brand'), 15, 512) ?>) {
+          try { brand.value = String(<?php echo json_encode(request('brand'), 15, 512) ?>); } catch(e){}
         }
       }
 
@@ -188,8 +164,8 @@
         list.forEach(s => {
           const opt = document.createElement('option'); opt.value = s.id; opt.textContent = s.name; sub.appendChild(opt);
         });
-        if (applyOld && @json(request('sub_category'))) {
-          try { sub.value = String(@json(request('sub_category'))); } catch(e){}
+        if (applyOld && <?php echo json_encode(request('sub_category'), 15, 512) ?>) {
+          try { sub.value = String(<?php echo json_encode(request('sub_category'), 15, 512) ?>); } catch(e){}
         }
       }
 
@@ -200,7 +176,7 @@
         const data = await fetchJson(url);
         const list = Array.isArray(data) ? data : (data.data ?? []);
         list.forEach(t => { const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.name; type.appendChild(opt); });
-        if (applyOld && @json(request('type'))) { try { type.value = String(@json(request('type'))); } catch(e){} }
+        if (applyOld && <?php echo json_encode(request('type'), 15, 512) ?>) { try { type.value = String(<?php echo json_encode(request('type'), 15, 512) ?>); } catch(e){} }
       }
 
       cat.addEventListener('change', async () => { await loadBrands(cat.value, false); });
@@ -221,13 +197,13 @@
     </script>
     </form>
 
-    {{-- TABLE --}}
+    
     <div class="bg-pink-50 shadow rounded-lg overflow-hidden border border-pink-100 overflow-x-auto">
         <table class="min-w-full text-sm">
             <thead class="bg-pink-100">
                 <tr>
                     <th class="px-4 py-3 text-center">ID</th>
-                    <th class="px-4 py-3 text-left">Classification (Catégorie > Marque > Sous-cat. > Type)</th>
+                    <th class="px-4 py-3 text-left">Catégorie / Sous-cat. / Type</th>
                     <th class="px-4 py-3 text-left">Localisation</th>
                     <th class="px-4 py-3 text-center">Statut</th>
                     <th class="px-4 py-3 text-right">Prix achat</th>
@@ -241,112 +217,96 @@
 
             <tbody class="divide-y divide-pink-100">
             <tbody class="divide-y divide-gray-200">
-                @forelse($consoles as $console)
-                    @php $hasMods = $console->mods_count > 0; @endphp
-                    <tr class="align-top {{ $hasMods ? 'bg-amber-100 border-l-4 border-l-amber-300' : 'bg-white' }}">
+                <?php $__empty_1 = true; $__currentLoopData = $consoles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $console): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <?php $hasMods = $console->mods_count > 0; ?>
+                    <tr class="align-top <?php echo e($hasMods ? 'bg-amber-100 border-l-4 border-l-amber-300' : 'bg-white'); ?>">
                         <td class="px-4 py-3 text-center font-medium text-gray-800">
-                            {{ $console->id }}
-                            @if($hasMods)
+                            <?php echo e($console->id); ?>
+
+                            <?php if($hasMods): ?>
                                 <span class="block text-xs text-amber-600 font-normal">modé</span>
-                            @endif
+                            <?php endif; ?>
                         </td>
                         <td class="px-4 py-3">
                             <div class="text-sm">
-                                <span class="font-semibold text-gray-800">{{ $console->articleCategory?->name ?? '—' }}</span>
+                                <span class="font-semibold text-gray-800"><?php echo e($console->articleCategory?->name ?? '—'); ?></span>
                                 <span class="text-gray-400"> > </span>
-                                <span class="text-blue-600 font-medium">{{ $console->articleSubCategory?->brand?->name ?? '—' }}</span>
+                                <span class="text-blue-600 font-medium"><?php echo e($console->articleSubCategory?->brand?->name ?? '—'); ?></span>
                                 <span class="text-gray-400"> > </span>
-                                <span class="text-gray-700">{{ $console->articleSubCategory?->name ?? '—' }}</span>
+                                <span class="text-gray-700"><?php echo e($console->articleSubCategory?->name ?? '—'); ?></span>
                                 <span class="text-gray-400"> > </span>
-                                <span class="text-gray-600">{{ $console->articleType?->name ?? '—' }}</span>
-                                
-                                @if($console->region)
-                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
-                                        @if($console->region === 'PAL') 🇪🇺
-                                        @elseif($console->region === 'NTSC-U') 🇺🇸
-                                        @elseif($console->region === 'NTSC-J') 🇯🇵
-                                        @else 🌍
-                                        @endif
-                                        {{ $console->region }}
-                                    </span>
-                                @endif
-                                @if($console->completeness)
-                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-                                        @if($console->completeness === 'Console seule') 📦
-                                        @elseif($console->completeness === 'Avec boîte') 📦📄
-                                        @else 📦📄🎮
-                                        @endif
-                                        {{ $console->completeness }}
-                                    </span>
-                                @endif
+                                <span class="text-gray-600"><?php echo e($console->articleType?->name ?? '—'); ?></span>
                             </div>
                         </td>
                         <td class="px-4 py-3">
-                            @if($console->repairer)
+                            <?php if($console->repairer): ?>
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                                    🔧 {{ $console->repairer->name }}
+                                    🔧 <?php echo e($console->repairer->name); ?>
+
                                 </span>
-                            @elseif($console->store)
+                            <?php elseif($console->store): ?>
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                    🏪 {{ $console->store->name }}
+                                    🏪 <?php echo e($console->store->name); ?>
+
                                 </span>
-                            @else
+                            <?php else: ?>
                                 <span class="text-gray-400">—</span>
-                            @endif
+                            <?php endif; ?>
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold
-                                @if($console->status === 'stock') bg-green-100 text-green-800 border border-green-200
-                                @elseif($console->status === 'defective') bg-orange-100 text-orange-800 border border-orange-200
-                                @elseif($console->status === 'repair') bg-indigo-100 text-indigo-800 border border-indigo-200
-                                @elseif($console->status === 'disabled') bg-red-100 text-red-800 border border-red-200
-                                @else bg-gray-100 text-gray-800 border border-gray-200
-                                @endif">
-                                @if($console->status === 'stock') En stock
-                                @elseif($console->status === 'defective') Défectueuse
-                                @elseif($console->status === 'repair') En réparation
-                                @elseif($console->status === 'disabled') Désactivée
-                                @else {{ ucfirst($console->status) }}
-                                @endif
+                                <?php if($console->status === 'stock'): ?> bg-green-100 text-green-800 border border-green-200
+                                <?php elseif($console->status === 'defective'): ?> bg-orange-100 text-orange-800 border border-orange-200
+                                <?php elseif($console->status === 'repair'): ?> bg-indigo-100 text-indigo-800 border border-indigo-200
+                                <?php elseif($console->status === 'disabled'): ?> bg-red-100 text-red-800 border border-red-200
+                                <?php else: ?> bg-gray-100 text-gray-800 border border-gray-200
+                                <?php endif; ?>">
+                                <?php if($console->status === 'stock'): ?> En stock
+                                <?php elseif($console->status === 'defective'): ?> Défectueuse
+                                <?php elseif($console->status === 'repair'): ?> En réparation
+                                <?php elseif($console->status === 'disabled'): ?> Désactivée
+                                <?php else: ?> <?php echo e(ucfirst($console->status)); ?>
+
+                                <?php endif; ?>
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            @if(!is_null($console->prix_achat))
-                                {{ number_format($console->prix_achat, 2, ',', ' ') }} €
-                            @else
+                            <?php if(!is_null($console->prix_achat)): ?>
+                                <?php echo e(number_format($console->prix_achat, 2, ',', ' ')); ?> €
+                            <?php else: ?>
                                 <span class="text-gray-400">—</span>
-                            @endif
+                            <?php endif; ?>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            @php $repairCost = $console->repair_cost ?? 0; @endphp
-                            @if($repairCost > 0)
-                                <span class="text-orange-600 font-medium">{{ number_format($repairCost, 2, ',', ' ') }} €</span>
-                            @else
+                            <?php $repairCost = $console->repair_cost ?? 0; ?>
+                            <?php if($repairCost > 0): ?>
+                                <span class="text-orange-600 font-medium"><?php echo e(number_format($repairCost, 2, ',', ' ')); ?> €</span>
+                            <?php else: ?>
                                 <span class="text-gray-400">—</span>
-                            @endif
+                            <?php endif; ?>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            @php $totalCost = $console->total_cost ?? 0; @endphp
-                            @if($totalCost > 0)
-                                <span class="font-semibold text-gray-900">{{ number_format($totalCost, 2, ',', ' ') }} €</span>
-                            @else
+                            <?php $totalCost = $console->total_cost ?? 0; ?>
+                            <?php if($totalCost > 0): ?>
+                                <span class="font-semibold text-gray-900"><?php echo e(number_format($totalCost, 2, ',', ' ')); ?> €</span>
+                            <?php else: ?>
                                 <span class="text-gray-400">—</span>
-                            @endif
+                            <?php endif; ?>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <span class="font-semibold text-gray-900">{{ number_format($console->valorisation, 2, ',', ' ') }} €</span>
+                            <span class="font-semibold text-gray-900"><?php echo e(number_format($console->valorisation, 2, ',', ' ')); ?> €</span>
                         </td>
                         <td class="px-4 py-3 text-center align-top">
                             <form method="POST"
-                                action="{{ route('admin.consoles.update-status', $console) }}"
+                                action="<?php echo e(route('admin.consoles.update-status', $console)); ?>"
                                 class="flex flex-col space-y-2 items-center">
-                                @csrf
-                                @method('PATCH')
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PATCH'); ?>
                                 <select name="status" class="w-full max-w-[160px] border border-gray-300 rounded p-2 text-sm">
-                                    <option value="stock" @selected($console->status === 'stock')>🟢 En stock</option>
-                                    <option value="defective" @selected($console->status === 'defective')>🟠 Défectueuse</option>
-                                    <option value="repair" @selected($console->status === 'repair')>🔧 En réparation</option>
-                                    <option value="disabled" @selected($console->status === 'disabled')>⛔ Désactivée</option>
+                                    <option value="stock" <?php if($console->status === 'stock'): echo 'selected'; endif; ?>>🟢 En stock</option>
+                                    <option value="defective" <?php if($console->status === 'defective'): echo 'selected'; endif; ?>>🟠 Défectueuse</option>
+                                    <option value="repair" <?php if($console->status === 'repair'): echo 'selected'; endif; ?>>🔧 En réparation</option>
+                                    <option value="disabled" <?php if($console->status === 'disabled'): echo 'selected'; endif; ?>>⛔ Désactivée</option>
                                 </select>
                                 <button type="submit" class="w-full max-w-[160px] bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm font-medium">
                                     💾 Enregistrer
@@ -355,73 +315,76 @@
                         </td>
                         <td class="px-4 py-3 text-center w-[180px] whitespace-nowrap align-top">
                             <div class="flex flex-col gap-2 items-center">
-                                <a href="{{ route('admin.articles.edit', $console) }}"
+                                <a href="<?php echo e(route('admin.articles.edit', $console)); ?>"
                                    class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded hover:bg-yellow-200 border border-yellow-200 font-medium">
                                     ✏️ Éditer
                                 </a>
-                                @if($console->article_type_id)
-                                    @if($console->productSheet)
-                                        {{-- Article déjà lié à une fiche --}}
-                                        <a href="{{ route('admin.product-sheets.edit', $console->productSheet) }}"
+                                <?php if($console->article_type_id): ?>
+                                    <?php if($console->productSheet): ?>
+                                        
+                                        <a href="<?php echo e(route('admin.product-sheets.edit', $console->productSheet)); ?>"
                                            class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded hover:bg-emerald-200 border border-emerald-200 font-medium"
-                                           title="Voir la fiche '{{ $console->productSheet->name }}'">
+                                           title="Voir la fiche '<?php echo e($console->productSheet->name); ?>'">
                                             🖼️ Voir fiche
                                         </a>
-                                    @else
-                                        @php
+                                    <?php else: ?>
+                                        <?php
                                             $existingSheet = $productSheets->get($console->article_type_id)?->first();
-                                        @endphp
-                                        @if($existingSheet)
-                                            {{-- Dupliquer une fiche existante --}}
-                                            <form method="POST" action="{{ route('admin.product-sheets.duplicate', $existingSheet) }}" class="w-full">
-                                                @csrf
-                                                <input type="hidden" name="console_id" value="{{ $console->id }}">
+                                        ?>
+                                        <?php if($existingSheet): ?>
+                                            
+                                            <form method="POST" action="<?php echo e(route('admin.product-sheets.duplicate', $existingSheet)); ?>" class="w-full">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="console_id" value="<?php echo e($console->id); ?>">
                                                 <button type="submit"
                                                         class="w-full bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200 border border-blue-200 font-medium"
-                                                        title="Dupliquer la fiche '{{ $existingSheet->name }}'">
+                                                        title="Dupliquer la fiche '<?php echo e($existingSheet->name); ?>'">
                                                     📋 Dupliquer fiche
                                                 </button>
                                             </form>
-                                        @else
-                                            {{-- Créer une nouvelle fiche --}}
-                                            <a href="{{ route('admin.product-sheets.create', ['article_type_id' => $console->article_type_id, 'console_id' => $console->id]) }}"
+                                        <?php else: ?>
+                                            
+                                            <a href="<?php echo e(route('admin.product-sheets.create', ['article_type_id' => $console->article_type_id, 'console_id' => $console->id])); ?>"
                                                class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded hover:bg-emerald-200 border border-emerald-200 font-medium">
                                                 🖼️ Créer fiche
                                             </a>
-                                        @endif
-                                    @endif
-                                @endif
-                                @if($console->status === 'stock')
-                                    <a href="{{ route('admin.consoles.edit', $console) }}"
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                <?php if($console->status === 'stock'): ?>
+                                    <a href="<?php echo e(route('admin.consoles.edit', $console)); ?>"
                                        class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded hover:bg-indigo-200 border border-indigo-200 font-medium">
                                         ⚙️ Gérer les prix
                                     </a>
-                                @else
+                                <?php else: ?>
                                     <span class="bg-gray-100 text-gray-400 px-3 py-1 rounded border border-gray-200 cursor-not-allowed"
                                           title="Les prix ne peuvent être définis que si l'article est en stock">
                                         🚫 Prix indisponibles
                                     </span>
-                                @endif
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                             Aucun article trouvé
                         </td>
                     </tr>
-                @endforelse
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
 
-    {{-- Pagination safe --}}
-    @if (method_exists($consoles, 'links'))
+    
+    <?php if(method_exists($consoles, 'links')): ?>
         <div class="mt-4">
-            {{ $consoles->links() }}
+            <?php echo e($consoles->links()); ?>
+
         </div>
-    @endif
+    <?php endif; ?>
 
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/consoles/index.blade.php ENDPATH**/ ?>

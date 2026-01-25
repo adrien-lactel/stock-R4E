@@ -35,7 +35,7 @@
                 @method('PUT')
             @endif
 
-            <h2 class="text-lg font-semibold text-gray-800">Taxonomie</h2>
+            <h2 class="text-lg font-semibold text-gray-800">Classification</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                 <div>
                     <label class="block text-sm font-medium">Catégorie *</label>

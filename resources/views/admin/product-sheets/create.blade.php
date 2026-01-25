@@ -25,7 +25,7 @@
         <form method="POST" action="{{ route('admin.product-sheets.store') }}" id="productSheetForm">
             @csrf
 
-            {{-- TAXONOMIE --}}
+            {{-- CLASSIFICATION --}}
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Type de produit</h2>
 
@@ -353,11 +353,11 @@
                     </div>
                 </div>
 
-                {{-- GALERIE D'IMAGES DE TAXONOMIE --}}
+                {{-- GALERIE D'IMAGES DE CATÉGORIE --}}
                 <div id="taxonomy_gallery_container" class="hidden mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-sm font-semibold text-blue-900">
-                            📚 Images existantes pour cette taxonomie
+                            📚 Images existantes pour cette catégorie
                         </h3>
                         <button type="button" 
                                 onclick="document.getElementById('taxonomy_gallery_container').classList.add('hidden')"
@@ -367,7 +367,7 @@
                     </div>
                     <p class="text-xs text-blue-700 mb-3">Cliquez sur une image pour l'ajouter à votre fiche</p>
                     <div id="taxonomy_gallery" class="grid grid-cols-3 md:grid-cols-8 gap-2 max-h-64 overflow-y-auto">
-                        {{-- Les images de taxonomie seront chargées ici --}}
+                        {{-- Les images de catégorie seront chargées ici --}}
                     </div>
                 </div>
 
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('tags_hidden').value = JSON.stringify(tagsArray);
     });
 
-    // Cascading selects pour taxonomie
+    // Cascading selects pour classification
     (function initTaxonomy() {
         const categorySelect = document.getElementById('category_select');
         const brandSelect = document.getElementById('brand_select');
@@ -494,11 +494,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const typeSelect = document.getElementById('type_select');
 
         if (!categorySelect || !brandSelect || !subCategorySelect || !typeSelect) {
-            console.error('❌ Selects de taxonomie non trouvés');
+            console.error('❌ Selects de classification non trouvés');
             return;
         }
 
-        console.log('✅ Taxonomie initialisée');
+        console.log('✅ Classification initialisée');
 
         categorySelect.addEventListener('change', async function() {
             const categoryId = this.value;
@@ -762,13 +762,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ========================================
-    // GALERIE D'IMAGES DE TAXONOMIE
+    // GALERIE D'IMAGES DE CATÉGORIE
     // ========================================
     const typeSelect = document.getElementById('type_select'); // ID correct du select
     const galleryContainer = document.getElementById('taxonomy_gallery_container');
     const galleryDiv = document.getElementById('taxonomy_gallery');
 
-    // Écouter les changements de taxonomie (type)
+    // Écouter les changements de catégorie (type)
     if (typeSelect) {
         typeSelect.addEventListener('change', async function() {
             const typeId = this.value;
@@ -778,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Charger les images de taxonomie
+            // Charger les images de catégorie
             try {
                 const response = await fetch('{{ route("admin.product-sheets.taxonomy-images") }}?article_type_id=' + typeId);
                 const images = await response.json();
@@ -836,7 +836,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     galleryContainer.classList.add('hidden');
                 }
             } catch (error) {
-                console.error('Erreur chargement images taxonomie:', error);
+                console.error('Erreur chargement images catégorie:', error);
                 galleryContainer.classList.add('hidden');
             }
         });

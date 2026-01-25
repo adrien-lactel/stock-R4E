@@ -67,6 +67,14 @@ class ConsoleAdminController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('region')) {
+            $query->where('region', $request->region);
+        }
+
+        if ($request->filled('completeness')) {
+            $query->where('completeness', $request->completeness);
+        }
+
         if ($request->filled('store_id')) {
             $query->where('store_id', $request->store_id);
         }
