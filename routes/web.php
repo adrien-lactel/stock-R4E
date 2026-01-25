@@ -190,6 +190,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/ajax/types/{subCategory}', [TaxonomyController::class, 'ajaxTypes'])
             ->name('ajax.types');
 
+        Route::get('/ajax/type-description/{type}', [TaxonomyController::class, 'ajaxTypeDescription'])
+            ->name('ajax.type-description');
+
         /* =====================
         | DASHBOARD
         ===================== */
@@ -297,6 +300,13 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
 
         Route::delete('/articles/{console}', [ConsoleAdminController::class, 'destroyArticle'])
             ->name('articles.destroy');
+
+        // Upload et suppression d'images d'articles
+        Route::post('/articles/upload-image', [ConsoleAdminController::class, 'uploadArticleImage'])
+            ->name('articles.upload-image');
+
+        Route::post('/articles/delete-image', [ConsoleAdminController::class, 'deleteArticleImage'])
+            ->name('articles.delete-image');
 
         /* =====================
         | CONSOLES

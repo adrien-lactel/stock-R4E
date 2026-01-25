@@ -383,7 +383,7 @@
         </div>
 
         {{-- CREATE --}}
-        <form method="POST" action="{{ route('admin.taxonomy.type.store') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-2">
+        <form method="POST" action="{{ route('admin.taxonomy.type.store') }}" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-2">
             @csrf
             <select name="article_sub_category_id" class="w-full border rounded p-2" required>
                 <option value="">— Sous-catégorie —</option>
@@ -396,8 +396,11 @@
                 @endforeach
             </select>
 
-            <input name="name" placeholder="Ex : Game Boy, Game Gear…"
+            <input name="name" placeholder="Ex : Pokémon Rouge, Zelda…"
                    class="w-full border rounded p-2" required>
+
+            <input name="publisher" placeholder="Éditeur (optionnel)"
+                   class="w-full border rounded p-2">
 
             <button class="bg-indigo-600 text-white px-4 py-2 rounded">➕ Ajouter</button>
         </form>
@@ -408,6 +411,7 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="px-3 py-2 text-left">Nom</th>
+                        <th class="px-3 py-2 text-left">Éditeur</th>
                         <th class="px-3 py-2 text-left">Sous-catégorie</th>
                         <th class="px-3 py-2 text-left">Catégorie</th>
                         <th class="px-3 py-2 text-center w-40">Actions</th>
@@ -418,7 +422,7 @@
                         @foreach($category->subCategories as $sub)
                             @foreach($sub->types as $type)
                                 @php
-                                    $filterText = strtolower($type->name.' '.$sub->name.' '.$category->name);
+                                    $filterText = strtolower($type->name.' '.($type->publisher ?? '').' '.$sub->name.' '.$category->name);
                                 @endphp
                                 <tr data-filter-row data-filter-text="{{ $filterText }}">
                                     <td class="px-3 py-2">
@@ -429,6 +433,13 @@
                                                    value="{{ $type->name }}"
                                                    class="w-full rounded border-gray-300"
                                                    required>
+                                    </td>
+
+                                    <td class="px-3 py-2">
+                                            <input name="publisher"
+                                                   value="{{ $type->publisher }}"
+                                                   placeholder="Éditeur"
+                                                   class="w-full rounded border-gray-300">
                                     </td>
 
                                     <td class="px-3 py-2">
@@ -476,7 +487,7 @@
                     @endphp
                     @if($typesCount === 0)
                         <tr>
-                            <td colspan="4" class="px-3 py-6 text-center text-gray-500">
+                            <td colspan="5" class="px-3 py-6 text-center text-gray-500">
                                 Aucun type
                             </td>
                         </tr>

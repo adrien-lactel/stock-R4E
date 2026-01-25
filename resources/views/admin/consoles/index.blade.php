@@ -433,6 +433,18 @@
                                         🚫 Prix indisponibles
                                     </span>
                                 @endif
+                                
+                                {{-- Bouton de suppression --}}
+                                <form method="POST" action="{{ route('admin.articles.destroy', $console) }}" 
+                                      class="w-full"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                            class="w-full bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 border border-red-200 font-medium">
+                                        🗑️ Supprimer
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>

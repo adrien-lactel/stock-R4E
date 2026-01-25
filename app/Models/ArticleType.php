@@ -11,12 +11,18 @@ class ArticleType extends Model
 
     protected $fillable = [
         'name',
+        'publisher',
         'article_sub_category_id',
         'cover_image',
         'gameplay_image',
         'description',
         'key_features',
         'average_market_price',
+        'images',
+    ];
+
+    protected $casts = [
+        'images' => 'array',
     ];
 
     public function subCategory()

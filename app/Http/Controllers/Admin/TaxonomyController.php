@@ -85,11 +85,14 @@ class TaxonomyController extends Controller
         $request->validate([
             'article_sub_category_id' => 'required|exists:article_sub_categories,id',
             'name' => 'required|string|max:255',
+            'publisher' => 'nullable|string|max:255',
         ]);
 
         ArticleType::firstOrCreate([
             'article_sub_category_id' => $request->article_sub_category_id,
             'name' => $request->name,
+        ], [
+            'publisher' => $request->publisher,
         ]);
 
         return back()->with('success', 'Type ajouté');
@@ -206,6 +209,7 @@ public function updateType(Request $request, ArticleType $type)
     $data = $request->validate([
         'name' => 'required|string|max:255',
         'article_sub_category_id' => 'required|exists:article_sub_categories,id',
+        'publisher' => 'nullable|string|max:255',
     ]);
 
     $type->update($data);
@@ -257,5 +261,16 @@ public function destroyType(ArticleType $type)
     return back()->with('success', 'Type supprimé.');
 }
 
+    /* =====================================================
+     | AJAX — description du type
+     ===================================================== */
+    public function ajaxTypeDescription(ArticleType $type)
+    {
+        return response()->json([
+            'description' => $type->description ?? '',
+            'publisher' => $type->publisher ?? '',
+            'images' => $type->images ?? [],
+        ]);
+    }
     
 }

@@ -595,7 +595,9 @@ class ProductSheetController extends Controller
         $showAll = $request->has('show_all') && $request->show_all == '1';
         
         if ($showAll) {
-            // Afficher toutes les images de toutes les taxonomies
+            // Afficher toutes les images de toutes les taxonomies (ProductSheet + ArticleType)
+            
+            // 1. Images des ProductSheets
             $sheets = ProductSheet::with(['articleType.subCategory.category'])->whereNotNull('images')->get();
             
             foreach ($sheets as $sheet) {
@@ -609,14 +611,45 @@ class ProductSheetController extends Controller
                             'type_name' => $sheet->articleType->name ?? 'N/A',
                             'sub_category_name' => $sheet->articleType->subCategory->name ?? 'N/A',
                             'category_name' => $sheet->articleType->subCategory->category->name ?? 'N/A',
+                            'source' => 'product_sheet',
                         ];
                     }
+                }
+            }
+            
+            // 2. Images des ArticleTypes
+            $types = ArticleType::with(['subCategory.category'])->whereNotNull('images')->get();
+            
+            foreach ($types as $type) {
+                $typeImages = is_array($type->images) ? $type->images : [];
+                foreach ($typeImages as $img) {
+                    $images[] = [
+                        'url' => $img,
+                        'type_id' => $type->id,
+                        'type_name' => $type->name,
+                        'sub_category_name' => $type->subCategory->name ?? 'N/A',
+                        'category_name' => $type->subCategory->category->name ?? 'N/A',
+                        'source' => 'article_type',
+                    ];
                 }
             }
         } elseif ($request->has('article_type_id')) {
             $selectedType = ArticleType::with(['subCategory.category'])->find($request->article_type_id);
             
-            // Récupérer toutes les images des fiches de cette taxonomie
+            // 1. Récupérer les images de l'ArticleType lui-même
+            if ($selectedType && $selectedType->images) {
+                $typeImages = is_array($selectedType->images) ? $selectedType->images : [];
+                foreach ($typeImages as $img) {
+                    $images[] = [
+                        'url' => $img,
+                        'type_id' => $selectedType->id,
+                        'type_name' => $selectedType->name,
+                        'source' => 'article_type',
+                    ];
+                }
+            }
+            
+            // 2. Récupérer toutes les images des ProductSheets de cette taxonomie
             $sheets = ProductSheet::where('article_type_id', $request->article_type_id)
                 ->whereNotNull('images')
                 ->get();
@@ -629,6 +662,7 @@ class ProductSheetController extends Controller
                             'url' => $img,
                             'sheet_id' => $sheet->id,
                             'sheet_name' => $sheet->name,
+                            'source' => 'product_sheet',
                         ];
                     }
                 }

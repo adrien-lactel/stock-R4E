@@ -13,6 +13,8 @@ use App\Models\Repairer;
 use App\Models\ArticleSubCategory;
 use App\Models\ArticleType;
 use App\Models\Mod;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ConsoleAdminController extends Controller
 {
@@ -266,6 +268,9 @@ class ConsoleAdminController extends Controller
 
             // ✅ quantité pour création en lot
             'quantity'                 => 'nullable|integer|min:1|max:100',
+
+            // ✅ Description partagée au niveau du type
+            'article_type_description' => 'nullable|string',
         ]);
 
         // Accept additional optional fields present on the Console model
@@ -298,9 +303,16 @@ class ConsoleAdminController extends Controller
             $data['assignment_status'] = 'pending_acceptance';
         }
 
+        // ✅ Mettre à jour la description du type d'article si fournie
+        if ($request->filled('article_type_description')) {
+            \App\Models\ArticleType::where('id', $data['article_type_id'])
+                ->update(['description' => $request->article_type_description]);
+        }
+
         // ✅ Création en lot
         $quantity = (int) ($data['quantity'] ?? 1);
         unset($data['quantity']); // Ne pas insérer quantity dans la table consoles
+        unset($data['article_type_description']); // Ne pas insérer dans consoles (c'est au niveau du type)
 
         $createdIds = [];
         for ($i = 0; $i < $quantity; $i++) {
@@ -378,6 +390,9 @@ class ConsoleAdminController extends Controller
             'console_mods.*.price_applied' => 'nullable|numeric|min:0',
             'console_mods.*.work_time_minutes' => 'nullable|integer|min:0',
             'console_mods.*.notes'     => 'nullable|string|max:500',
+
+            // ✅ Description partagée au niveau du type
+            'article_type_description' => 'nullable|string',
         ]);
 
         // Accept additional optional fields present on the Console model
@@ -399,6 +414,13 @@ class ConsoleAdminController extends Controller
         // Extraire console_mods avant merge
         $consoleMods = $data['console_mods'] ?? [];
         unset($data['console_mods']);
+
+        // ✅ Mettre à jour la description du type d'article si fournie
+        if ($request->filled('article_type_description')) {
+            \App\Models\ArticleType::where('id', $data['article_type_id'])
+                ->update(['description' => $request->article_type_description]);
+        }
+        unset($data['article_type_description']); // Ne pas insérer dans consoles
 
         $data = array_merge($data, $extra);
 
@@ -615,4 +637,123 @@ class ConsoleAdminController extends Controller
         return redirect()->route('admin.articles.recent')
             ->with('success', "Article #{$articleId} supprimé avec succès.");
     }
+
+    /**
+     * Upload d'une image d'article vers Cloudinary (associée à un article_type).
+     */
+    public function uploadArticleImage(Request $request)
+    {
+        \Log::info('uploadArticleImage appelée', [
+            'has_file' => $request->hasFile('image'),
+            'article_type_id' => $request->input('article_type_id'),
+        ]);
+
+        try {
+            $request->validate([
+                'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:10240', // Max 10MB
+                'article_type_id' => 'required|exists:article_types,id',
+            ]);
+
+            $file = $request->file('image');
+            $typeId = $request->input('article_type_id');
+            
+            if (!$file) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun fichier reçu'
+                ], 400);
+            }
+            
+            // Vérifier la taille (10MB max)
+            if ($file->getSize() > 10 * 1024 * 1024) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le fichier est trop volumineux (' . round($file->getSize() / 1024 / 1024, 2) . ' MB). Maximum autorisé : 10 MB.'
+                ], 413);
+            }
+            
+            // Upload vers Cloudinary dans R4E/articles/images
+            $path = Storage::disk('cloudinary')->putFileAs(
+                'R4E/articles/images',
+                $file,
+                Str::random(40) . '.' . $file->getClientOriginalExtension(),
+                'public'
+            );
+            
+            // Récupérer l'URL complète
+            $uploadedFileUrl = Storage::disk('cloudinary')->url($path);
+
+            // Ajouter l'URL au tableau images de l'article_type
+            $articleType = ArticleType::findOrFail($typeId);
+            $images = $articleType->images ?? [];
+            $images[] = $uploadedFileUrl;
+            $articleType->images = $images;
+            $articleType->save();
+
+            \Log::info('Image uploadée et ajoutée à article_type', [
+                'url' => $uploadedFileUrl,
+                'type_id' => $typeId,
+                'total_images' => count($images),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'url' => $uploadedFileUrl,
+                'path' => $uploadedFileUrl,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur upload image article', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Supprimer une image d'un article_type.
+     */
+    public function deleteArticleImage(Request $request)
+    {
+        try {
+            $request->validate([
+                'article_type_id' => 'required|exists:article_types,id',
+                'image_url' => 'required|string',
+            ]);
+
+            $typeId = $request->input('article_type_id');
+            $imageUrl = $request->input('image_url');
+
+            $articleType = ArticleType::findOrFail($typeId);
+            $images = $articleType->images ?? [];
+
+            // Retirer l'URL du tableau
+            $images = array_values(array_filter($images, fn($url) => $url !== $imageUrl));
+            $articleType->images = $images;
+            $articleType->save();
+
+            \Log::info('Image supprimée de article_type', [
+                'url' => $imageUrl,
+                'type_id' => $typeId,
+                'remaining_images' => count($images),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Image supprimée avec succès.',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur suppression image article', [
+                'message' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
+

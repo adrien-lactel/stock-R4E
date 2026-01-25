@@ -89,6 +89,48 @@
         </div>
 
         
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Région</label>
+            <select name="region"
+                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Toutes</option>
+                <option value="PAL" <?php if(request('region')==='PAL'): echo 'selected'; endif; ?>>🇪🇺 PAL</option>
+                <option value="NTSC-U" <?php if(request('region')==='NTSC-U'): echo 'selected'; endif; ?>>🇺🇸 NTSC-U</option>
+                <option value="NTSC-J" <?php if(request('region')==='NTSC-J'): echo 'selected'; endif; ?>>🇯🇵 NTSC-J</option>
+                <option value="Région libre" <?php if(request('region')==='Région libre'): echo 'selected'; endif; ?>>🌍 Région libre</option>
+            </select>
+        </div>
+
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Complétude</label>
+            <select name="completeness"
+                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Toutes</option>
+                <option value="Console seule" <?php if(request('completeness')==='Console seule'): echo 'selected'; endif; ?>>📦 Console seule</option>
+                <option value="Avec boîte" <?php if(request('completeness')==='Avec boîte'): echo 'selected'; endif; ?>>📦📄 Avec boîte</option>
+                <option value="Complète en boîte" <?php if(request('completeness')==='Complète en boîte'): echo 'selected'; endif; ?>>📦📄🎮 Complète</option>
+            </select>
+        </div>
+
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Langue</label>
+            <select name="language"
+                    class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Toutes</option>
+                <option value="Français" <?php if(request('language')==='Français'): echo 'selected'; endif; ?>>🇫🇷 Français</option>
+                <option value="Anglais" <?php if(request('language')==='Anglais'): echo 'selected'; endif; ?>>🇬🇧 Anglais</option>
+                <option value="Japonais" <?php if(request('language')==='Japonais'): echo 'selected'; endif; ?>>🇯🇵 Japonais</option>
+                <option value="Allemand" <?php if(request('language')==='Allemand'): echo 'selected'; endif; ?>>🇩🇪 Allemand</option>
+                <option value="Italien" <?php if(request('language')==='Italien'): echo 'selected'; endif; ?>>🇮🇹 Italien</option>
+                <option value="Espagnol" <?php if(request('language')==='Espagnol'): echo 'selected'; endif; ?>>🇪🇸 Espagnol</option>
+                <option value="Coréen" <?php if(request('language')==='Coréen'): echo 'selected'; endif; ?>>🇰🇷 Coréen</option>
+                <option value="Chinois" <?php if(request('language')==='Chinois'): echo 'selected'; endif; ?>>🇨🇳 Chinois</option>
+            </select>
+        </div>
+
+        
         <?php if(isset($stores)): ?>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Magasin</label>
@@ -203,7 +245,7 @@
             <thead class="bg-pink-100">
                 <tr>
                     <th class="px-4 py-3 text-center">ID</th>
-                    <th class="px-4 py-3 text-left">Catégorie / Sous-cat. / Type</th>
+                    <th class="px-4 py-3 text-left">Classification (Catégorie > Marque > Sous-cat. > Type)</th>
                     <th class="px-4 py-3 text-left">Localisation</th>
                     <th class="px-4 py-3 text-center">Statut</th>
                     <th class="px-4 py-3 text-right">Prix achat</th>
@@ -236,6 +278,43 @@
                                 <span class="text-gray-700"><?php echo e($console->articleSubCategory?->name ?? '—'); ?></span>
                                 <span class="text-gray-400"> > </span>
                                 <span class="text-gray-600"><?php echo e($console->articleType?->name ?? '—'); ?></span>
+                                
+                                <?php if($console->region): ?>
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                        <?php if($console->region === 'PAL'): ?> 🇪🇺
+                                        <?php elseif($console->region === 'NTSC-U'): ?> 🇺🇸
+                                        <?php elseif($console->region === 'NTSC-J'): ?> 🇯🇵
+                                        <?php else: ?> 🌍
+                                        <?php endif; ?>
+                                        <?php echo e($console->region); ?>
+
+                                    </span>
+                                <?php endif; ?>
+                                <?php if($console->completeness): ?>
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+                                        <?php if($console->completeness === 'Console seule'): ?> 📦
+                                        <?php elseif($console->completeness === 'Avec boîte'): ?> 📦📄
+                                        <?php else: ?> 📦📄🎮
+                                        <?php endif; ?>
+                                        <?php echo e($console->completeness); ?>
+
+                                    </span>
+                                <?php endif; ?>
+                                <?php if($console->language): ?>
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800">
+                                        <?php if($console->language === 'Français'): ?> 🇫🇷
+                                        <?php elseif($console->language === 'Anglais'): ?> 🇬🇧
+                                        <?php elseif($console->language === 'Japonais'): ?> 🇯🇵
+                                        <?php elseif($console->language === 'Allemand'): ?> 🇩🇪
+                                        <?php elseif($console->language === 'Italien'): ?> 🇮🇹
+                                        <?php elseif($console->language === 'Espagnol'): ?> 🇪🇸
+                                        <?php elseif($console->language === 'Coréen'): ?> 🇰🇷
+                                        <?php elseif($console->language === 'Chinois'): ?> 🇨🇳
+                                        <?php endif; ?>
+                                        <?php echo e($console->language); ?>
+
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </td>
                         <td class="px-4 py-3">
@@ -362,6 +441,18 @@
                                         🚫 Prix indisponibles
                                     </span>
                                 <?php endif; ?>
+                                
+                                
+                                <form method="POST" action="<?php echo e(route('admin.articles.destroy', $console)); ?>" 
+                                      class="w-full"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.')">
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('DELETE'); ?>
+                                    <button type="submit"
+                                            class="w-full bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 border border-red-200 font-medium">
+                                        🗑️ Supprimer
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
