@@ -111,6 +111,13 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::delete('/accessories/{accessory}', [AccessoryAdminController::class, 'destroy'])->name('accessories.destroy');
 
         /* =====================
+        | GOOGLE VISION SETUP GUIDE
+        ===================== */
+        Route::get('/google-vision-setup', function () {
+            return view('admin.google-vision-setup');
+        })->name('google-vision-setup');
+
+        /* =====================
         | RÉPARATEURS
         ===================== */
         Route::get('/repairers', [RepairerAdminController::class, 'index'])->name('repairers.index');
@@ -181,6 +188,8 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         /* =====================
         | AJAX TAXONOMIE (🔥 IMPORTANT)
         ===================== */
+        Route::post('/taxonomy/type/auto-create', [TaxonomyController::class, 'autoCreateType'])
+            ->name('taxonomy.type.auto-create');
         Route::get('/ajax/brands/{category}', [TaxonomyController::class, 'ajaxBrands'])
             ->name('ajax.brands');
 
@@ -192,6 +201,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
 
         Route::get('/ajax/type-description/{type}', [TaxonomyController::class, 'ajaxTypeDescription'])
             ->name('ajax.type-description');
+        
+        Route::get('/ajax/lookup-rom-id/{romId}', [TaxonomyController::class, 'lookupRomId'])
+            ->name('ajax.lookup-rom-id');
 
         /* =====================
         | DASHBOARD
@@ -307,6 +319,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
 
         Route::post('/articles/delete-image', [ConsoleAdminController::class, 'deleteArticleImage'])
             ->name('articles.delete-image');
+
+        // Analyse IA d'une image
+        Route::post('/articles/analyze-image', [ConsoleAdminController::class, 'analyzeImageAI'])
+            ->name('articles.analyze-image');
 
         /* =====================
         | CONSOLES

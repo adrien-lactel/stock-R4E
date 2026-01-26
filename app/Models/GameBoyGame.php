@@ -10,6 +10,7 @@ class GameBoyGame extends Model
         'rom_id',
         'name',
         'year',
+        'publisher',
         'image_url',
         'cloudinary_url',
         'price',

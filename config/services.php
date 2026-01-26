@@ -31,4 +31,9 @@ return [
         ],
     ],
 
+    'google_vision' => [
+        'credentials' => env('GOOGLE_VISION_CREDENTIALS') ? json_decode(env('GOOGLE_VISION_CREDENTIALS'), true) : null,
+        'project_id' => env('GOOGLE_VISION_PROJECT_ID'),
+    ],
+
 ];

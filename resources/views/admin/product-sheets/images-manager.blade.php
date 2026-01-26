@@ -125,9 +125,16 @@
                                  class="w-full h-32 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-90 transition"
                                  onclick="openLightbox('{{ $image['url'] }}', '{{ addslashes($image['type_name'] ?? $image['sheet_name'] ?? '') }}', @if($showAll ?? false)'{{ $image['category_name'] ?? '' }} › {{ $image['sub_category_name'] ?? '' }} › {{ $image['type_name'] ?? '' }}'@else null @endif, '{{ $image['source'] ?? 'product_sheet' }}', {{ $image['sheet_id'] ?? 'null' }}, {{ $image['type_id'] ?? 'null' }})">
                             
+                            {{-- Badge pour les images cover/gameplay --}}
+                            @if(isset($image['label']))
+                                <div class="absolute top-1 left-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+                                    {{ $image['label'] }}
+                                </div>
+                            @endif
+                            
                             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-[10px] px-1 py-0.5">
                                 <div class="truncate">
-                                    @if(($image['source'] ?? 'product_sheet') === 'article_type')
+                                    @if(str_contains($image['source'] ?? 'product_sheet', 'article_type'))
                                         <span class="bg-purple-600 px-1 rounded text-[9px]">Type</span> {{ $image['type_name'] ?? '' }}
                                     @else
                                         <span class="bg-blue-600 px-1 rounded text-[9px]">Fiche</span> {{ $image['sheet_name'] ?? '' }}

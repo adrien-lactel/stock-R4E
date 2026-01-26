@@ -646,16 +646,19 @@ class ConsoleAdminController extends Controller
         \Log::info('uploadArticleImage appelée', [
             'has_file' => $request->hasFile('image'),
             'article_type_id' => $request->input('article_type_id'),
+            'image_type' => $request->input('image_type'),
         ]);
 
         try {
             $request->validate([
                 'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:10240', // Max 10MB
                 'article_type_id' => 'required|exists:article_types,id',
+                'image_type' => 'nullable|in:cover,gameplay', // Type d'image pour les jeux
             ]);
 
             $file = $request->file('image');
             $typeId = $request->input('article_type_id');
+            $imageType = $request->input('image_type'); // 'cover', 'gameplay', ou null
             
             if (!$file) {
                 return response()->json([
@@ -683,18 +686,27 @@ class ConsoleAdminController extends Controller
             // Récupérer l'URL complète
             $uploadedFileUrl = Storage::disk('cloudinary')->url($path);
 
-            // Ajouter l'URL au tableau images de l'article_type
+            // Mettre à jour l'article_type
             $articleType = ArticleType::findOrFail($typeId);
-            $images = $articleType->images ?? [];
-            $images[] = $uploadedFileUrl;
-            $articleType->images = $images;
-            $articleType->save();
-
-            \Log::info('Image uploadée et ajoutée à article_type', [
-                'url' => $uploadedFileUrl,
-                'type_id' => $typeId,
-                'total_images' => count($images),
-            ]);
+            
+            if ($imageType === 'cover') {
+                // Image de la cartouche/boîte
+                $articleType->cover_image = $uploadedFileUrl;
+                $articleType->save();
+                \Log::info('Cover image enregistrée', ['url' => $uploadedFileUrl, 'type_id' => $typeId]);
+            } elseif ($imageType === 'gameplay') {
+                // Screenshot du gameplay
+                $articleType->gameplay_image = $uploadedFileUrl;
+                $articleType->save();
+                \Log::info('Gameplay image enregistrée', ['url' => $uploadedFileUrl, 'type_id' => $typeId]);
+            } else {
+                // Images génériques (tableau images)
+                $images = $articleType->images ?? [];
+                $images[] = $uploadedFileUrl;
+                $articleType->images = $images;
+                $articleType->save();
+                \Log::info('Image générique ajoutée', ['url' => $uploadedFileUrl, 'type_id' => $typeId, 'total_images' => count($images)]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -721,25 +733,34 @@ class ConsoleAdminController extends Controller
         try {
             $request->validate([
                 'article_type_id' => 'required|exists:article_types,id',
-                'image_url' => 'required|string',
+                'image_url' => 'nullable|string',
+                'image_type' => 'nullable|in:cover,gameplay',
             ]);
 
             $typeId = $request->input('article_type_id');
             $imageUrl = $request->input('image_url');
+            $imageType = $request->input('image_type');
 
             $articleType = ArticleType::findOrFail($typeId);
-            $images = $articleType->images ?? [];
-
-            // Retirer l'URL du tableau
-            $images = array_values(array_filter($images, fn($url) => $url !== $imageUrl));
-            $articleType->images = $images;
-            $articleType->save();
-
-            \Log::info('Image supprimée de article_type', [
-                'url' => $imageUrl,
-                'type_id' => $typeId,
-                'remaining_images' => count($images),
-            ]);
+            
+            if ($imageType === 'cover') {
+                // Supprimer l'image cover
+                $articleType->cover_image = null;
+                $articleType->save();
+                \Log::info('Cover image supprimée', ['type_id' => $typeId]);
+            } elseif ($imageType === 'gameplay') {
+                // Supprimer l'image gameplay
+                $articleType->gameplay_image = null;
+                $articleType->save();
+                \Log::info('Gameplay image supprimée', ['type_id' => $typeId]);
+            } else {
+                // Supprimer une image générique du tableau
+                $images = $articleType->images ?? [];
+                $images = array_values(array_filter($images, fn($url) => $url !== $imageUrl));
+                $articleType->images = $images;
+                $articleType->save();
+                \Log::info('Image générique supprimée', ['url' => $imageUrl, 'type_id' => $typeId, 'remaining_images' => count($images)]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -752,6 +773,111 @@ class ConsoleAdminController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Analyser une image avec Tesseract OCR (gratuit, offline) pour reconnaître un article.
+     */
+    public function analyzeImageAI(Request $request)
+    {
+        try {
+            // Utiliser Tesseract OCR (100% gratuit, offline)
+            // MÉMORISÉ: Version Google Vision disponible dans ImageRecognitionService si besoin
+
+            // Gérer base64 OU fichier uploadé
+            $imageData = null;
+            $tempPath = null;
+            $fullPath = null;
+
+            if ($request->has('image_base64')) {
+                // Image en base64 (depuis webcam ou canvas)
+                $base64Image = $request->input('image_base64');
+                
+                // Extraire les données base64 (enlever le préfixe data:image/...)
+                if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+                    $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                    $type = strtolower($type[1]); // jpg, png, gif
+                    
+                    $imageData = base64_decode($base64Image);
+                    
+                    if ($imageData === false) {
+                        throw new \Exception('Impossible de décoder l\'image base64');
+                    }
+                    
+                    // Créer le chemin complet du fichier temporaire
+                    $fileName = 'ai-analyze-' . time() . '.' . $type;
+                    $fullPath = storage_path('app/temp/' . $fileName);
+                    
+                    // Sauvegarder directement avec file_put_contents
+                    $written = file_put_contents($fullPath, $imageData);
+                    
+                    if ($written === false || !file_exists($fullPath)) {
+                        throw new \Exception('Échec de la création du fichier temporaire');
+                    }
+                    
+                    // Stocker juste le nom relatif pour le nettoyage
+                    $tempPath = 'temp/' . $fileName;
+                    
+                    \Log::info('Fichier temporaire créé', [
+                        'path' => $fullPath, 
+                        'size' => filesize($fullPath),
+                        'exists' => file_exists($fullPath)
+                    ]);
+                } else {
+                    throw new \Exception('Format base64 invalide');
+                }
+                
+            } elseif ($request->hasFile('image')) {
+                // Image uploadée normalement
+                $request->validate([
+                    'image' => 'required|image|max:10240', // Max 10MB
+                ]);
+                
+                $tempPath = $request->file('image')->store('temp', 'local');
+                $fullPath = storage_path('app/' . $tempPath);
+                
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune image fournie'
+                ], 400);
+            }
+
+            // Récupérer le service OCR Tesseract (gratuit, offline)
+            $recognitionService = app(\App\Services\TesseractOcrService::class);
+
+            // Analyser l'image
+            $analysis = $recognitionService->analyzeGamingProduct($fullPath);
+
+            // Nettoyer le fichier temporaire
+            if ($tempPath) {
+                \Storage::disk('local')->delete($tempPath);
+            }
+
+            \Log::info('Analyse Tesseract OCR', [
+                'success' => $analysis['success'] ?? false,
+                'suggestions' => $analysis['suggestions'] ?? null,
+            ]);
+
+            return response()->json($analysis);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation échouée: ' . implode(', ', $e->errors()['image'] ?? ['Erreur de validation'])
+            ], 422);
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur analyse IA image', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'analyse: ' . $e->getMessage()
             ], 500);
         }
     }

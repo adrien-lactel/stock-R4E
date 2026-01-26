@@ -37,16 +37,18 @@ class ProductSheetController extends Controller
         $mods = Mod::orderBy('name')->get();
         $selectedType = null;
         $selectedSubCategory = null;
+        $selectedBrand = null;
         $selectedCategory = null;
 
         // Si un article_type_id est fourni, charger toute la taxonomie
         if ($request->has('article_type_id')) {
-            $selectedType = ArticleType::with(['subCategory.category'])
+            $selectedType = ArticleType::with(['subCategory.brand.category'])
                 ->find($request->article_type_id);
             
             if ($selectedType) {
                 $selectedSubCategory = $selectedType->subCategory()->with('types')->first();
-                $selectedCategory = $selectedSubCategory?->category()->with('subCategories')->first();
+                $selectedBrand = $selectedSubCategory?->brand()->with('subCategories')->first();
+                $selectedCategory = $selectedBrand?->category()->with('brands')->first();
             }
         }
 
@@ -55,6 +57,7 @@ class ProductSheetController extends Controller
             'categories' => $categories,
             'mods' => $mods,
             'selectedCategory' => $selectedCategory,
+            'selectedBrand' => $selectedBrand,
             'selectedSubCategory' => $selectedSubCategory,
             'selectedType' => $selectedType,
         ]);
@@ -618,9 +621,34 @@ class ProductSheetController extends Controller
             }
             
             // 2. Images des ArticleTypes
-            $types = ArticleType::with(['subCategory.category'])->whereNotNull('images')->get();
+            $types = ArticleType::with(['subCategory.category'])->get();
             
             foreach ($types as $type) {
+                // Images cover et gameplay
+                if ($type->cover_image) {
+                    $images[] = [
+                        'url' => $type->cover_image,
+                        'type_id' => $type->id,
+                        'type_name' => $type->name,
+                        'sub_category_name' => $type->subCategory->name ?? 'N/A',
+                        'category_name' => $type->subCategory->category->name ?? 'N/A',
+                        'source' => 'article_type_cover',
+                        'label' => '🎮 Photo du jeu',
+                    ];
+                }
+                if ($type->gameplay_image) {
+                    $images[] = [
+                        'url' => $type->gameplay_image,
+                        'type_id' => $type->id,
+                        'type_name' => $type->name,
+                        'sub_category_name' => $type->subCategory->name ?? 'N/A',
+                        'category_name' => $type->subCategory->category->name ?? 'N/A',
+                        'source' => 'article_type_gameplay',
+                        'label' => '🕹️ Gameplay',
+                    ];
+                }
+                
+                // Images génériques (array JSON)
                 $typeImages = is_array($type->images) ? $type->images : [];
                 foreach ($typeImages as $img) {
                     $images[] = [
@@ -637,15 +665,38 @@ class ProductSheetController extends Controller
             $selectedType = ArticleType::with(['subCategory.category'])->find($request->article_type_id);
             
             // 1. Récupérer les images de l'ArticleType lui-même
-            if ($selectedType && $selectedType->images) {
-                $typeImages = is_array($selectedType->images) ? $selectedType->images : [];
-                foreach ($typeImages as $img) {
+            if ($selectedType) {
+                // Images cover et gameplay (images spécifiques jeux vidéo)
+                if ($selectedType->cover_image) {
                     $images[] = [
-                        'url' => $img,
+                        'url' => $selectedType->cover_image,
                         'type_id' => $selectedType->id,
                         'type_name' => $selectedType->name,
-                        'source' => 'article_type',
+                        'source' => 'article_type_cover',
+                        'label' => '🎮 Photo du jeu',
                     ];
+                }
+                if ($selectedType->gameplay_image) {
+                    $images[] = [
+                        'url' => $selectedType->gameplay_image,
+                        'type_id' => $selectedType->id,
+                        'type_name' => $selectedType->name,
+                        'source' => 'article_type_gameplay',
+                        'label' => '🕹️ Gameplay',
+                    ];
+                }
+                
+                // Images génériques (array JSON)
+                if ($selectedType->images) {
+                    $typeImages = is_array($selectedType->images) ? $selectedType->images : [];
+                    foreach ($typeImages as $img) {
+                        $images[] = [
+                            'url' => $img,
+                            'type_id' => $selectedType->id,
+                            'type_name' => $selectedType->name,
+                            'source' => 'article_type',
+                        ];
+                    }
                 }
             }
             

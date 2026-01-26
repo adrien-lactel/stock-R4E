@@ -50,8 +50,15 @@
                         <label class="block text-sm font-medium mb-1">Marque *</label>
                         <select name="brand_temp" id="brand_select"
                                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                required disabled>
+                                required {{ isset($selectedCategory) ? '' : 'disabled' }}>
                             <option value="">-- Sélectionner une catégorie d'abord --</option>
+                            @if(isset($selectedCategory) && isset($selectedCategory->brands))
+                                @foreach($selectedCategory->brands as $brand)
+                                    <option value="{{ $brand->id }}" {{ isset($selectedBrand) && $selectedBrand->id == $brand->id ? 'selected' : '' }}>
+                                        {{ $brand->name }}
+                                    </option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
 
@@ -60,10 +67,10 @@
                         <label class="block text-sm font-medium mb-1">Sous-catégorie *</label>
                         <select name="sub_category_temp" id="sub_category_select"
                                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                required disabled>
+                                required {{ isset($selectedBrand) ? '' : 'disabled' }}>
                             <option value="">-- Sélectionner une marque d'abord --</option>
-                            @if(isset($selectedCategory) && isset($selectedCategory->subCategories))
-                                @foreach($selectedCategory->subCategories as $sub)
+                            @if(isset($selectedBrand) && isset($selectedBrand->subCategories))
+                                @foreach($selectedBrand->subCategories as $sub)
                                     <option value="{{ $sub->id }}" {{ isset($selectedSubCategory) && $selectedSubCategory->id == $sub->id ? 'selected' : '' }}>
                                         {{ $sub->name }}
                                     </option>
@@ -96,56 +103,33 @@
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Informations produit</h2>
 
                 <div class="space-y-4">
-                    {{-- ROM ID Game Boy (optionnel) --}}
-                    <div class="p-4 bg-green-50 border border-green-200 rounded-md">
-                        <label class="block text-sm font-medium text-green-800 mb-1">
-                            🎮 ROM ID Game Boy (optionnel)
-                        </label>
-                        <div class="flex gap-2 items-start">
-                            <div class="flex-1 relative">
-                                <input type="text" id="rom_id_input" autocomplete="off"
-                                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                                       placeholder="Ex: DMG-APEE-0, DMG-MLA-1"
-                                       pattern="DMG-[A-Z0-9]+-[0-9]">
-                                <p class="text-xs text-green-700 mt-1">
-                                    Tapez pour voir les suggestions (ex: DMG-A)
-                                </p>
-                                
-                                {{-- Dropdown suggestions --}}
-                                <div id="rom_suggestions" class="hidden absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                </div>
-                            </div>
-                            <button type="button" id="lookup_rom_btn" 
-                                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                                    disabled>
-                                Rechercher
-                            </button>
-                        </div>
-                        <div id="rom_lookup_result" class="mt-2 hidden">
-                            <div class="text-sm text-green-700">
-                                <span id="rom_lookup_message"></span>
-                            </div>
-                        </div>
+                    {{-- Complétude --}}
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Complétude *</label>
+                        <select name="completeness_type" id="completeness_type"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="Loose">Loose (jeu seul)</option>
+                            <option value="CIB">CIB (complet boîte + notice)</option>
+                            <option value="Sealed">Sealed (neuf scellé)</option>
+                            <option value="Boîte + jeu">Boîte + jeu (sans notice)</option>
+                            <option value="Console seule">Console seule</option>
+                            <option value="Console complète">Console complète (avec accessoires)</option>
+                        </select>
                     </div>
-
-                    {{-- Nom --}}
+                    
+                    {{-- Nom (généré automatiquement) --}}
                     <div>
                         <label class="block text-sm font-medium mb-1">Nom de la fiche *</label>
                         <input type="text" name="name" id="product_name"
                                value="{{ old('name') }}"
-                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                               placeholder="Ex: PlayStation 5 Standard Edition"
-                               required>
-                    </div>
-
-                    {{-- Année de sortie --}}
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Année de sortie</label>
-                        <input type="number" name="release_year" id="product_year"
-                               value="{{ old('release_year') }}"
-                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                               placeholder="Ex: 1989"
-                               min="1970" max="2099">
+                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50"
+                               placeholder="Sélectionnez la taxonomie et la complétude"
+                               readonly required>
+                        <p class="text-xs text-gray-500 mt-1">
+                            💡 Le nom est généré automatiquement : Type + Complétude
+                        </p>
                     </div>
 
                     {{-- Description produit --}}
@@ -767,11 +751,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const typeSelect = document.getElementById('type_select'); // ID correct du select
     const galleryContainer = document.getElementById('taxonomy_gallery_container');
     const galleryDiv = document.getElementById('taxonomy_gallery');
+    const completenessSelect = document.getElementById('completeness_type');
+    const productNameInput = document.getElementById('product_name');
+
+    // Fonction pour générer le nom automatiquement
+    function generateProductName() {
+        const typeText = typeSelect?.options[typeSelect.selectedIndex]?.text || '';
+        const completenessText = completenessSelect?.value || '';
+        
+        if (typeText && completenessText) {
+            productNameInput.value = `${typeText} - ${completenessText}`;
+        } else {
+            productNameInput.value = '';
+        }
+    }
+
+    // Écouter les changements de complétude
+    if (completenessSelect) {
+        completenessSelect.addEventListener('change', generateProductName);
+    }
 
     // Écouter les changements de catégorie (type)
     if (typeSelect) {
         typeSelect.addEventListener('change', async function() {
             const typeId = this.value;
+            
+            // Générer le nom automatiquement
+            generateProductName();
             
             if (!typeId) {
                 galleryContainer.classList.add('hidden');
