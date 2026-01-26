@@ -57,10 +57,12 @@ class GameBoyGamesSeeder extends Seeder
     {
         // Sample de quelques jeux populaires pour tester
         return [
-            ["rom_id" => "DMG-MLA-0", "name" => "Super Mario Land", "year" => "1989", "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "publisher" => "Nintendo"],
-            ["rom_id" => "DMG-MQE-0", "name" => "Super Mario Land 2: 6 Golden Coins", "year" => "1992", "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "publisher" => "Nintendo"],
-            ["rom_id" => "DMG-TRA-0", "name" => "Tetris", "year" => "1989", "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "publisher" => "Nintendo"],
-            ["rom_id" => "DMG-A1J-0", "name" => "Aretha", "year" => null, "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "publisher" => null],
+            ["rom_id" => "DMG-MLA-0", "name" => "Super Mario Land", "year" => "1989", "publisher" => "Nintendo", "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "created_at" => now(), "updated_at" => now()],
+            ["rom_id" => "DMG-MQE-0", "name" => "Super Mario Land 2: 6 Golden Coins", "year" => "1992", "publisher" => "Nintendo", "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "created_at" => now(), "updated_at" => now()],
+            ["rom_id" => "DMG-TRA-0", "name" => "Tetris", "year" => "1989", "publisher" => "Nintendo", "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "created_at" => now(), "updated_at" => now()],
+            ["rom_id" => "DMG-A1J-0", "name" => "Aretha", "year" => null, "publisher" => null, "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "created_at" => now(), "updated_at" => now()],
+            ["rom_id" => "DMG-A2BE-0", "name" => "Hyper Black Bass 95", "year" => null, "publisher" => null, "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "created_at" => now(), "updated_at" => now()],
+            ["rom_id" => "DMG-A2DJ-0", "name" => "Dino Breeder 2", "year" => null, "publisher" => null, "image_url" => null, "cloudinary_url" => null, "price" => null, "source" => "manual", "created_at" => now(), "updated_at" => now()],
         ];
     }
 }
