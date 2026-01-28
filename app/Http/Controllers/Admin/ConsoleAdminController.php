@@ -18,6 +18,60 @@ use Illuminate\Support\Str;
 
 class ConsoleAdminController extends Controller
 {
+    /**
+     * Extraire le public_id d'une URL Cloudinary pour suppression
+     */
+    private function extractCloudinaryPublicId($url)
+    {
+        // URL Cloudinary format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{ext}
+        if (preg_match('/\/upload\/(?:v\d+\/)?(.+)\.\w+$/', $url, $matches)) {
+            return $matches[1]; // Retourne le public_id sans l'extension
+        }
+        return null;
+    }
+
+    /**
+     * Détecter la région depuis un ROM ID Game Boy
+     */
+    private function detectRegionFromRomId($romId)
+    {
+        if (!$romId) return null;
+        
+        $romId = strtoupper(trim($romId));
+        $region = null;
+        
+        // Extraire la partie du code jeu (entre DMG- et le suffixe final)
+        if (preg_match('/^[A-Z]+-([A-Z0-9]+)-([\w]+)$/i', $romId, $matches)) {
+            $gameCode = $matches[1]; // Ex: "A1J", "OBE", "K4J"
+            $suffix = $matches[2];    // Ex: "0", "USA", "JPN"
+            
+            // Cas spéciaux avec suffixe explicite
+            if (in_array($suffix, ['USA', 'CAN'])) {
+                $region = 'NTSC-U';
+            } elseif (in_array($suffix, ['JPN', 'JAP'])) {
+                $region = 'NTSC-J';
+            } elseif (in_array($suffix, ['EUR', 'PAL', 'FRA', 'GER', 'ITA', 'SPA', 'UK', 'NOE'])) {
+                $region = 'PAL';
+            }
+            // Sinon, détecter par la dernière lettre du code du jeu
+            else {
+                $lastLetter = substr($gameCode, -1);
+                
+                if ($lastLetter === 'J') {
+                    $region = 'NTSC-J'; // Japon
+                } elseif ($lastLetter === 'E') {
+                    $region = 'PAL'; // Europe
+                } elseif ($lastLetter === 'P') {
+                    $region = 'PAL'; // PAL/Europe
+                } elseif ($lastLetter === 'U' || $lastLetter === 'A') {
+                    $region = 'NTSC-U'; // USA
+                }
+            }
+        }
+        
+        return $region;
+    }
+    
     /* =====================================================
      | INDEX — liste des consoles
      ===================================================== */
@@ -271,7 +325,31 @@ class ConsoleAdminController extends Controller
 
             // ✅ Description partagée au niveau du type
             'article_type_description' => 'nullable|string',
+            
+            // ✅ Champs Game Boy
+            'rom_id'                   => 'nullable|string|max:50',
+            'region'                   => 'nullable|string|in:NTSC-J,NTSC-U,PAL',
+            'year'                     => 'nullable|integer|min:1980|max:' . (date('Y') + 1),
         ]);
+        
+        // ✅ Vérification de cohérence ROM ID / Région
+        if (!empty($data['rom_id'])) {
+            $detectedRegion = $this->detectRegionFromRomId($data['rom_id']);
+            
+            if ($detectedRegion) {
+                // Si aucune région n'est fournie, utiliser celle détectée
+                if (empty($data['region'])) {
+                    $data['region'] = $detectedRegion;
+                    \Log::info("Région auto-détectée pour ROM ID {$data['rom_id']}: {$detectedRegion}");
+                }
+                // Si une région est fournie, vérifier la cohérence
+                elseif ($data['region'] !== $detectedRegion) {
+                    return back()
+                        ->withErrors(['region' => "La région sélectionnée ({$data['region']}) ne correspond pas au ROM ID ({$data['rom_id']} → {$detectedRegion})."])
+                        ->withInput();
+                }
+            }
+        }
 
         // Accept additional optional fields present on the Console model
         $extra = $request->validate([
@@ -393,6 +471,11 @@ class ConsoleAdminController extends Controller
 
             // ✅ Description partagée au niveau du type
             'article_type_description' => 'nullable|string',
+
+            // ✅ Validation ROM ID, région et année
+            'rom_id'                   => 'nullable|string|max:50',
+            'region'                   => 'nullable|string|in:NTSC-J,NTSC-U,PAL',
+            'year'                     => 'nullable|integer|min:1980|max:' . (date('Y') + 1),
         ]);
 
         // Accept additional optional fields present on the Console model
@@ -414,6 +497,27 @@ class ConsoleAdminController extends Controller
         // Extraire console_mods avant merge
         $consoleMods = $data['console_mods'] ?? [];
         unset($data['console_mods']);
+
+        // ✅ Vérifier la cohérence ROM ID / Région
+        if (!empty($data['rom_id'])) {
+            $detectedRegion = $this->detectRegionFromRomId($data['rom_id']);
+            
+            if ($detectedRegion) {
+                // Si aucune région fournie, on complète automatiquement
+                if (empty($data['region'])) {
+                    $data['region'] = $detectedRegion;
+                    \Log::info("Région auto-détectée pour ROM ID {$data['rom_id']}: {$detectedRegion}");
+                }
+                // Si une région est fournie mais ne correspond pas, on retourne une erreur
+                elseif ($data['region'] !== $detectedRegion) {
+                    return back()
+                        ->withErrors([
+                            'region' => "La région sélectionnée ({$data['region']}) ne correspond pas au ROM ID ({$data['rom_id']} → {$detectedRegion})"
+                        ])
+                        ->withInput();
+                }
+            }
+        }
 
         // ✅ Mettre à jour la description du type d'article si fournie
         if ($request->filled('article_type_description')) {
@@ -653,12 +757,12 @@ class ConsoleAdminController extends Controller
             $request->validate([
                 'image' => 'required|file|mimes:jpeg,png,jpg,gif,webp,avif|max:10240', // Max 10MB
                 'article_type_id' => 'required|exists:article_types,id',
-                'image_type' => 'nullable|in:cover,gameplay', // Type d'image pour les jeux
+                'image_type' => 'nullable|in:cover,artwork,gameplay', // Type d'image pour les jeux
             ]);
 
             $file = $request->file('image');
             $typeId = $request->input('article_type_id');
-            $imageType = $request->input('image_type'); // 'cover', 'gameplay', ou null
+            $imageType = $request->input('image_type'); // 'cover', 'artwork', 'gameplay', ou null
             
             if (!$file) {
                 return response()->json([
@@ -690,13 +794,42 @@ class ConsoleAdminController extends Controller
             $articleType = ArticleType::findOrFail($typeId);
             
             if ($imageType === 'cover') {
-                // Image de la cartouche/boîte
-                $articleType->cover_image = $uploadedFileUrl;
+                // Image de la cartouche/boîte - Conserver l'ancienne si elle existe
+                if (empty($articleType->cover_image)) {
+                    $articleType->cover_image = $uploadedFileUrl;
+                } else {
+                    // Si une image existe déjà, l'ajouter au tableau générique
+                    $images = $articleType->images ?? [];
+                    $images[] = $uploadedFileUrl;
+                    $articleType->images = $images;
+                    \Log::info('Cover image ajoutée au tableau (cover_image déjà défini)', ['url' => $uploadedFileUrl]);
+                }
                 $articleType->save();
                 \Log::info('Cover image enregistrée', ['url' => $uploadedFileUrl, 'type_id' => $typeId]);
+            } elseif ($imageType === 'artwork') {
+                // Artwork officiel - Conserver l'ancienne si elle existe
+                if (empty($articleType->artwork_image)) {
+                    $articleType->artwork_image = $uploadedFileUrl;
+                } else {
+                    // Si une image existe déjà, l'ajouter au tableau générique
+                    $images = $articleType->images ?? [];
+                    $images[] = $uploadedFileUrl;
+                    $articleType->images = $images;
+                    \Log::info('Artwork image ajoutée au tableau (artwork_image déjà défini)', ['url' => $uploadedFileUrl]);
+                }
+                $articleType->save();
+                \Log::info('Artwork image enregistrée', ['url' => $uploadedFileUrl, 'type_id' => $typeId]);
             } elseif ($imageType === 'gameplay') {
-                // Screenshot du gameplay
-                $articleType->gameplay_image = $uploadedFileUrl;
+                // Screenshot du gameplay - Conserver l'ancienne si elle existe
+                if (empty($articleType->gameplay_image)) {
+                    $articleType->gameplay_image = $uploadedFileUrl;
+                } else {
+                    // Si une image existe déjà, l'ajouter au tableau générique
+                    $images = $articleType->images ?? [];
+                    $images[] = $uploadedFileUrl;
+                    $articleType->images = $images;
+                    \Log::info('Gameplay image ajoutée au tableau (gameplay_image déjà défini)', ['url' => $uploadedFileUrl]);
+                }
                 $articleType->save();
                 \Log::info('Gameplay image enregistrée', ['url' => $uploadedFileUrl, 'type_id' => $typeId]);
             } else {
@@ -734,7 +867,7 @@ class ConsoleAdminController extends Controller
             $request->validate([
                 'article_type_id' => 'required|exists:article_types,id',
                 'image_url' => 'nullable|string',
-                'image_type' => 'nullable|in:cover,gameplay',
+                'image_type' => 'nullable|in:cover,artwork,gameplay',
             ]);
 
             $typeId = $request->input('article_type_id');
@@ -744,17 +877,73 @@ class ConsoleAdminController extends Controller
             $articleType = ArticleType::findOrFail($typeId);
             
             if ($imageType === 'cover') {
-                // Supprimer l'image cover
+                // Supprimer le fichier Cloudinary si c'est une URL Cloudinary
+                if ($articleType->cover_image && str_contains($articleType->cover_image, 'cloudinary')) {
+                    try {
+                        $publicId = $this->extractCloudinaryPublicId($articleType->cover_image);
+                        if ($publicId) {
+                            Storage::disk('cloudinary')->delete($publicId);
+                            \Log::info('Fichier Cloudinary supprimé', ['public_id' => $publicId]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                    }
+                }
+                
+                // Supprimer l'image cover de la base
                 $articleType->cover_image = null;
                 $articleType->save();
                 \Log::info('Cover image supprimée', ['type_id' => $typeId]);
+            } elseif ($imageType === 'artwork') {
+                // Supprimer le fichier Cloudinary si c'est une URL Cloudinary
+                if ($articleType->artwork_image && str_contains($articleType->artwork_image, 'cloudinary')) {
+                    try {
+                        $publicId = $this->extractCloudinaryPublicId($articleType->artwork_image);
+                        if ($publicId) {
+                            Storage::disk('cloudinary')->delete($publicId);
+                            \Log::info('Fichier Cloudinary supprimé', ['public_id' => $publicId]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                    }
+                }
+                
+                // Supprimer l'image artwork de la base
+                $articleType->artwork_image = null;
+                $articleType->save();
+                \Log::info('Artwork image supprimée', ['type_id' => $typeId]);
             } elseif ($imageType === 'gameplay') {
-                // Supprimer l'image gameplay
+                // Supprimer le fichier Cloudinary si c'est une URL Cloudinary
+                if ($articleType->gameplay_image && str_contains($articleType->gameplay_image, 'cloudinary')) {
+                    try {
+                        $publicId = $this->extractCloudinaryPublicId($articleType->gameplay_image);
+                        if ($publicId) {
+                            Storage::disk('cloudinary')->delete($publicId);
+                            \Log::info('Fichier Cloudinary supprimé', ['public_id' => $publicId]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                    }
+                }
+                
+                // Supprimer l'image gameplay de la base
                 $articleType->gameplay_image = null;
                 $articleType->save();
                 \Log::info('Gameplay image supprimée', ['type_id' => $typeId]);
             } else {
                 // Supprimer une image générique du tableau
+                if ($imageUrl && str_contains($imageUrl, 'cloudinary')) {
+                    try {
+                        $publicId = $this->extractCloudinaryPublicId($imageUrl);
+                        if ($publicId) {
+                            Storage::disk('cloudinary')->delete($publicId);
+                            \Log::info('Fichier Cloudinary générique supprimé', ['public_id' => $publicId]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                    }
+                }
+                
                 $images = $articleType->images ?? [];
                 $images = array_values(array_filter($images, fn($url) => $url !== $imageUrl));
                 $articleType->images = $images;
@@ -773,6 +962,79 @@ class ConsoleAdminController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Masquer une image locale Game Boy en la renommant avec .hidden
+     */
+    public function hideLocalImage(Request $request)
+    {
+        try {
+            $request->validate([
+                'image_url' => 'required|string',
+            ]);
+
+            $imageUrl = $request->input('image_url');
+            
+            // Vérifier que c'est bien une image locale (pas Cloudinary)
+            if (str_contains($imageUrl, 'cloudinary')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cette action est réservée aux images locales.'
+                ], 400);
+            }
+            
+            // Extraire le chemin relatif de l'image
+            // URL format: http://localhost/images/taxonomy/gameboy/dmg-a3bp-0-artwork.jpg
+            if (preg_match('/images\/taxonomy\/gameboy\/(.+)$/', $imageUrl, $matches)) {
+                $fileName = $matches[1];
+                $filePath = public_path('images/taxonomy/gameboy/' . $fileName);
+                
+                // Vérifier que le fichier existe
+                if (!file_exists($filePath)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Fichier introuvable: ' . $fileName
+                    ], 404);
+                }
+                
+                // Renommer le fichier en ajoutant .hidden
+                $newFilePath = $filePath . '.hidden';
+                
+                if (rename($filePath, $newFilePath)) {
+                    \Log::info('Image locale masquée', [
+                        'original' => $fileName,
+                        'renamed' => basename($newFilePath)
+                    ]);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Image masquée avec succès.',
+                        'original_file' => $fileName,
+                        'hidden_file' => basename($newFilePath)
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Impossible de renommer le fichier.'
+                    ], 500);
+                }
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Format d\'URL invalide.'
+            ], 400);
+            
+        } catch (\Exception $e) {
+            \Log::error('Erreur masquage image locale', [
+                'message' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du masquage: ' . $e->getMessage()
             ], 500);
         }
     }

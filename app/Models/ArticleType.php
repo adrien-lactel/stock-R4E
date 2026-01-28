@@ -14,6 +14,7 @@ class ArticleType extends Model
         'publisher',
         'article_sub_category_id',
         'cover_image',
+        'artwork_image',
         'gameplay_image',
         'description',
         'key_features',

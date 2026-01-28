@@ -160,6 +160,16 @@
         </div>
     </div>
 
+    {{-- MODAL LIGHTBOX POUR AFFICHER LES IMAGES EN GRAND --}}
+    <div id="image-lightbox" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4" onclick="closeImageLightbox()">
+        <button type="button" onclick="closeImageLightbox()" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <img id="lightbox-image" src="" class="max-w-full max-h-full object-contain" onclick="event.stopPropagation()">
+    </div>
+
     {{-- FORMULAIRE --}}
     <div class="bg-white shadow rounded-lg p-6">
         <form method="POST"
@@ -437,36 +447,48 @@
                     
                     <!-- Pour les jeux vidéo : deux types d'images -->
                     <div id="game_images_section" style="display: none;">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <!-- Photo du jeu (cartouche/boîte) -->
                             <div>
                                 <label class="block text-sm font-semibold mb-2 text-blue-900">🎮 Photo du jeu (cartouche/boîte)</label>
                                 <div id="cover-dropzone"
-                                     class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors bg-blue-50">
-                                    <svg class="w-10 h-10 text-blue-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     class="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors bg-blue-50 inline-block mb-2">
+                                    <svg class="w-8 h-8 text-blue-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     </svg>
-                                    <p class="text-sm text-blue-700 font-medium">📱 Cliquez pour prendre une photo</p>
-                                    <p class="text-xs text-blue-600 mt-1">Photo de la cartouche ou de la boîte</p>
+                                    <p class="text-xs text-blue-700 font-medium">📱 Ajouter</p>
                                 </div>
                                 <input type="file" id="cover-input" accept="image/*" capture="environment" class="hidden">
-                                <div id="cover-preview" class="mt-3"></div>
+                                <div id="cover-preview" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- Image artwork -->
+                            <div>
+                                <label class="block text-sm font-semibold mb-2 text-pink-900">🎨 Artwork/page accueil jeu</label>
+                                <div id="artwork-dropzone"
+                                     class="border-2 border-dashed border-pink-300 rounded-lg p-4 text-center cursor-pointer hover:border-pink-500 transition-colors bg-pink-50 inline-block mb-2">
+                                    <svg class="w-8 h-8 text-pink-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <p class="text-xs text-pink-700 font-medium">📱 Ajouter</p>
+                                </div>
+                                <input type="file" id="artwork-input" accept="image/*" capture="environment" class="hidden">
+                                <div id="artwork-preview" class="flex flex-wrap gap-2"></div>
                             </div>
 
                             <!-- Image du gameplay -->
                             <div>
                                 <label class="block text-sm font-semibold mb-2 text-purple-900">🕹️ Screenshot gameplay</label>
                                 <div id="gameplay-dropzone"
-                                     class="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-500 transition-colors bg-purple-50">
-                                    <svg class="w-10 h-10 text-purple-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     class="border-2 border-dashed border-purple-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-500 transition-colors bg-purple-50 inline-block mb-2">
+                                    <svg class="w-8 h-8 text-purple-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                     </svg>
-                                    <p class="text-sm text-purple-700 font-medium">📱 Cliquez pour prendre une photo</p>
-                                    <p class="text-xs text-purple-600 mt-1">Capture d'écran du jeu en action</p>
+                                    <p class="text-xs text-purple-700 font-medium">📱 Ajouter</p>
                                 </div>
                                 <input type="file" id="gameplay-input" accept="image/*" capture="environment" class="hidden">
-                                <div id="gameplay-preview" class="mt-3"></div>
+                                <div id="gameplay-preview" class="flex flex-wrap gap-2"></div>
                             </div>
                         </div>
                         <p class="text-xs text-gray-500 italic">
@@ -648,6 +670,76 @@
      JS CLASSIFICATION
 ===================== --}}
 <script>
+// ✅ Base URLs pour les images (défini en PREMIER avant tout code)
+window.gameboyImageBaseUrl = '{{ asset('images/taxonomy/gameboy') }}';
+window.laravelAssetBase = '{{ asset('') }}';
+
+// ✅ Lightbox pour afficher les images en grand
+window.openImageLightbox = function(imageUrl) {
+  const lightbox = document.getElementById('image-lightbox');
+  const lightboxImage = document.getElementById('lightbox-image');
+  if (lightbox && lightboxImage) {
+    lightboxImage.src = imageUrl;
+    lightbox.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Bloquer le scroll
+  }
+};
+
+window.closeImageLightbox = function() {
+  const lightbox = document.getElementById('image-lightbox');
+  if (lightbox) {
+    lightbox.classList.add('hidden');
+    document.body.style.overflow = ''; // Réactiver le scroll
+  }
+};
+
+// Fermer avec la touche Échap
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageLightbox();
+  }
+});
+
+// ✅ Détecter la région depuis un ROM ID Game Boy
+window.detectRegionFromRomId = function(romId) {
+  if (!romId) return null;
+  
+  const romIdUpper = romId.toUpperCase();
+  let region = null;
+  
+  // Extraire la partie du code jeu (entre DMG- et le suffixe final)
+  const match = romIdUpper.match(/^[A-Z]+-([A-Z0-9]+)-([\w]+)$/i);
+  if (match) {
+    const gameCode = match[1]; // Ex: "A1J", "OBE", "K4J"
+    const suffix = match[2];    // Ex: "0", "USA", "JPN"
+    
+    // Cas spéciaux avec suffixe explicite
+    if (['USA', 'CAN'].includes(suffix)) {
+      region = 'NTSC-U';
+    } else if (['JPN', 'JAP'].includes(suffix)) {
+      region = 'NTSC-J';
+    } else if (['EUR', 'PAL', 'FRA', 'GER', 'ITA', 'SPA', 'UK', 'NOE'].includes(suffix)) {
+      region = 'PAL';
+    }
+    // Sinon, détecter par la dernière lettre du code du jeu
+    else {
+      const lastLetter = gameCode.slice(-1);
+      
+      if (lastLetter === 'J') {
+        region = 'NTSC-J'; // Japon
+      } else if (lastLetter === 'E') {
+        region = 'PAL'; // Europe
+      } else if (lastLetter === 'P') {
+        region = 'PAL'; // PAL/Europe
+      } else if (lastLetter === 'U' || lastLetter === 'A') {
+        region = 'NTSC-U'; // USA
+      }
+    }
+  }
+  
+  return region;
+};
+
 (function() {
   const cat = document.getElementById('article_category_id');
   const brand = document.getElementById('article_brand_id');
@@ -960,21 +1052,39 @@
 
   // Ajouter une prévisualisation d'image
   function addImagePreview(url, typeId, isExisting) {
+    // Si l'URL n'est pas absolue, préfixer avec asset()
+    let finalUrl = url;
+    if (!/^https?:\/\//.test(url) && !url.startsWith('//')) {
+      if (window.gameboyImageBaseUrl && url.includes('images/taxonomy/gameboy')) {
+        // Pour les images Game Boy, utiliser la base dynamique
+        const fileName = url.split('/').pop();
+        finalUrl = window.gameboyImageBaseUrl + '/' + fileName;
+      } else {
+        // Pour les autres images, utiliser asset()
+        finalUrl = (window.laravelAssetBase || '') + url.replace(/^\//, '');
+      }
+    }
     const div = document.createElement('div');
-    div.className = 'relative group';
-    
+    div.className = 'relative group cursor-pointer';
+    div.onclick = () => openImageLightbox(finalUrl);
     div.innerHTML = `
-      <img src="${url}" class="w-full h-32 object-cover rounded-lg border border-gray-200">
+      <div class="aspect-square w-full overflow-hidden rounded-lg border border-gray-200">
+        <img src="${finalUrl}" class="w-full h-full object-cover hover:opacity-90 transition-opacity">
+      </div>
       <button type="button" 
-              class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-              onclick="deleteImage('${url}', ${typeId}, this.parentElement)">
+              class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+              onclick="event.stopPropagation(); deleteImage('${finalUrl}', ${typeId}, this.parentElement);">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
       </button>
       ${isExisting ? '<span class="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">Taxonomie</span>' : ''}
+      <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        <svg class="w-8 h-8 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+        </svg>
+      </div>
     `;
-    
     previewContainer.appendChild(div);
   }
 
@@ -1009,18 +1119,22 @@
   };
 
   // ========================================
-  // GESTION DES IMAGES SPÉCIFIQUES AUX JEUX (COVER + GAMEPLAY)
+  // GESTION DES IMAGES SPÉCIFIQUES AUX JEUX (COVER + ARTWORK + GAMEPLAY)
   // ========================================
   const gameImagesSection = document.getElementById('game_images_section');
   const genericImagesSection = document.getElementById('generic_images_section');
   const coverDropzone = document.getElementById('cover-dropzone');
+  const artworkDropzone = document.getElementById('artwork-dropzone');
   const gameplayDropzone = document.getElementById('gameplay-dropzone');
   const coverInput = document.getElementById('cover-input');
+  const artworkInput = document.getElementById('artwork-input');
   const gameplayInput = document.getElementById('gameplay-input');
   const coverPreview = document.getElementById('cover-preview');
+  const artworkPreview = document.getElementById('artwork-preview');
   const gameplayPreview = document.getElementById('gameplay-preview');
 
   let currentCoverImage = null;
+  let currentArtworkImage = null;
   let currentGameplayImage = null;
 
   // Basculer entre les sections d'images selon la catégorie
@@ -1055,37 +1169,183 @@
       const response = await fetch(`{{ url('admin/ajax/type-description') }}/${typeId}`);
       const data = await response.json();
       
+      // ✅ Charger les images principales
       if (data.cover_image) {
-        displayGameImage('cover', data.cover_image);
+        addGameImage('cover', data.cover_image);
         currentCoverImage = data.cover_image;
       }
+      if (data.artwork_image) {
+        addGameImage('artwork', data.artwork_image);
+        currentArtworkImage = data.artwork_image;
+      }
       if (data.gameplay_image) {
-        displayGameImage('gameplay', data.gameplay_image);
+        addGameImage('gameplay', data.gameplay_image);
         currentGameplayImage = data.gameplay_image;
+      }
+      
+      // ✅ Charger aussi les images supplémentaires du tableau "images"
+      if (data.images && Array.isArray(data.images)) {
+        data.images.forEach(imageUrl => {
+          // Ajouter à cover par défaut (ces images sont des ajouts ultérieurs)
+          addGameImage('cover', imageUrl);
+        });
       }
     } catch (e) {
       console.error('Erreur chargement images du jeu:', e);
     }
   }
 
-  // Afficher une image de jeu
-  function displayGameImage(type, url) {
-    const container = type === 'cover' ? coverPreview : gameplayPreview;
-    container.innerHTML = `
-      <div class="relative group">
-        <img src="${url}" class="w-full h-48 object-cover rounded-lg border-2 border-gray-300">
-        <button type="button" 
-                class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                onclick="deleteGameImage('${type}', ${currentArticleTypeId})">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-        <span class="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded font-semibold">
-          ${type === 'cover' ? '🎮 Photo du jeu' : '🕹️ Gameplay'}
+  // ✅ Charger les images Game Boy depuis les fichiers (si ROM ID détecté)
+  async function loadGameBoyImagesFromFiles(romId) {
+    if (!romId || !window.gameboyImageBaseUrl) return;
+    
+    // NE PAS effacer les images déjà chargées depuis la base (uploadées)
+    // clearGameImages(); // ❌ Supprimé pour conserver les images Cloudinary
+    
+    // Normaliser le ROM ID en minuscules
+    const normalizedRomId = romId.toLowerCase().replace(/\s+/g, '-');
+    console.log('🔍 Recherche images Game Boy pour:', normalizedRomId);
+    
+    // Variations de noms de fichiers à tester
+    const imageTypes = [
+      { type: 'cover', suffixes: ['-cover', '-cover-1', '-cover-2', '-cover-3', ''] },
+      { type: 'artwork', suffixes: ['-artwork', '-artwork-1', '-artwork-2', '-artwork-3', '-artwork-4'] },
+      { type: 'gameplay', suffixes: ['-gameplay', '-gameplay-1', '-gameplay-2', '-gameplay-3'] }
+    ];
+    
+    const extensions = ['jpg', 'jpeg', 'png', 'webp'];
+    
+    // ✅ Parcourir TOUTES les combinaisons pour trouver toutes les images (ignorer les .hidden)
+    for (const imageType of imageTypes) {
+      for (const suffix of imageType.suffixes) {
+        for (const ext of extensions) {
+          const fileName = `${normalizedRomId}${suffix}.${ext}`;
+          const imageUrl = `${window.gameboyImageBaseUrl}/${fileName}`;
+          
+          // Vérifier d'abord qu'il n'existe pas de version .hidden
+          try {
+            const hiddenResponse = await fetch(`${imageUrl}.hidden`, { method: 'HEAD' });
+            if (hiddenResponse.ok) {
+              console.log(`⏭️ Fichier masqué ignoré: ${fileName} (existe en .hidden)`);
+              continue; // Passer au fichier suivant
+            }
+          } catch (e) {
+            // Pas de fichier .hidden, on peut continuer
+          }
+          
+          // Vérifier si l'image normale existe
+          try {
+            const response = await fetch(imageUrl, { method: 'HEAD' });
+            if (response.ok) {
+              console.log(`✅ Image trouvée [${imageType.type}]: ${fileName}`);
+              addGameImage(imageType.type, imageUrl, fileName);
+            }
+          } catch (e) {
+            // Image non trouvée, continuer
+          }
+        }
+      }
+    }
+    
+    console.log('🔍 Recherche terminée pour', normalizedRomId);
+  }
+
+  // Effacer toutes les images de jeu
+  function clearGameImages() {
+    coverPreview.innerHTML = '';
+    artworkPreview.innerHTML = '';
+    gameplayPreview.innerHTML = '';
+    currentCoverImage = null;
+    currentArtworkImage = null;
+    currentGameplayImage = null;
+  }
+
+  // Ajouter une image de jeu (sans écraser les existantes)
+  function addGameImage(type, url, fileName = '') {
+    console.log(`📸 Ajout image [${type}]: ${fileName || url}`);
+    
+    // ✅ Si l'URL n'est pas absolue, préfixer avec asset()
+    let finalUrl = url;
+    let isLocalGameBoyImage = false;
+    
+    if (!/^https?:\/\//.test(url) && !url.startsWith('//')) {
+      if (window.gameboyImageBaseUrl && url.includes('images/taxonomy/gameboy')) {
+        // Pour les images Game Boy, utiliser la base dynamique
+        const fileNameFromUrl = url.split('/').pop();
+        finalUrl = window.gameboyImageBaseUrl + '/' + fileNameFromUrl;
+        isLocalGameBoyImage = true; // Image de référence, non supprimable
+      } else {
+        // Pour les autres images, utiliser asset()
+        finalUrl = (window.laravelAssetBase || '') + url.replace(/^\//, '');
+      }
+    }
+    
+    // Déterminer si c'est une image Cloudinary (supprimable)
+    const isCloudinaryImage = finalUrl.includes('cloudinary.com');
+    
+    const container = type === 'cover' ? coverPreview : (type === 'artwork' ? artworkPreview : gameplayPreview);
+    const label = type === 'cover' ? '🎮' : (type === 'artwork' ? '🎨' : '🕹️');
+    
+    console.log(`  ➡️ Ajout dans conteneur ${type}, nb enfants avant:`, container.children.length);
+    
+    // ✅ Créer un élément vignette et l'ajouter au conteneur
+    const imageElement = document.createElement('div');
+    imageElement.className = 'inline-block';
+    imageElement.dataset.imageUrl = finalUrl; // Stocker l'URL pour référence
+    
+    // Bouton de suppression uniquement pour les images Cloudinary uploadées
+    const deleteButton = (isCloudinaryImage || !isLocalGameBoyImage) ? `
+      <button type="button" 
+              class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+              onclick="event.stopPropagation(); removeSingleGameImage(this, '${type}', '${finalUrl.replace(/'/g, "\\'")}', ${currentArticleTypeId});">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    ` : `
+      <button type="button" 
+              class="absolute top-1 right-1 bg-gray-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              onclick="event.stopPropagation(); removeSingleGameImage(this, '${type}', '${finalUrl.replace(/'/g, "\\'")}', ${currentArticleTypeId});">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+        </svg>
+      </button>
+    `;
+    
+    imageElement.innerHTML = `
+      <div class="relative group cursor-pointer w-24 h-24" onclick="openImageLightbox('${finalUrl}')">
+        <div class="w-full h-full overflow-hidden rounded-lg border-2 border-gray-300">
+          <img src="${finalUrl}" class="w-full h-full object-cover hover:opacity-90 transition-opacity">
+        </div>
+        ${deleteButton}
+        <span class="absolute bottom-1 left-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded font-semibold">
+          ${label}
         </span>
+        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <svg class="w-8 h-8 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+          </svg>
+        </div>
       </div>
     `;
+    
+    container.appendChild(imageElement);
+    console.log(`  ✅ Ajouté, nb enfants après:`, container.children.length);
+    
+    // Enregistrer la première image trouvée pour ce type
+    if (type === 'cover' && !currentCoverImage) {
+      currentCoverImage = finalUrl;
+    } else if (type === 'artwork' && !currentArtworkImage) {
+      currentArtworkImage = finalUrl;
+    } else if (type === 'gameplay' && !currentGameplayImage) {
+      currentGameplayImage = finalUrl;
+    }
+  }
+
+  // Afficher une image de jeu (compatibilité - utilise addGameImage)
+  function displayGameImage(type, url) {
+    // NE PLUS effacer le conteneur, juste ajouter l'image
+    addGameImage(type, url);
   }
 
   // Upload d'image cover
@@ -1144,7 +1404,35 @@
     });
   }
 
-  // Upload une image de jeu (cover ou gameplay)
+  // Upload d'image artwork
+  if (artworkDropzone && artworkInput) {
+    artworkDropzone.addEventListener('click', () => artworkInput.click());
+    
+    artworkDropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      artworkDropzone.classList.add('border-pink-500', 'bg-pink-100');
+    });
+    
+    artworkDropzone.addEventListener('dragleave', () => {
+      artworkDropzone.classList.remove('border-pink-500', 'bg-pink-100');
+    });
+    
+    artworkDropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      artworkDropzone.classList.remove('border-pink-500', 'bg-pink-100');
+      if (e.dataTransfer.files.length > 0) {
+        uploadGameImage('artwork', e.dataTransfer.files[0]);
+      }
+    });
+    
+    artworkInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        uploadGameImage('artwork', e.target.files[0]);
+      }
+    });
+  }
+
+  // Upload une image de jeu (cover ou gameplay ou artwork)
   async function uploadGameImage(type, file) {
     if (!currentArticleTypeId) {
       alert('Veuillez d\'abord sélectionner un type de jeu');
@@ -1159,7 +1447,7 @@
     const formData = new FormData();
     formData.append('image', file);
     formData.append('article_type_id', currentArticleTypeId);
-    formData.append('image_type', type); // 'cover' ou 'gameplay'
+    formData.append('image_type', type); // 'cover', 'artwork' ou 'gameplay'
 
     try {
       const response = await fetch('{{ route('admin.articles.upload-image') }}', {
@@ -1176,10 +1464,13 @@
         displayGameImage(type, data.url);
         if (type === 'cover') {
           currentCoverImage = data.url;
+        } else if (type === 'artwork') {
+          currentArtworkImage = data.url;
         } else {
           currentGameplayImage = data.url;
         }
-        alert(`✅ Image ${type === 'cover' ? 'de la cartouche' : 'du gameplay'} enregistrée !`);
+        const typeLabel = type === 'cover' ? 'de la cartouche' : (type === 'artwork' ? 'artwork' : 'du gameplay');
+        alert(`✅ Image ${typeLabel} enregistrée !`);
       } else {
         alert('Erreur upload: ' + data.message);
       }
@@ -1189,9 +1480,96 @@
     }
   }
 
-  // Supprimer une image de jeu
+  // Supprimer une seule image (pour les images multiples)
+  window.removeSingleGameImage = async function(buttonElement, type, imageUrl, typeId) {
+    // Déterminer si c'est une image locale Game Boy (non supprimable en base)
+    const isLocalGameBoy = imageUrl.includes('images/taxonomy/gameboy') && !imageUrl.includes('cloudinary');
+    
+    if (isLocalGameBoy) {
+      // Image de référence : renommer le fichier pour masquer l'image
+      if (!confirm('⚠️ Masquer cette image ? (Le fichier sera renommé en .hidden)')) return;
+      
+      try {
+        const response = await fetch('{{ route('admin.articles.hide-local-image') }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            image_url: imageUrl
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Supprimer visuellement l'élément du DOM
+          const imageContainer = buttonElement.closest('.mb-3');
+          if (imageContainer) {
+            imageContainer.remove();
+            console.log('✅ Image locale masquée (fichier renommé)');
+          }
+        } else {
+          alert('Erreur: ' + data.message);
+        }
+      } catch (e) {
+        console.error('Erreur masquage:', e);
+        alert('Erreur lors du masquage de l\'image');
+      }
+      return;
+    }
+    
+    // Image uploadée (Cloudinary) : suppression complète
+    const typeLabel = type === 'cover' ? 'du jeu' : (type === 'artwork' ? 'artwork' : 'du gameplay');
+    if (!confirm(`🗑️ Supprimer définitivement cette image ${typeLabel} ?`)) return;
+
+    try {
+      const response = await fetch('{{ route('admin.articles.delete-image') }}', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          article_type_id: typeId,
+          image_type: type,
+          image_url: imageUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Supprimer visuellement l'élément
+        const imageContainer = buttonElement.closest('.mb-3');
+        if (imageContainer) {
+          imageContainer.remove();
+        }
+        
+        // Réinitialiser la référence si c'était l'image courante
+        if (type === 'cover' && currentCoverImage === imageUrl) {
+          currentCoverImage = null;
+        } else if (type === 'artwork' && currentArtworkImage === imageUrl) {
+          currentArtworkImage = null;
+        } else if (type === 'gameplay' && currentGameplayImage === imageUrl) {
+          currentGameplayImage = null;
+        }
+        
+        console.log('✅ Image supprimée de Cloudinary et de la base');
+      } else {
+        alert('Erreur: ' + data.message);
+      }
+    } catch (e) {
+      console.error('Erreur suppression:', e);
+      alert('Erreur lors de la suppression');
+    }
+  };
+
+  // Supprimer une image de jeu (legacy - supprime toute la colonne)
   window.deleteGameImage = async function(type, typeId) {
-    if (!confirm(`Supprimer cette image ${type === 'cover' ? 'du jeu' : 'du gameplay'} ?`)) return;
+    const typeLabel = type === 'cover' ? 'du jeu' : (type === 'artwork' ? 'artwork' : 'du gameplay');
+    if (!confirm(`Supprimer cette image ${typeLabel} ?`)) return;
 
     try {
       const response = await fetch('{{ route('admin.articles.delete-image') }}', {
@@ -1209,10 +1587,12 @@
       const data = await response.json();
 
       if (data.success) {
-        const container = type === 'cover' ? coverPreview : gameplayPreview;
+        const container = type === 'cover' ? coverPreview : (type === 'artwork' ? artworkPreview : gameplayPreview);
         container.innerHTML = '';
         if (type === 'cover') {
           currentCoverImage = null;
+        } else if (type === 'artwork') {
+          currentArtworkImage = null;
         } else {
           currentGameplayImage = null;
         }
@@ -1377,6 +1757,9 @@
           romIdInput.classList.remove('ring-2', 'ring-green-500');
         }, 1500);
         
+        // ✅ Charger les images Game Boy depuis les fichiers
+        loadGameBoyImagesFromFiles(normalizedRomId);
+        
         alert(`✅ Jeu trouvé !\n\nNom: ${data.game.name}\nROM ID: ${normalizedRomId}`);
       } else {
         // Jeu non trouvé, mais on peut quand même utiliser le ROM ID
@@ -1397,6 +1780,9 @@
         setTimeout(() => {
           romIdInput.classList.remove('ring-2', 'ring-yellow-500');
         }, 1500);
+        
+        // ✅ Charger les images Game Boy depuis les fichiers même si jeu non trouvé
+        loadGameBoyImagesFromFiles(normalizedRomId);
         
         const gameName = prompt(`⚠️ ROM ID "${normalizedRomId}" non trouvé dans la base.\n\nVoulez-vous entrer le nom du jeu manuellement ?`, '');
         
@@ -2215,6 +2601,16 @@
             if (romIdInput) {
               romIdInput.value = sugg.rom_id;
               console.log('✅ ROM ID rempli:', sugg.rom_id);
+              
+              // ✅ Charger les images Game Boy depuis les fichiers
+              loadGameBoyImagesFromFiles(sugg.rom_id);
+              
+              // ✅ Détecter et remplir automatiquement la région depuis le ROM ID
+              const detectedRegion = detectRegionFromRomId(sugg.rom_id);
+              if (detectedRegion) {
+                sugg.region = detectedRegion;
+                console.log('✅ Région détectée depuis ROM ID:', detectedRegion);
+              }
             }
           }
 

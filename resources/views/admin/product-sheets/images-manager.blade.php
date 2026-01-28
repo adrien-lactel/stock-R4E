@@ -120,10 +120,16 @@
                 <div id="images_grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     @foreach($images as $image)
                         <div class="relative group" data-image-url="{{ $image['url'] }}" data-source="{{ $image['source'] ?? 'product_sheet' }}" data-sheet-id="{{ $image['sheet_id'] ?? '' }}" data-type-id="{{ $image['type_id'] ?? '' }}">
-                            <img src="{{ $image['url'] }}" 
-                                 alt="Image {{ $image['source'] === 'article_type' ? 'de type' : 'de fiche' }} {{ $image['type_name'] ?? $image['sheet_name'] ?? '' }}"
-                                 class="w-full h-32 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-90 transition"
-                                 onclick="openLightbox('{{ $image['url'] }}', '{{ addslashes($image['type_name'] ?? $image['sheet_name'] ?? '') }}', @if($showAll ?? false)'{{ $image['category_name'] ?? '' }} › {{ $image['sub_category_name'] ?? '' }} › {{ $image['type_name'] ?? '' }}'@else null @endif, '{{ $image['source'] ?? 'product_sheet' }}', {{ $image['sheet_id'] ?? 'null' }}, {{ $image['type_id'] ?? 'null' }})">
+                               <img src="{{ Str::startsWith($image['url'], ['http://', 'https://', '//']) ? $image['url'] : asset($image['url']) }}"
+                                   alt="Image {{ $image['source'] === 'article_type' ? 'de type' : 'de fiche' }} {{ $image['type_name'] ?? $image['sheet_name'] ?? '' }}"
+                                   class="w-full h-32 object-cover rounded border border-gray-300 cursor-pointer hover:opacity-90 transition"
+                                   onclick="openLightbox('{{ Str::startsWith($image['url'], ['http://', 'https://', '//']) ? $image['url'] : asset($image['url']) }}', '{{ addslashes($image['type_name'] ?? $image['sheet_name'] ?? '') }}', @if($showAll ?? false)'{{ $image['category_name'] ?? '' }} › {{ $image['sub_category_name'] ?? '' }} › {{ $image['type_name'] ?? '' }}'@else null @endif, '{{ $image['source'] ?? 'product_sheet' }}', {{ $image['sheet_id'] ?? 'null' }}, {{ $image['type_id'] ?? 'null' }})">
+                            @push('scripts')
+                            <script>
+                                // Définit la base dynamique pour les images Game Boy (si besoin JS)
+                                window.gameboyImageBaseUrl = '{{ asset('images/taxonomy/gameboy') }}';
+                            </script>
+                            @endpush
                             
                             {{-- Badge pour les images cover/gameplay --}}
                             @if(isset($image['label']))

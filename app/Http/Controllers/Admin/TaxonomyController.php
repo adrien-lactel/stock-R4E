@@ -170,14 +170,50 @@ class TaxonomyController extends Controller
                 $subCategory = 'Game Boy Advance';
             }
             
-            // Déterminer la région selon le suffixe du ROM ID
+            // Déterminer la région selon la lettre du code du jeu (avant le suffixe final)
+            // Format ROM ID: DMG-XXXL-N où L = lettre de région, N = numéro de version
             $region = null;
-            if (preg_match('/-(JPN|JAP)$/i', $romId) || preg_match('/-[0-9]$/i', $romId)) {
-                $region = 'NTSC-J';
-            } elseif (preg_match('/-(USA|CAN)$/i', $romId)) {
-                $region = 'NTSC-U';
-            } elseif (preg_match('/-(EUR|PAL|FRA|GER|ITA|SPA|UK)$/i', $romId)) {
-                $region = 'PAL';
+            
+            // Extraire la partie du code jeu (entre DMG- et le suffixe final)
+            if (preg_match('/^[A-Z]+-([A-Z0-9]+)-([\w]+)$/i', $romId, $matches)) {
+                $gameCode = $matches[1]; // Ex: "A1J", "OBE", "A2BE"
+                $suffix = $matches[2];    // Ex: "0", "USA", "JPN"
+                
+                // Cas spéciaux avec suffixe explicite
+                if (in_array(strtoupper($suffix), ['USA', 'CAN'])) {
+                    $region = 'NTSC-U';
+                } elseif (in_array(strtoupper($suffix), ['JPN', 'JAP'])) {
+                    $region = 'NTSC-J';
+                } elseif (in_array(strtoupper($suffix), ['EUR', 'PAL', 'FRA', 'GER', 'ITA', 'SPA', 'UK', 'NOE'])) {
+                    $region = 'PAL';
+                }
+                // Sinon, détecter par la lettre du code du jeu
+                else {
+                    $lastLetter = strtoupper(substr($gameCode, -1));
+                    
+                    if ($lastLetter === 'J') {
+                        $region = 'NTSC-J'; // Japon
+                    } elseif ($lastLetter === 'E') {
+                        $region = 'PAL'; // Europe
+                    } elseif ($lastLetter === 'P') {
+                        $region = 'PAL'; // PAL/Europe
+                    } elseif ($lastLetter === 'U' || $lastLetter === 'A') {
+                        $region = 'NTSC-U'; // USA
+                    }
+                    // Vérifier aussi l'avant-dernière lettre si la dernière est un chiffre
+                    elseif (is_numeric($lastLetter) && strlen($gameCode) >= 2) {
+                        $secondLastLetter = strtoupper(substr($gameCode, -2, 1));
+                        if ($secondLastLetter === 'J') {
+                            $region = 'NTSC-J';
+                        } elseif ($secondLastLetter === 'E') {
+                            $region = 'PAL';
+                        } elseif ($secondLastLetter === 'P') {
+                            $region = 'PAL';
+                        } elseif ($secondLastLetter === 'U' || $secondLastLetter === 'A') {
+                            $region = 'NTSC-U';
+                        }
+                    }
+                }
             }
             
             // Vérifier si un type existe déjà pour ce jeu

@@ -102,66 +102,123 @@
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Informations produit</h2>
 
-                <div class="space-y-4">
-                    {{-- Complétude --}}
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Complétude *</label>
-                        <select name="completeness_type" id="completeness_type"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                required>
-                            <option value="">-- Sélectionner --</option>
-                            <option value="Loose">Loose (jeu seul)</option>
-                            <option value="CIB">CIB (complet boîte + notice)</option>
-                            <option value="Sealed">Sealed (neuf scellé)</option>
-                            <option value="Boîte + jeu">Boîte + jeu (sans notice)</option>
-                            <option value="Console seule">Console seule</option>
-                            <option value="Console complète">Console complète (avec accessoires)</option>
-                        </select>
-                    </div>
-                    
-                    {{-- Nom (généré automatiquement) --}}
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Nom de la fiche *</label>
-                        <input type="text" name="name" id="product_name"
-                               value="{{ old('name') }}"
-                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50"
-                               placeholder="Sélectionnez la taxonomie et la complétude"
-                               readonly required>
-                        <p class="text-xs text-gray-500 mt-1">
-                            💡 Le nom est généré automatiquement : Type + Complétude
-                        </p>
+
+                {{-- IMAGES --}}
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">📷 Images de l'article</h2>
+
+                    {{-- Galerie dynamique liée au ROM ID --}}
+                    <div id="romid_gallery" class="mb-6 hidden">
+                        <p class="text-xs text-gray-600 mb-2">Images partagées pour ce jeu :</p>
+                        <div id="romid_gallery_list" class="flex flex-wrap gap-3"></div>
                     </div>
 
-                    {{-- Description produit --}}
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Description du produit</label>
-                        <textarea name="description" rows="4"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                  placeholder="Description générale du produit...">{{ old('description') }}</textarea>
+                    {{-- Zone d'upload/caméra --}}
+                    <div class="mb-4 flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium mb-2">🎮 Photo du jeu (cartouche/boîte)</label>
+                            <label for="image_upload" class="cursor-pointer inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                                📤 Choisir une photo
+                                <input type="file" id="image_upload" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp,image/avif" class="hidden">
+                            </label>
+                            <span class="mx-2 text-gray-400">ou</span>
+                            <button type="button" id="take_photo_btn" class="inline-flex items-center px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700">
+                                📱 Prendre une photo
+                            </button>
+                            <p class="text-xs text-gray-500 mt-1">Photo de la cartouche ou de la boîte</p>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium mb-2">🕹️ Screenshot gameplay</label>
+                            <label for="screenshot_upload" class="cursor-pointer inline-flex items-center px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                                📤 Choisir un screenshot
+                                <input type="file" id="screenshot_upload" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp,image/avif" class="hidden">
+                            </label>
+                            <span class="mx-2 text-gray-400">ou</span>
+                            <button type="button" id="take_screenshot_btn" class="inline-flex items-center px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700">
+                                📱 Prendre une capture
+                            </button>
+                            <p class="text-xs text-gray-500 mt-1">Capture d'écran du jeu en action</p>
+                        </div>
                     </div>
 
-                    {{-- Caractéristiques techniques --}}
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Caractéristiques techniques</label>
-                        <textarea name="technical_specs" rows="4"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                  placeholder="Processeur, RAM, stockage, connectivité...">{{ old('technical_specs') }}</textarea>
-                    </div>
+                    <input type="hidden" name="images" id="images_input">
+                    <input type="hidden" name="main_image" id="main_image_input">
+                </div>
+                        // =============================
+                        // GALERIE DYNAMIQUE ROM ID
+                        // =============================
+                        const romIdGallery = document.getElementById('romid_gallery');
+                        const romIdGalleryList = document.getElementById('romid_gallery_list');
 
-                    {{-- Accessoires inclus --}}
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Accessoires inclus</label>
-                        <textarea name="included_items" rows="3"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                  placeholder="Câble HDMI, manette, câble d'alimentation...">{{ old('included_items') }}</textarea>
-                    </div>
+                        async function loadRomIdGallery(romId) {
+                            if (!romId) {
+                                romIdGallery.classList.add('hidden');
+                                romIdGalleryList.innerHTML = '';
+                                return;
+                            }
+                            // Extensions à tester (majuscules/minuscules)
+                            const exts = ['jpg', 'jpeg', 'png', 'webp'];
+                            const extVariants = exts.flatMap(e => [e, e.toUpperCase()]);
+                            // Génère toutes les variantes possibles pour matcher le pattern réel
+                            const suffixes = ['', '-0', '-0-artwork', '-0-cover', '-0-gameplay'];
+                            const romIdBase = romId.toLowerCase();
+                            const romIdVariants = suffixes.map(s => romIdBase + s);
+                            
+                            let found = false;
+                            romIdGalleryList.innerHTML = '';
+                            // Utilise la base dynamique générée par Blade
+                            const baseUrl = window.gameboyImageBaseUrl || '/images/taxonomy/gameboy';
+                            for (const rom of romIdVariants) {
+                                for (const ext of extVariants) {
+                                    const url = `${baseUrl}/${rom}.${ext}`;
+                                    try {
+                                        const res = await fetch(url, { method: 'HEAD' });
+                                        if (res.ok) {
+                                            found = true;
+                                            const img = document.createElement('img');
+                                            img.src = url;
+                                            img.alt = 'Image ' + rom;
+                                            img.className = 'w-24 h-24 object-cover rounded border border-gray-300 cursor-pointer hover:scale-105 transition';
+                                            img.onerror = function() {
+                                                img.style.display = 'none';
+                                                const err = document.createElement('div');
+                                                err.className = 'text-xs text-red-600';
+                                                err.textContent = `Erreur de chargement pour ${rom}.${ext}`;
+                                                romIdGalleryList.appendChild(err);
+                                            };
+                                            img.addEventListener('click', function() {
+                                                // Lightbox simple
+                                                const modal = document.createElement('div');
+                                                modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50';
+                                                modal.innerHTML = `<img src='${url}' class='max-h-[80vh] max-w-[90vw] rounded shadow-lg'><button class='absolute top-4 right-4 text-white text-2xl' id='close_lightbox'>&times;</button>`;
+                                                document.body.appendChild(modal);
+                                                document.getElementById('close_lightbox').onclick = () => modal.remove();
+                                                modal.onclick = e => { if (e.target === modal) modal.remove(); };
+                                            });
+                                            romIdGalleryList.appendChild(img);
+                                        }
+                                    } catch {}
+                                }
+                            }
+                            if (found) {
+                                romIdGallery.classList.remove('hidden');
+                            } else {
+                                romIdGallery.classList.add('hidden');
+                            }
+                        }
 
-                    {{-- Description marketing --}}
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Description marketing</label>
-                        <textarea name="marketing_description" rows="3"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                  placeholder="Texte commercial pour mettre en avant le produit...">{{ old('marketing_description') }}</textarea>
+                        if (romIdInput) {
+                            romIdInput.addEventListener('input', function() {
+                                const romId = this.value.trim().toUpperCase();
+                                loadRomIdGallery(romId);
+                            });
+                            romIdInput.addEventListener('change', function() {
+                                const romId = this.value.trim().toUpperCase();
+                                loadRomIdGallery(romId);
+                            });
+                            // Initial load si déjà prérempli
+                            if (romIdInput.value) loadRomIdGallery(romIdInput.value.trim().toUpperCase());
+                        }
                     </div>
                 </div>
             </div>
@@ -329,6 +386,16 @@
                     </div>
                 </div>
 
+
+                {{-- Suggestion image ROM ID --}}
+                <div id="romid_image_suggestion" class="mb-4 hidden">
+                    <p class="text-xs text-gray-600 mb-1">Image trouvée pour ce ROM ID :</p>
+                    <div class="flex items-center gap-3">
+                        <img id="romid_image_preview" src="" alt="Image ROM ID" class="w-24 h-24 object-cover rounded border border-gray-300">
+                        <button type="button" id="romid_image_add_btn" class="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 text-xs">+ Ajouter à la fiche</button>
+                    </div>
+                </div>
+
                 {{-- Images sélectionnées --}}
                 <div id="selectedImages" class="hidden">
                     <p class="text-sm font-medium mb-3">Images ajoutées :</p>
@@ -336,6 +403,73 @@
                         {{-- Les images seront affichées ici --}}
                     </div>
                 </div>
+    // =============================
+    // SUGGESTION IMAGE ROM ID
+    // =============================
+    const romIdImageSuggestion = document.getElementById('romid_image_suggestion');
+    const romIdImagePreview = document.getElementById('romid_image_preview');
+    const romIdImageAddBtn = document.getElementById('romid_image_add_btn');
+
+
+    async function checkRomIdImage(romId) {
+        if (!romId) {
+            romIdImageSuggestion.classList.add('hidden');
+            return;
+        }
+        const baseUrl = window.gameboyImageBaseUrl || '/images/taxonomy/gameboy';
+        // Génère toutes les variantes possibles pour matcher le pattern réel
+        const suffixes = ['', '-0', '-0-artwork', '-0-cover', '-0-gameplay'];
+        const exts = ['jpg', 'jpeg', 'png', 'webp'];
+        const romIdVariants = [romId, romId.toLowerCase()];
+        let foundUrl = null;
+        for (const rom of romIdVariants) {
+            for (const suffix of suffixes) {
+                for (const ext of exts) {
+                    const url = `${baseUrl}/${rom.toLowerCase()}${suffix}.${ext}`;
+                    try {
+                        const res = await fetch(url, { method: 'HEAD' });
+                        if (res.ok) {
+                            foundUrl = url;
+                            break;
+                        }
+                    } catch {}
+                }
+                if (foundUrl) break;
+            }
+            if (foundUrl) break;
+        }
+        if (foundUrl) {
+            romIdImagePreview.src = foundUrl;
+            romIdImageSuggestion.classList.remove('hidden');
+        } else {
+            romIdImageSuggestion.classList.add('hidden');
+        }
+    }
+
+    if (romIdInput) {
+        romIdInput.addEventListener('input', function() {
+            const romId = this.value.trim().toUpperCase();
+            checkRomIdImage(romId);
+        });
+        romIdInput.addEventListener('change', function() {
+            const romId = this.value.trim().toUpperCase();
+            checkRomIdImage(romId);
+        });
+    }
+
+    if (romIdImageAddBtn) {
+        romIdImageAddBtn.addEventListener('click', function() {
+            const url = romIdImagePreview.src;
+            if (!url) return;
+            // Ajoute l'image à la liste sélectionnée (simulate upload)
+            if (typeof selectedImages !== 'undefined') {
+                selectedImages.push({ url: url, path: url });
+                if (!mainImage) mainImage = url;
+                updateSelectedImages();
+            }
+            romIdImageSuggestion.classList.add('hidden');
+        });
+    }
 
                 {{-- GALERIE D'IMAGES DE CATÉGORIE --}}
                 <div id="taxonomy_gallery_container" class="hidden mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -394,6 +528,9 @@
 
 @push('scripts')
 <script>
+// Définir la base dynamique pour les images Game Boy AVANT DOMContentLoaded
+window.gameboyImageBaseUrl = '{{ asset('images/taxonomy/gameboy') }}';
+
 document.addEventListener('DOMContentLoaded', function() {
     // Gestion des étoiles pour critères de collection
     let conditionCriteria = {};

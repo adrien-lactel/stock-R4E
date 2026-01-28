@@ -320,6 +320,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::post('/articles/delete-image', [ConsoleAdminController::class, 'deleteArticleImage'])
             ->name('articles.delete-image');
 
+        Route::post('/articles/hide-local-image', [ConsoleAdminController::class, 'hideLocalImage'])
+            ->name('articles.hide-local-image');
+
         // Analyse IA d'une image
         Route::post('/articles/analyze-image', [ConsoleAdminController::class, 'analyzeImageAI'])
             ->name('articles.analyze-image');

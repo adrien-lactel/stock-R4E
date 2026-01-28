@@ -36,4 +36,11 @@ return [
         'project_id' => env('GOOGLE_VISION_PROJECT_ID'),
     ],
 
+    'screenscraper' => [
+        'user' => env('SCREENSCRAPER_USER'),
+        'password' => env('SCREENSCRAPER_PASSWORD'),
+        'dev_id' => env('SCREENSCRAPER_DEV_ID', 'stockr4e'),
+        'dev_password' => env('SCREENSCRAPER_DEV_PASSWORD', 'stockr4epass2026'),
+    ],
+
 ];
