@@ -411,12 +411,35 @@ public function destroyType(ArticleType $type)
      ===================================================== */
     public function ajaxTypeDescription(ArticleType $type)
     {
+        // Convertir les chemins relatifs en URLs R2 complètes
+        $r2Url = config('filesystems.disks.r2.url');
+        
+        $coverImage = $type->cover_image;
+        $artworkImage = $type->artwork_image;
+        $gameplayImage = $type->gameplay_image;
+        $logoImage = $type->logo_image ?? null;
+        
+        // Si les images commencent par /images/, les convertir en URLs R2
+        if ($coverImage && str_starts_with($coverImage, '/images/')) {
+            $coverImage = $r2Url . '/' . ltrim($coverImage, '/');
+        }
+        if ($artworkImage && str_starts_with($artworkImage, '/images/')) {
+            $artworkImage = $r2Url . '/' . ltrim($artworkImage, '/');
+        }
+        if ($gameplayImage && str_starts_with($gameplayImage, '/images/')) {
+            $gameplayImage = $r2Url . '/' . ltrim($gameplayImage, '/');
+        }
+        if ($logoImage && str_starts_with($logoImage, '/images/')) {
+            $logoImage = $r2Url . '/' . ltrim($logoImage, '/');
+        }
+        
         return response()->json([
             'description' => $type->description ?? '',
             'publisher' => $type->publisher ?? '',
-            'cover_image' => $type->cover_image ?? null,
-            'artwork_image' => $type->artwork_image ?? null,
-            'gameplay_image' => $type->gameplay_image ?? null,
+            'cover_image' => $coverImage,
+            'artwork_image' => $artworkImage,
+            'gameplay_image' => $gameplayImage,
+            'logo_image' => $logoImage,
         ]);
     }
 
@@ -467,6 +490,7 @@ public function destroyType(ArticleType $type)
         $identifier = $request->identifier;
         $folder = $request->folder;
         $basePath = public_path("images/taxonomy/{$folder}");
+        $r2Url = config('filesystems.disks.r2.url');
 
         $images = [];
 
@@ -483,14 +507,19 @@ public function destroyType(ArticleType $type)
                     $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork-3", etc.
                     
                     // Séparer le type de base et l'index
-                    if (preg_match('/^(cover|artwork|gameplay)(-\d+)?$/i', $fullType, $typeMatches)) {
+                    if (preg_match('/^(cover|artwork|gameplay|logo)(-\d+)?$/i', $fullType, $typeMatches)) {
                         $baseType = $typeMatches[1];
                         $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
+                        
+                        // Utiliser l'URL R2 si configurée, sinon l'URL locale
+                        $imageUrl = $r2Url 
+                            ? "{$r2Url}/images/taxonomy/{$folder}/{$filename}"
+                            : "/stock-R4E/public/images/taxonomy/{$folder}/{$filename}";
                         
                         $images[] = [
                             'filename' => $filename,
                             'path' => "images/taxonomy/{$folder}/{$filename}",
-                            'url' => "/stock-R4E/public/images/taxonomy/{$folder}/{$filename}",
+                            'url' => $imageUrl,
                             'type' => $baseType,
                             'full_type' => $fullType,
                             'index' => $index,
@@ -513,7 +542,7 @@ public function destroyType(ArticleType $type)
                     if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.(png|jpg|jpeg)$/i', $filename, $matches)) {
                         $fullType = $matches[1];
                         
-                        if (preg_match('/^(cover|artwork|gameplay)(-\d+)?$/i', $fullType, $typeMatches)) {
+                        if (preg_match('/^(cover|artwork|gameplay|logo)(-\d+)?$/i', $fullType, $typeMatches)) {
                             $baseType = $typeMatches[1];
                             $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                             
@@ -535,7 +564,7 @@ public function destroyType(ArticleType $type)
 
         // Trier par type puis par index
         usort($images, function($a, $b) {
-            $typeOrder = ['cover' => 1, 'artwork' => 2, 'gameplay' => 3];
+            $typeOrder = ['cover' => 1, 'logo' => 2, 'artwork' => 3, 'gameplay' => 4];
             $typeCompare = ($typeOrder[$a['type']] ?? 99) - ($typeOrder[$b['type']] ?? 99);
             if ($typeCompare !== 0) return $typeCompare;
             return $a['index'] - $b['index'];
