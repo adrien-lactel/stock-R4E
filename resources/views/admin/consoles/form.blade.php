@@ -2367,10 +2367,15 @@ async function fetchGameSuggestions(query) {
     console.log('Response status:', response.status);
     const data = await response.json();
     console.log('Data:', data);
+    console.log('data.success:', data.success);
+    console.log('data.games:', data.games);
+    console.log('Type de data.games:', typeof data.games, Array.isArray(data.games));
     
     if (data.success && data.games && data.games.length > 0) {
+      console.log('✅ Appel de displayGameSuggestions avec', data.games.length, 'jeux');
       displayGameSuggestions(data.games);
     } else {
+      console.log('❌ Pas de jeux à afficher ou data.success=false');
       clearGameSuggestions();
     }
   } catch (error) {
