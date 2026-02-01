@@ -499,27 +499,227 @@ class ProductSheetController extends Controller
     public function autocompleteRomId(Request $request)
     {
         $query = $request->get('q', '');
+        $searchType = $request->get('type', 'rom_id'); // 'rom_id' ou 'name'
         
         if (strlen($query) < 2) {
             return response()->json([]);
         }
 
-        $suggestions = GameBoyGame::where('rom_id', 'like', strtoupper($query) . '%')
-            ->whereNotNull('rom_id')
-            ->orderBy('rom_id')
-            ->limit(10)
-            ->get(['rom_id', 'name', 'year', 'image_url'])
-            ->map(function($game) {
-                return [
-                    'rom_id' => $game->rom_id,
-                    'label' => $game->rom_id . ' - ' . $game->name,
-                    'name' => $game->name,
-                    'year' => $game->year,
-                    'image_url' => $game->image_url,
+        $suggestions = collect();
+        
+        // ========================================
+        // RECHERCHE PAR ROM ID (GB, GBC, GBA, NES, SNES, N64)
+        // ========================================
+        if ($searchType === 'rom_id') {
+            $queryUpper = strtoupper($query);
+            
+            // Déterminer le dossier taxonomy basé sur le préfixe du ROM ID
+            $taxonomyFolder = $this->detectTaxonomyFolder($queryUpper);
+            
+            // Game Boy (DMG-, CGB-, AGB-)
+            if (str_starts_with($queryUpper, 'DMG-') || str_starts_with($queryUpper, 'CGB-') || str_starts_with($queryUpper, 'AGB-')) {
+                $games = \App\Models\GameBoyGame::where('rom_id', 'like', $queryUpper . '%')
+                    ->whereNotNull('rom_id')
+                    ->orderBy('rom_id')
+                    ->limit(10)
+                    ->get(['rom_id', 'name', 'year', 'publisher']);
+                
+                foreach ($games as $game) {
+                    $suggestions->push($this->formatSuggestion($game, $taxonomyFolder));
+                }
+            }
+            
+            // NES (HVC-, NES-)
+            if (str_starts_with($queryUpper, 'HVC-') || str_starts_with($queryUpper, 'NES-')) {
+                $games = \DB::table('nes_games')
+                    ->where('rom_id', 'like', $queryUpper . '%')
+                    ->whereNotNull('rom_id')
+                    ->orderBy('rom_id')
+                    ->limit(10)
+                    ->get(['rom_id', 'name', 'year', 'publisher']);
+                
+                foreach ($games as $game) {
+                    $suggestions->push($this->formatSuggestion($game, 'nes'));
+                }
+            }
+            
+            // SNES (SHVC-, SNS-)
+            if (str_starts_with($queryUpper, 'SHVC-') || str_starts_with($queryUpper, 'SNS-')) {
+                $games = \DB::table('snes_games')
+                    ->where('rom_id', 'like', $queryUpper . '%')
+                    ->whereNotNull('rom_id')
+                    ->orderBy('rom_id')
+                    ->limit(10)
+                    ->get(['rom_id', 'name', 'year', 'publisher']);
+                
+                foreach ($games as $game) {
+                    $suggestions->push($this->formatSuggestion($game, 'snes'));
+                }
+            }
+            
+            // N64 (N***, format variable)
+            if (preg_match('/^N[A-Z0-9]{3}-/', $queryUpper)) {
+                $games = \DB::table('n64_games')
+                    ->where('rom_id', 'like', $queryUpper . '%')
+                    ->whereNotNull('rom_id')
+                    ->orderBy('rom_id')
+                    ->limit(10)
+                    ->get(['rom_id', 'name', 'year', 'publisher']);
+                
+                foreach ($games as $game) {
+                    $suggestions->push($this->formatSuggestion($game, 'n64'));
+                }
+            }
+            
+            // Recherche générique si aucun préfixe spécifique détecté
+            if ($suggestions->isEmpty()) {
+                // Chercher dans toutes les tables
+                $allTables = [
+                    ['table' => 'game_boy_games', 'folder' => 'gameboy', 'model' => \App\Models\GameBoyGame::class],
+                    ['table' => 'nes_games', 'folder' => 'nes'],
+                    ['table' => 'snes_games', 'folder' => 'snes'],
+                    ['table' => 'n64_games', 'folder' => 'n64'],
                 ];
-            });
+                
+                foreach ($allTables as $tableInfo) {
+                    if (isset($tableInfo['model'])) {
+                        $games = $tableInfo['model']::where('rom_id', 'like', $queryUpper . '%')
+                            ->whereNotNull('rom_id')
+                            ->orderBy('rom_id')
+                            ->limit(3)
+                            ->get(['rom_id', 'name', 'year', 'publisher']);
+                    } else {
+                        $games = \DB::table($tableInfo['table'])
+                            ->where('rom_id', 'like', $queryUpper . '%')
+                            ->whereNotNull('rom_id')
+                            ->orderBy('rom_id')
+                            ->limit(3)
+                            ->get(['rom_id', 'name', 'year', 'publisher']);
+                    }
+                    
+                    foreach ($games as $game) {
+                        $suggestions->push($this->formatSuggestion($game, $tableInfo['folder']));
+                    }
+                }
+            }
+        }
+        
+        // ========================================
+        // RECHERCHE PAR NOM (Game Gear)
+        // ========================================
+        elseif ($searchType === 'name') {
+            $games = \DB::table('game_gear_games')
+                ->where('name', 'like', '%' . $query . '%')
+                ->orderBy('name')
+                ->limit(10)
+                ->get(['slug', 'name', 'year', 'publisher']);
+            
+            foreach ($games as $game) {
+                $localImage = $this->findLocalImageBySlug($game->slug, 'gamegear');
+                
+                $suggestions->push([
+                    'rom_id' => $game->slug,
+                    'slug' => $game->slug,
+                    'label' => $game->name,
+                    'name' => $game->name,
+                    'year' => $game->year ?? null,
+                    'publisher' => $game->publisher ?? null,
+                    'image_url' => $localImage,
+                    'console' => 'Game Gear',
+                ]);
+            }
+        }
 
-        return response()->json($suggestions);
+        return response()->json($suggestions->take(10));
+    }
+    
+    /**
+     * Détecter le dossier taxonomy basé sur le préfixe ROM ID
+     */
+    private function detectTaxonomyFolder($romId)
+    {
+        if (str_starts_with($romId, 'DMG-')) return 'gameboy';
+        if (str_starts_with($romId, 'CGB-')) return 'game boy color';
+        if (str_starts_with($romId, 'AGB-')) return 'game boy advance';
+        if (str_starts_with($romId, 'HVC-') || str_starts_with($romId, 'NES-')) return 'nes';
+        if (str_starts_with($romId, 'SHVC-') || str_starts_with($romId, 'SNS-')) return 'snes';
+        if (preg_match('/^N[A-Z0-9]{3}-/', $romId)) return 'n64';
+        return 'gameboy'; // fallback
+    }
+    
+    /**
+     * Formater une suggestion avec image locale
+     */
+    private function formatSuggestion($game, $taxonomyFolder)
+    {
+        $romId = $game->rom_id ?? $game->slug ?? null;
+        $localImage = $this->findLocalImage($romId, $taxonomyFolder);
+        
+        return [
+            'rom_id' => $romId,
+            'label' => $romId . ' - ' . $game->name,
+            'name' => $game->name,
+            'year' => $game->year ?? null,
+            'publisher' => $game->publisher ?? null,
+            'image_url' => $localImage,
+            'console' => ucfirst(str_replace('-', ' ', $taxonomyFolder)),
+        ];
+    }
+    
+    /**
+     * Trouver l'image locale d'un jeu par ROM ID
+     */
+    private function findLocalImage($romId, $taxonomyFolder)
+    {
+        if (!$romId) return null;
+        
+        $basePath = public_path("images/taxonomy/{$taxonomyFolder}");
+        $baseUrl = asset("images/taxonomy/{$taxonomyFolder}");
+        
+        // Chercher image cover en priorité
+        $coverFile = "{$basePath}/{$romId}-cover.png";
+        if (file_exists($coverFile)) {
+            return "{$baseUrl}/{$romId}-cover.png";
+        }
+        
+        // Fallback sur artwork
+        $artworkFile = "{$basePath}/{$romId}-artwork.png";
+        if (file_exists($artworkFile)) {
+            return "{$baseUrl}/{$romId}-artwork.png";
+        }
+        
+        // Fallback sur logo
+        $logoFile = "{$basePath}/{$romId}-logo.png";
+        if (file_exists($logoFile)) {
+            return "{$baseUrl}/{$romId}-logo.png";
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Trouver l'image locale d'un jeu Game Gear par slug
+     */
+    private function findLocalImageBySlug($slug, $taxonomyFolder)
+    {
+        if (!$slug) return null;
+        
+        $basePath = public_path("images/taxonomy/{$taxonomyFolder}");
+        $baseUrl = asset("images/taxonomy/{$taxonomyFolder}");
+        
+        // Chercher image cover en priorité
+        $coverFile = "{$basePath}/{$slug}-cover.png";
+        if (file_exists($coverFile)) {
+            return "{$baseUrl}/{$slug}-cover.png";
+        }
+        
+        // Fallback sur artwork
+        $artworkFile = "{$basePath}/{$slug}-artwork.png";
+        if (file_exists($artworkFile)) {
+            return "{$baseUrl}/{$slug}-artwork.png";
+        }
+        
+        return null;
     }
 
     /* =====================================================

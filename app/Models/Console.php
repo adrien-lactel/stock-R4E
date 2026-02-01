@@ -39,6 +39,11 @@ class Console extends Model
         // PRODUIT
         'product_comment',
         'product_page_url',
+        
+        // IMAGES SPÉCIFIQUES À L'ARTICLE
+        'article_images',
+        'primary_image_url',
+        'image_captions',
 
         // MODIFICATIONS
         'mod_1',
@@ -62,6 +67,8 @@ class Console extends Model
         'assignment_accepted_at' => 'datetime',
         'assignment_received_at' => 'datetime',
         'shipped_at' => 'datetime',
+        'article_images' => 'array',
+        'image_captions' => 'array',
     ];
 
     /* ===================== */

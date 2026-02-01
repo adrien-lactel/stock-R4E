@@ -31,7 +31,7 @@ class ConsoleAdminController extends Controller
     }
 
     /**
-     * Détecter la région depuis un ROM ID Game Boy
+     * Détecter la région depuis un ROM ID Game Boy, SNES, NES, etc.
      */
     private function detectRegionFromRomId($romId)
     {
@@ -40,17 +40,17 @@ class ConsoleAdminController extends Controller
         $romId = strtoupper(trim($romId));
         $region = null;
         
-        // Extraire la partie du code jeu (entre DMG- et le suffixe final)
+        // Format avec suffixe: DMG-AFX-USA, SHVC-MK-NOE
         if (preg_match('/^[A-Z]+-([A-Z0-9]+)-([\w]+)$/i', $romId, $matches)) {
-            $gameCode = $matches[1]; // Ex: "A1J", "OBE", "K4J"
-            $suffix = $matches[2];    // Ex: "0", "USA", "JPN"
+            $gameCode = $matches[1]; // Ex: "AFX", "MK"
+            $suffix = $matches[2];    // Ex: "USA", "JPN", "NOE"
             
             // Cas spéciaux avec suffixe explicite
             if (in_array($suffix, ['USA', 'CAN'])) {
                 $region = 'NTSC-U';
             } elseif (in_array($suffix, ['JPN', 'JAP'])) {
                 $region = 'NTSC-J';
-            } elseif (in_array($suffix, ['EUR', 'PAL', 'FRA', 'GER', 'ITA', 'SPA', 'UK', 'NOE'])) {
+            } elseif (in_array($suffix, ['EUR', 'PAL', 'FRA', 'GER', 'ITA', 'SPA', 'UK', 'NOE', 'FRG', 'HOL', 'SCN'])) {
                 $region = 'PAL';
             }
             // Sinon, détecter par la dernière lettre du code du jeu
@@ -65,6 +65,36 @@ class ConsoleAdminController extends Controller
                     $region = 'PAL'; // PAL/Europe
                 } elseif ($lastLetter === 'U' || $lastLetter === 'A') {
                     $region = 'NTSC-U'; // USA
+                }
+            }
+        }
+        // Format simple sans suffixe: DMG-AFX, SHVC-MK, SNS-MW
+        elseif (preg_match('/^([A-Z]+)-([A-Z0-9]+)$/i', $romId, $matches)) {
+            $prefix = $matches[1];    // Ex: "DMG", "SHVC", "SNS"
+            $gameCode = $matches[2];  // Ex: "AFX", "MK"
+            
+            $lastLetter = substr($gameCode, -1);
+            
+            // Détection par dernière lettre du code
+            if ($lastLetter === 'J') {
+                $region = 'NTSC-J'; // Japon
+            } elseif ($lastLetter === 'E') {
+                $region = 'PAL'; // Europe
+            } elseif ($lastLetter === 'P') {
+                $region = 'PAL'; // PAL/Europe
+            } elseif ($lastLetter === 'U' || $lastLetter === 'A') {
+                $region = 'NTSC-U'; // USA
+            }
+            // Si pas de lettre de région claire, détecter par préfixe
+            else {
+                // SHVC- = Super Famicom (Japon), SNS- = SNES (USA), SNSP- = SNES (PAL)
+                if (in_array($prefix, ['SHVC', 'HVC'])) {
+                    $region = 'NTSC-J';
+                } elseif (in_array($prefix, ['SNS', 'NUS', 'DMG', 'CGB', 'AGB'])) {
+                    // Par défaut USA pour ces préfixes si pas de lettre claire
+                    $region = 'NTSC-U';
+                } elseif (in_array($prefix, ['SNSP'])) {
+                    $region = 'PAL';
                 }
             }
         }
@@ -330,6 +360,12 @@ class ConsoleAdminController extends Controller
             'rom_id'                   => 'nullable|string|max:50',
             'region'                   => 'nullable|string|in:NTSC-J,NTSC-U,PAL',
             'year'                     => 'nullable|integer|min:1980|max:' . (date('Y') + 1),
+            
+            // ✅ Images spécifiques à l'article
+            'article_images'           => 'nullable|array',
+            'article_images.*'         => 'nullable|string|url',
+            'primary_image_url'        => 'nullable|string|url',
+            'image_captions'           => 'nullable|array',
         ]);
         
         // ✅ Vérification de cohérence ROM ID / Région
@@ -385,6 +421,17 @@ class ConsoleAdminController extends Controller
         if ($request->filled('article_type_description')) {
             \App\Models\ArticleType::where('id', $data['article_type_id'])
                 ->update(['description' => $request->article_type_description]);
+        }
+
+        // ✅ Traiter les images spécifiques à l'article
+        if ($request->filled('article_images')) {
+            $data['article_images'] = json_decode($request->article_images, true) ?? [];
+        }
+        if ($request->filled('primary_image_url')) {
+            $data['primary_image_url'] = $request->primary_image_url;
+        }
+        if ($request->filled('image_captions')) {
+            $data['image_captions'] = json_decode($request->image_captions, true) ?? [];
         }
 
         // ✅ Création en lot
@@ -476,6 +523,12 @@ class ConsoleAdminController extends Controller
             'rom_id'                   => 'nullable|string|max:50',
             'region'                   => 'nullable|string|in:NTSC-J,NTSC-U,PAL',
             'year'                     => 'nullable|integer|min:1980|max:' . (date('Y') + 1),
+            
+            // ✅ Images spécifiques à l'article
+            'article_images'           => 'nullable|array',
+            'article_images.*'         => 'nullable|string|url',
+            'primary_image_url'        => 'nullable|string|url',
+            'image_captions'           => 'nullable|array',
         ]);
 
         // Accept additional optional fields present on the Console model
@@ -525,6 +578,17 @@ class ConsoleAdminController extends Controller
                 ->update(['description' => $request->article_type_description]);
         }
         unset($data['article_type_description']); // Ne pas insérer dans consoles
+
+        // ✅ Traiter les images spécifiques à l'article
+        if ($request->filled('article_images')) {
+            $data['article_images'] = json_decode($request->article_images, true) ?? [];
+        }
+        if ($request->filled('primary_image_url')) {
+            $data['primary_image_url'] = $request->primary_image_url;
+        }
+        if ($request->filled('image_captions')) {
+            $data['image_captions'] = json_decode($request->image_captions, true) ?? [];
+        }
 
         $data = array_merge($data, $extra);
 
@@ -779,16 +843,14 @@ class ConsoleAdminController extends Controller
                 ], 413);
             }
             
-            // Upload vers Cloudinary dans R4E/articles/images
-            $path = Storage::disk('cloudinary')->putFileAs(
-                'R4E/articles/images',
-                $file,
-                Str::random(40) . '.' . $file->getClientOriginalExtension(),
-                'public'
-            );
+            // Upload vers Cloudflare R2
+            $fileName = Str::random(40) . '.' . $file->getClientOriginalExtension();
+            $path = 'articles/images/' . $fileName;
             
-            // Récupérer l'URL complète
-            $uploadedFileUrl = Storage::disk('cloudinary')->url($path);
+            Storage::disk('r2')->put($path, file_get_contents($file), 'public');
+            
+            // URL publique R2
+            $uploadedFileUrl = Storage::disk('r2')->url($path);
 
             // Mettre à jour l'article_type
             $articleType = ArticleType::findOrFail($typeId);
@@ -877,16 +939,15 @@ class ConsoleAdminController extends Controller
             $articleType = ArticleType::findOrFail($typeId);
             
             if ($imageType === 'cover') {
-                // Supprimer le fichier Cloudinary si c'est une URL Cloudinary
-                if ($articleType->cover_image && str_contains($articleType->cover_image, 'cloudinary')) {
+                // Supprimer le fichier de R2 s'il existe
+                if ($articleType->cover_image) {
                     try {
-                        $publicId = $this->extractCloudinaryPublicId($articleType->cover_image);
-                        if ($publicId) {
-                            Storage::disk('cloudinary')->delete($publicId);
-                            \Log::info('Fichier Cloudinary supprimé', ['public_id' => $publicId]);
-                        }
+                        // Extraire le chemin depuis l'URL R2
+                        $path = str_replace(config('filesystems.disks.r2.url') . '/', '', $articleType->cover_image);
+                        Storage::disk('r2')->delete($path);
+                        \Log::info('Fichier R2 supprimé', ['path' => $path]);
                     } catch (\Exception $e) {
-                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                        \Log::warning('Impossible de supprimer le fichier R2', ['error' => $e->getMessage()]);
                     }
                 }
                 
@@ -895,16 +956,14 @@ class ConsoleAdminController extends Controller
                 $articleType->save();
                 \Log::info('Cover image supprimée', ['type_id' => $typeId]);
             } elseif ($imageType === 'artwork') {
-                // Supprimer le fichier Cloudinary si c'est une URL Cloudinary
-                if ($articleType->artwork_image && str_contains($articleType->artwork_image, 'cloudinary')) {
+                // Supprimer le fichier de R2 s'il existe
+                if ($articleType->artwork_image) {
                     try {
-                        $publicId = $this->extractCloudinaryPublicId($articleType->artwork_image);
-                        if ($publicId) {
-                            Storage::disk('cloudinary')->delete($publicId);
-                            \Log::info('Fichier Cloudinary supprimé', ['public_id' => $publicId]);
-                        }
+                        $path = str_replace(config('filesystems.disks.r2.url') . '/', '', $articleType->artwork_image);
+                        Storage::disk('r2')->delete($path);
+                        \Log::info('Fichier R2 supprimé', ['path' => $path]);
                     } catch (\Exception $e) {
-                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                        \Log::warning('Impossible de supprimer le fichier R2', ['error' => $e->getMessage()]);
                     }
                 }
                 
@@ -913,16 +972,14 @@ class ConsoleAdminController extends Controller
                 $articleType->save();
                 \Log::info('Artwork image supprimée', ['type_id' => $typeId]);
             } elseif ($imageType === 'gameplay') {
-                // Supprimer le fichier Cloudinary si c'est une URL Cloudinary
-                if ($articleType->gameplay_image && str_contains($articleType->gameplay_image, 'cloudinary')) {
+                // Supprimer le fichier de R2 s'il existe
+                if ($articleType->gameplay_image) {
                     try {
-                        $publicId = $this->extractCloudinaryPublicId($articleType->gameplay_image);
-                        if ($publicId) {
-                            Storage::disk('cloudinary')->delete($publicId);
-                            \Log::info('Fichier Cloudinary supprimé', ['public_id' => $publicId]);
-                        }
+                        $path = str_replace(config('filesystems.disks.r2.url') . '/', '', $articleType->gameplay_image);
+                        Storage::disk('r2')->delete($path);
+                        \Log::info('Fichier R2 supprimé', ['path' => $path]);
                     } catch (\Exception $e) {
-                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                        \Log::warning('Impossible de supprimer le fichier R2', ['error' => $e->getMessage()]);
                     }
                 }
                 
@@ -932,15 +989,13 @@ class ConsoleAdminController extends Controller
                 \Log::info('Gameplay image supprimée', ['type_id' => $typeId]);
             } else {
                 // Supprimer une image générique du tableau
-                if ($imageUrl && str_contains($imageUrl, 'cloudinary')) {
+                if ($imageUrl) {
                     try {
-                        $publicId = $this->extractCloudinaryPublicId($imageUrl);
-                        if ($publicId) {
-                            Storage::disk('cloudinary')->delete($publicId);
-                            \Log::info('Fichier Cloudinary générique supprimé', ['public_id' => $publicId]);
-                        }
+                        $path = str_replace(config('filesystems.disks.r2.url') . '/', '', $imageUrl);
+                        Storage::disk('r2')->delete($path);
+                        \Log::info('Fichier R2 générique supprimé', ['path' => $path]);
                     } catch (\Exception $e) {
-                        \Log::warning('Impossible de supprimer le fichier Cloudinary', ['error' => $e->getMessage()]);
+                        \Log::warning('Impossible de supprimer le fichier R2', ['error' => $e->getMessage()]);
                     }
                 }
                 
@@ -1145,61 +1200,77 @@ class ConsoleAdminController extends Controller
     }
 
     /**
-     * Recherche de jeux pour l'autocomplétion
+     * Recherche de jeu par ROM ID
+     */
+    /**
+     * Recherche unifiée de jeux par ROM ID ou nom
      */
     public function searchGame(Request $request)
     {
-        $platform = $request->get('platform');
-        $query = $request->get('query');
+        $platform = $request->input('platform');
+        $query = $request->input('query');
 
-        if (!$platform || !$query || strlen($query) < 2) {
-            return response()->json(['success' => true, 'games' => []]);
-        }
-
-        // Mapping des plateformes vers les tables de jeux
-        $tableMap = [
-            'gameboy' => \App\Models\GameBoyGame::class,
-            'snes' => \App\Models\SnesGame::class,
-            'nes' => \App\Models\NesGame::class,
-            'n64' => \App\Models\N64Game::class,
-            'gamegear' => \App\Models\GameGearGame::class,
-            'megadrive' => \App\Models\MegaDriveGame::class,
-            'saturn' => \App\Models\SegaSaturnGame::class,
-            'wonderswan' => \App\Models\WonderSwanGame::class,
-        ];
-
-        if (!isset($tableMap[$platform])) {
-            return response()->json(['success' => true, 'games' => []]);
-        }
-
-        $modelClass = $tableMap[$platform];
-        
-        try {
-            // Recherche par nom (name ou alternate_names si disponible)
-            $games = $modelClass::where('name', 'LIKE', "%{$query}%")
-                ->orWhere('alternate_names', 'LIKE', "%{$query}%")
-                ->limit(10)
-                ->get()
-                ->map(function($game) {
-                    return [
-                        'rom_id' => $game->rom_id ?? null,
-                        'name' => $game->name,
-                        'region' => $game->region ?? null,
-                        'publisher' => $game->publisher ?? null,
-                        'image_path' => $game->image_path ?? null,
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'games' => $games
-            ]);
-        } catch (\Exception $e) {
+        if (!$platform || !$query) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+                'message' => 'Paramètres manquants'
+            ]);
         }
+
+        $tableName = $this->getGameTableName($platform);
+        if (!$tableName) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Plateforme non reconnue'
+            ]);
+        }
+
+        // Découper la requête en mots pour recherche intelligente
+        $words = array_filter(explode(' ', $query));
+        
+        $games = \DB::table($tableName)
+            ->where(function($q) use ($query, $words, $tableName) {
+                // Recherche exacte par ROM ID/slug
+                if (\Schema::hasColumn($tableName, 'rom_id')) {
+                    $q->where('rom_id', 'LIKE', '%' . $query . '%');
+                }
+                if (\Schema::hasColumn($tableName, 'slug')) {
+                    $q->orWhere('slug', 'LIKE', '%' . $query . '%');
+                }
+                
+                // Recherche par nom (exact)
+                $q->orWhere('name', 'LIKE', '%' . $query . '%');
+                
+                // Si plusieurs mots, recherche chaque mot séparément (plus flexible)
+                if (count($words) > 1) {
+                    $q->orWhere(function($subQ) use ($words) {
+                        foreach ($words as $word) {
+                            $subQ->where('name', 'LIKE', '%' . $word . '%');
+                        }
+                    });
+                }
+            })
+            ->limit(15)
+            ->get();
+
+        if ($games->count() > 0) {
+            // Ajouter la région détectée depuis le ROM ID
+            $gamesWithRegion = $games->map(function($game) {
+                $romId = $game->rom_id ?? $game->slug ?? '';
+                $game->region = $this->detectRegionFromRomId($romId);
+                return $game;
+            });
+            
+            return response()->json([
+                'success' => true,
+                'games' => $gamesWithRegion
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Aucun jeu trouvé'
+        ]);
     }
 
     /**
@@ -1207,234 +1278,260 @@ class ConsoleAdminController extends Controller
      */
     public function searchGameByRomId(Request $request)
     {
-        $platform = $request->get('platform');
-        $romId = $request->get('rom_id');
+        $platform = $request->input('platform');
+        $romId = $request->input('romid');
+        $suggestions = $request->input('suggestions', false);
 
         if (!$platform || !$romId) {
-            return response()->json(['success' => true, 'game' => null]);
-        }
-
-        $tableMap = [
-            'gameboy' => \App\Models\GameBoyGame::class,
-            'snes' => \App\Models\SnesGame::class,
-            'nes' => \App\Models\NesGame::class,
-            'n64' => \App\Models\N64Game::class,
-            'gamegear' => \App\Models\GameGearGame::class,
-            'megadrive' => \App\Models\MegaDriveGame::class,
-            'saturn' => \App\Models\SegaSaturnGame::class,
-            'wonderswan' => \App\Models\WonderSwanGame::class,
-        ];
-
-        if (!isset($tableMap[$platform])) {
-            return response()->json(['success' => true, 'game' => null]);
-        }
-
-        $modelClass = $tableMap[$platform];
-        
-        try {
-            $game = $modelClass::where('rom_id', $romId)->first();
-            
-            if ($game) {
-                return response()->json([
-                    'success' => true,
-                    'game' => [
-                        'rom_id' => $game->rom_id,
-                        'name' => $game->name,
-                        'region' => $game->region ?? null,
-                        'publisher' => $game->publisher ?? null,
-                        'image_path' => $game->image_path ?? null,
-                    ]
-                ]);
-            }
-
-            return response()->json(['success' => true, 'game' => null]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Recherche de jeux par nom exact
-     */
-    public function searchGameByName(Request $request)
-    {
-        $platform = $request->get('platform');
-        $name = $request->get('name');
-
-        if (!$platform || !$name) {
-            return response()->json(['success' => true, 'game' => null]);
-        }
-
-        $tableMap = [
-            'gameboy' => \App\Models\GameBoyGame::class,
-            'snes' => \App\Models\SnesGame::class,
-            'nes' => \App\Models\NesGame::class,
-            'n64' => \App\Models\N64Game::class,
-            'gamegear' => \App\Models\GameGearGame::class,
-            'megadrive' => \App\Models\MegaDriveGame::class,
-            'saturn' => \App\Models\SegaSaturnGame::class,
-            'wonderswan' => \App\Models\WonderSwanGame::class,
-        ];
-
-        if (!isset($tableMap[$platform])) {
-            return response()->json(['success' => true, 'game' => null]);
-        }
-
-        $modelClass = $tableMap[$platform];
-        
-        try {
-            $game = $modelClass::where('name', $name)->first();
-            
-            if ($game) {
-                return response()->json([
-                    'success' => true,
-                    'game' => [
-                        'rom_id' => $game->rom_id ?? null,
-                        'name' => $game->name,
-                        'region' => $game->region ?? null,
-                        'publisher' => $game->publisher ?? null,
-                        'image_path' => $game->image_path ?? null,
-                    ]
-                ]);
-            }
-
-            return response()->json(['success' => true, 'game' => null]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Recherche de publishers pour autocomplete
-     */
-    public function searchPublishers(Request $request)
-    {
-        $query = $request->get('query');
-
-        if (!$query || strlen($query) < 2) {
-            return response()->json(['success' => true, 'publishers' => []]);
-        }
-
-        try {
-            if (class_exists(\App\Models\Publisher::class)) {
-                $publishers = \App\Models\Publisher::where('name', 'LIKE', "%{$query}%")
-                    ->limit(10)
-                    ->get(['id', 'name']);
-                    
-                return response()->json([
-                    'success' => true,
-                    'publishers' => $publishers
-                ]);
-            }
-
-            return response()->json(['success' => true, 'publishers' => []]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Créer un nouveau publisher via AJAX
-     */
-    public function createPublisher(Request $request)
-    {
-        $name = $request->get('name');
-
-        if (!$name) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Le nom est requis'
-            ], 400);
-        }
-
-        try {
-            if (class_exists(\App\Models\Publisher::class)) {
-                $publisher = \App\Models\Publisher::create(['name' => $name]);
-                
-                return response()->json([
-                    'success' => true,
-                    'publisher' => [
-                        'id' => $publisher->id,
-                        'name' => $publisher->name
-                    ]
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Modèle Publisher non disponible'
-            ], 500);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Mise à jour d'un champ de jeu via AJAX
-     */
-    public function updateGameField(Request $request)
-    {
-        $platform = $request->get('platform');
-        $romId = $request->get('rom_id');
-        $field = $request->get('field');
-        $value = $request->get('value');
-
-        if (!$platform || !$romId || !$field) {
             return response()->json([
                 'success' => false,
                 'message' => 'Paramètres manquants'
-            ], 400);
+            ]);
         }
 
-        $tableMap = [
-            'gameboy' => \App\Models\GameBoyGame::class,
-            'snes' => \App\Models\SnesGame::class,
-            'nes' => \App\Models\NesGame::class,
-            'n64' => \App\Models\N64Game::class,
-            'gamegear' => \App\Models\GameGearGame::class,
-            'megadrive' => \App\Models\MegaDriveGame::class,
-            'saturn' => \App\Models\SegaSaturnGame::class,
-            'wonderswan' => \App\Models\WonderSwanGame::class,
-        ];
-
-        if (!isset($tableMap[$platform])) {
+        $tableName = $this->getGameTableName($platform);
+        if (!$tableName) {
             return response()->json([
                 'success' => false,
-                'message' => 'Plateforme inconnue'
-            ], 400);
+                'message' => 'Plateforme non reconnue'
+            ]);
         }
 
-        $modelClass = $tableMap[$platform];
-        
-        try {
-            $game = $modelClass::where('rom_id', $romId)->first();
+        if ($suggestions) {
+            // Mode suggestions : retourner plusieurs résultats
+            $query = \DB::table($tableName);
             
-            if (!$game) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Jeu non trouvé'
-                ], 404);
+            // Certaines tables (ex: Game Gear) utilisent 'slug' au lieu de 'rom_id'
+            if (\Schema::hasColumn($tableName, 'rom_id')) {
+                $query->where(function($q) use ($romId, $tableName) {
+                    $q->where('rom_id', 'LIKE', '%' . $romId . '%');
+                    // Si la table a aussi un slug, chercher dedans aussi
+                    if (\Schema::hasColumn($tableName, 'slug')) {
+                        $q->orWhere('slug', 'LIKE', '%' . $romId . '%');
+                    }
+                });
+            } else if (\Schema::hasColumn($tableName, 'slug')) {
+                $query->where('slug', 'LIKE', '%' . $romId . '%');
             }
-
-            // Mettre à jour le champ
-            $game->$field = $value;
-            $game->save();
+            
+            // Trier par ROM ID et région pour grouper les versions ensemble
+            if (\Schema::hasColumn($tableName, 'region')) {
+                $query->orderBy('rom_id')->orderBy('region');
+            }
+            
+            $games = $query->limit(20)->get();
+            
+            // Utiliser la région de la BDD si disponible, sinon détecter
+            $gamesWithRegion = $games->map(function($game) {
+                $romIdValue = $game->rom_id ?? $game->slug ?? '';
+                
+                // Prioriser la région de la BDD si elle existe et n'est pas vide
+                if (isset($game->region) && $game->region && $game->region !== 'N/A') {
+                    $game->region_display = $game->region;
+                } else {
+                    // Sinon détecter depuis le ROM ID
+                    $detectedRegion = $this->detectRegionFromRomId($romIdValue);
+                    $game->region_display = $detectedRegion ?? $game->region ?? '';
+                }
+                
+                return $game;
+            });
 
             return response()->json([
+                'success' => $games->count() > 0,
+                'games' => $gamesWithRegion
+            ]);
+        }
+
+        // Mode recherche exacte : un seul résultat
+        $query = \DB::table($tableName);
+        
+        if (\Schema::hasColumn($tableName, 'rom_id')) {
+            $query->where(function($q) use ($romId, $tableName) {
+                $q->where('rom_id', 'LIKE', '%' . $romId . '%');
+                if (\Schema::hasColumn($tableName, 'slug')) {
+                    $q->orWhere('slug', 'LIKE', '%' . $romId . '%');
+                }
+            });
+        } else if (\Schema::hasColumn($tableName, 'slug')) {
+            $query->where('slug', 'LIKE', '%' . $romId . '%');
+        }
+        
+        $game = $query->first();
+
+        if ($game) {
+            // Ajouter la région détectée
+            $romId = $game->rom_id ?? $game->slug ?? '';
+            $game->region = $this->detectRegionFromRomId($romId);
+            
+            return response()->json([
                 'success' => true,
-                'message' => 'Champ mis à jour'
+                'game' => $game
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Jeu non trouvé'
+        ]);
+    }
+
+    /**
+     * Recherche de jeux par nom
+     */
+    public function searchGameByName(Request $request)
+    {
+        $platform = $request->input('platform');
+        $name = $request->input('name');
+        $suggestions = $request->input('suggestions', false);
+
+        if (!$platform || !$name) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paramètres manquants'
+            ]);
+        }
+
+        $tableName = $this->getGameTableName($platform);
+        if (!$tableName) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Plateforme non reconnue'
+            ]);
+        }
+
+        $limit = $suggestions ? 10 : 20;
+
+        $games = \DB::table($tableName)
+            ->where('name', 'LIKE', '%' . $name . '%')
+            ->limit($limit)
+            ->get();
+
+        if ($games->count() > 0) {
+            // Ajouter la région détectée
+            $gamesWithRegion = $games->map(function($game) {
+                $romId = $game->rom_id ?? $game->slug ?? '';
+                $game->region = $this->detectRegionFromRomId($romId);
+                return $game;
+            });
+            
+            return response()->json([
+                'success' => true,
+                'games' => $gamesWithRegion
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Aucun jeu trouvé'
+        ]);
+    }
+
+    /**
+     * Obtenir le nom de la table pour une plateforme donnée
+     */
+    private function getGameTableName($platform)
+    {
+        $tables = [
+            'gameboy' => 'game_boy_games',
+            'n64' => 'n64_games',
+            'nes' => 'nes_games',
+            'snes' => 'snes_games',
+            'gamegear' => 'game_gear_games',
+            'wonderswan' => 'wonderswan_games',
+            'segasaturn' => 'sega_saturn_games',
+            'megadrive' => 'mega_drive_games'
+        ];
+
+        return $tables[$platform] ?? null;
+    }
+
+    /**
+     * Mettre à jour un champ de jeu
+     */
+    public function updateGameField(Request $request)
+    {
+        $validated = $request->validate([
+            'game_id' => 'required|integer',
+            'platform' => 'required|string',
+            'field' => 'required|string|in:rom_id,name,year,publisher,developer,region,alternate_names',
+            'value' => 'nullable|string'
+        ]);
+
+        $tableName = $this->getGameTableName($validated['platform']);
+        if (!$tableName) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Plateforme non reconnue'
+            ]);
+        }
+
+        // Vérifier que la colonne existe
+        if (!\Schema::hasColumn($tableName, $validated['field'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Champ non valide pour cette plateforme'
+            ]);
+        }
+
+        // Mettre à jour le champ
+        \DB::table($tableName)
+            ->where('id', $validated['game_id'])
+            ->update([
+                $validated['field'] => $validated['value'],
+                'updated_at' => now()
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Champ mis à jour avec succès'
+        ]);
+    }
+
+    /**
+     * Recherche d'éditeurs pour autocomplete
+     */
+    public function searchPublishers(Request $request)
+    {
+        $query = $request->input('q', '');
+        
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+        
+        $publishers = \App\Models\Publisher::search($query, 20);
+        
+        return response()->json([
+            'publishers' => $publishers->map(function($publisher) {
+                return [
+                    'id' => $publisher->id,
+                    'name' => $publisher->name,
+                    'slug' => $publisher->slug,
+                    'logo' => $publisher->logo,
+                ];
+            })
+        ]);
+    }
+
+    /**
+     * Créer un nouvel éditeur
+     */
+    public function createPublisher(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        try {
+            $publisher = \App\Models\Publisher::findOrCreateByName($validated['name']);
+            
+            return response()->json([
+                'success' => true,
+                'publisher' => [
+                    'id' => $publisher->id,
+                    'name' => $publisher->name,
+                    'slug' => $publisher->slug,
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -1444,4 +1541,3 @@ class ConsoleAdminController extends Controller
         }
     }
 }
-

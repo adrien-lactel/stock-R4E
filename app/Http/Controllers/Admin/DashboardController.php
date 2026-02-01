@@ -174,6 +174,13 @@ class DashboardController extends Controller
                         'route' => 'admin.taxonomy.index',
                     ],
                     [
+                        'title' => 'Éditeurs',
+                        'subtitle' => 'Catalogue',
+                        'description' => 'Gérer les éditeurs de jeux et leurs logos.',
+                        'icon' => '📚',
+                        'route' => 'admin.publishers.index',
+                    ],
+                    [
                         'title' => 'Créer un magasin',
                         'subtitle' => 'Onboarding',
                         'description' => 'Ajouter une boutique et configurer son accès.',
