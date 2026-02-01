@@ -807,7 +807,7 @@ function getLocalGameImage(game, platform) {
   
   // Utiliser le proxy Laravel pour éviter les problèmes CORS avec R2
   const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '{{ route("proxy.taxonomy-image", ["folder" => "FOLDER", "filename" => "FILE"]) }}'.replace('/FILE', '').replace('/FOLDER', '') : '{{ url("/images/taxonomy") }}';
+  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '{{ url("/images/taxonomy") }}';
   
   // Pour WonderSwan, Mega Drive, Sega Saturn et Game Gear : utiliser le nom nettoyé
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
@@ -866,7 +866,7 @@ function getLocalGameImage(game, platform) {
 async function getGameImageWithFallback(game, platform) {
   // Utiliser le proxy Laravel pour éviter les problèmes CORS avec R2
   const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '{{ route("proxy.taxonomy-image", ["folder" => "FOLDER", "filename" => "FILE"]) }}'.replace('/FILE', '').replace('/FOLDER', '') : '{{ url("/images/taxonomy") }}';
+  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '{{ url("/images/taxonomy") }}';
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
   let identifier;
   
@@ -1176,7 +1176,7 @@ async function loadGameLogo(game, platform) {
   // Fallback avec proxy Laravel
   const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
   const localLogoUrl = useProxy 
-    ? '{{ route("proxy.taxonomy-image", ["folder" => "FOLDER", "filename" => "FILE"]) }}'.replace('FOLDER', folder).replace('FILE', logoFilename)
+    ? `/proxy/images/taxonomy/${folder}/${logoFilename}`
     : `/stock-R4E/public/images/taxonomy/${folder}/${logoFilename}`;
   const img = document.createElement('img');
   img.src = localLogoUrl;
@@ -1689,7 +1689,7 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
   // Recréer les images avec cache-busting
   const timestamp = Date.now();
   const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '{{ route("proxy.taxonomy-image", ["folder" => "FOLDER", "filename" => "FILE"]) }}'.replace('/FILE', '').replace('/FOLDER', '') : '/stock-R4E/public/images/taxonomy';
+  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '/stock-R4E/public/images/taxonomy';
   imageTypes.forEach(imgType => {
     const imageCard = document.createElement('div');
     imageCard.className = 'relative group';
@@ -2248,7 +2248,7 @@ async function displayGameResult(game, platform) {
   ];
   
   const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '{{ route("proxy.taxonomy-image", ["folder" => "FOLDER", "filename" => "FILE"]) }}'.replace('/FILE', '').replace('/FOLDER', '') : '/stock-R4E/public/images/taxonomy';
+  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '/stock-R4E/public/images/taxonomy';
   imageTypes.forEach(imgType => {
     const imageCard = document.createElement('div');
     imageCard.className = 'relative group';
