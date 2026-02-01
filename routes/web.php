@@ -23,6 +23,7 @@ use App\Http\Controllers\Store\StoreOfferController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\Admin\RepairerAdminController;
 use App\Http\Controllers\Admin\FeatureRequestController;
+use App\Http\Controllers\ImageProxyController;
 
 
 
@@ -35,6 +36,16 @@ use App\Http\Controllers\Admin\FeatureRequestController;
 Route::get('/', function() {
     return auth()->check() ? redirect('/dashboard') : redirect('/login');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Image Proxy (CORS fix for R2)
+|--------------------------------------------------------------------------
+*/
+Route::get('/proxy/images/taxonomy/{folder}/{filename}', [ImageProxyController::class, 'proxyTaxonomyImage'])
+    ->name('proxy.taxonomy-image')
+    ->where('folder', '[a-z0-9 ]+')
+    ->where('filename', '[A-Za-z0-9\-\.]+');
 
 /*
 |--------------------------------------------------------------------------
