@@ -1201,5 +1201,247 @@ class ConsoleAdminController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Recherche de jeux par ROM ID
+     */
+    public function searchGameByRomId(Request $request)
+    {
+        $platform = $request->get('platform');
+        $romId = $request->get('rom_id');
+
+        if (!$platform || !$romId) {
+            return response()->json(['success' => true, 'game' => null]);
+        }
+
+        $tableMap = [
+            'gameboy' => \App\Models\GameBoyGame::class,
+            'snes' => \App\Models\SnesGame::class,
+            'nes' => \App\Models\NesGame::class,
+            'n64' => \App\Models\N64Game::class,
+            'gamegear' => \App\Models\GameGearGame::class,
+            'megadrive' => \App\Models\MegaDriveGame::class,
+            'saturn' => \App\Models\SegaSaturnGame::class,
+            'wonderswan' => \App\Models\WonderSwanGame::class,
+        ];
+
+        if (!isset($tableMap[$platform])) {
+            return response()->json(['success' => true, 'game' => null]);
+        }
+
+        $modelClass = $tableMap[$platform];
+        
+        try {
+            $game = $modelClass::where('rom_id', $romId)->first();
+            
+            if ($game) {
+                return response()->json([
+                    'success' => true,
+                    'game' => [
+                        'rom_id' => $game->rom_id,
+                        'name' => $game->name,
+                        'region' => $game->region ?? null,
+                        'publisher' => $game->publisher ?? null,
+                        'image_path' => $game->image_path ?? null,
+                    ]
+                ]);
+            }
+
+            return response()->json(['success' => true, 'game' => null]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Recherche de jeux par nom exact
+     */
+    public function searchGameByName(Request $request)
+    {
+        $platform = $request->get('platform');
+        $name = $request->get('name');
+
+        if (!$platform || !$name) {
+            return response()->json(['success' => true, 'game' => null]);
+        }
+
+        $tableMap = [
+            'gameboy' => \App\Models\GameBoyGame::class,
+            'snes' => \App\Models\SnesGame::class,
+            'nes' => \App\Models\NesGame::class,
+            'n64' => \App\Models\N64Game::class,
+            'gamegear' => \App\Models\GameGearGame::class,
+            'megadrive' => \App\Models\MegaDriveGame::class,
+            'saturn' => \App\Models\SegaSaturnGame::class,
+            'wonderswan' => \App\Models\WonderSwanGame::class,
+        ];
+
+        if (!isset($tableMap[$platform])) {
+            return response()->json(['success' => true, 'game' => null]);
+        }
+
+        $modelClass = $tableMap[$platform];
+        
+        try {
+            $game = $modelClass::where('name', $name)->first();
+            
+            if ($game) {
+                return response()->json([
+                    'success' => true,
+                    'game' => [
+                        'rom_id' => $game->rom_id ?? null,
+                        'name' => $game->name,
+                        'region' => $game->region ?? null,
+                        'publisher' => $game->publisher ?? null,
+                        'image_path' => $game->image_path ?? null,
+                    ]
+                ]);
+            }
+
+            return response()->json(['success' => true, 'game' => null]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Recherche de publishers pour autocomplete
+     */
+    public function searchPublishers(Request $request)
+    {
+        $query = $request->get('query');
+
+        if (!$query || strlen($query) < 2) {
+            return response()->json(['success' => true, 'publishers' => []]);
+        }
+
+        try {
+            if (class_exists(\App\Models\Publisher::class)) {
+                $publishers = \App\Models\Publisher::where('name', 'LIKE', "%{$query}%")
+                    ->limit(10)
+                    ->get(['id', 'name']);
+                    
+                return response()->json([
+                    'success' => true,
+                    'publishers' => $publishers
+                ]);
+            }
+
+            return response()->json(['success' => true, 'publishers' => []]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Créer un nouveau publisher via AJAX
+     */
+    public function createPublisher(Request $request)
+    {
+        $name = $request->get('name');
+
+        if (!$name) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le nom est requis'
+            ], 400);
+        }
+
+        try {
+            if (class_exists(\App\Models\Publisher::class)) {
+                $publisher = \App\Models\Publisher::create(['name' => $name]);
+                
+                return response()->json([
+                    'success' => true,
+                    'publisher' => [
+                        'id' => $publisher->id,
+                        'name' => $publisher->name
+                    ]
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Modèle Publisher non disponible'
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mise à jour d'un champ de jeu via AJAX
+     */
+    public function updateGameField(Request $request)
+    {
+        $platform = $request->get('platform');
+        $romId = $request->get('rom_id');
+        $field = $request->get('field');
+        $value = $request->get('value');
+
+        if (!$platform || !$romId || !$field) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paramètres manquants'
+            ], 400);
+        }
+
+        $tableMap = [
+            'gameboy' => \App\Models\GameBoyGame::class,
+            'snes' => \App\Models\SnesGame::class,
+            'nes' => \App\Models\NesGame::class,
+            'n64' => \App\Models\N64Game::class,
+            'gamegear' => \App\Models\GameGearGame::class,
+            'megadrive' => \App\Models\MegaDriveGame::class,
+            'saturn' => \App\Models\SegaSaturnGame::class,
+            'wonderswan' => \App\Models\WonderSwanGame::class,
+        ];
+
+        if (!isset($tableMap[$platform])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Plateforme inconnue'
+            ], 400);
+        }
+
+        $modelClass = $tableMap[$platform];
+        
+        try {
+            $game = $modelClass::where('rom_id', $romId)->first();
+            
+            if (!$game) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jeu non trouvé'
+                ], 404);
+            }
+
+            // Mettre à jour le champ
+            $game->$field = $value;
+            $game->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Champ mis à jour'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
 
