@@ -31,15 +31,57 @@ class ImageProxyController extends Controller
             ]);
         }
 
-        // En production, rediriger vers R2 ou servir avec proxy
+        // En production, utiliser le mapping R2
         $r2Url = config('filesystems.disks.r2.url');
         if ($r2Url) {
-            // Construire l'URL R2
-            $imageUrl = "{$r2Url}/{$path}";
+            // Vérifier d'abord dans le mapping R2
+            $mappingFile = storage_path('app/taxonomy-r2-mapping.json');
+            if (file_exists($mappingFile)) {
+                $mapping = json_decode(file_get_contents($mappingFile), true);
+                
+                // Vérifier si l'image existe dans le mapping
+                if (isset($mapping[$folder][$filename])) {
+                    $imageUrl = $mapping[$folder][$filename];
+                    
+                    // Faire un proxy de l'image avec les bons headers CORS
+                    try {
+                        $context = stream_context_create([
+                            'http' => [
+                                'timeout' => 10,
+                                'ignore_errors' => true
+                            ]
+                        ]);
+                        
+                        $imageContent = file_get_contents($imageUrl, false, $context);
+                        
+                        if ($imageContent === false) {
+                            abort(404);
+                        }
+                        
+                        return response($imageContent, 200, [
+                            'Content-Type' => 'image/png',
+                            'Access-Control-Allow-Origin' => '*',
+                            'Access-Control-Allow-Methods' => 'GET, HEAD',
+                            'Access-Control-Allow-Headers' => 'Content-Type',
+                            'Cache-Control' => 'public, max-age=31536000',
+                        ]);
+                    } catch (\Exception $e) {
+                        abort(404);
+                    }
+                }
+            }
             
-            // Faire un proxy de l'image avec les bons headers CORS
+            // Fallback: essayer l'URL directe
+            $imageUrl = "{$r2Url}/{$path}";
             try {
-                $imageContent = file_get_contents($imageUrl);
+                $context = stream_context_create([
+                    'http' => [
+                        'timeout' => 10,
+                        'ignore_errors' => true
+                    ]
+                ]);
+                
+                $imageContent = @file_get_contents($imageUrl, false, $context);
                 
                 if ($imageContent === false) {
                     abort(404);
