@@ -805,7 +805,7 @@ function guessBrandFromRomId(romId) {
 function getLocalGameImage(game, platform) {
   if (!game) return null;
   
-  const baseUrl = '{{ url("/images/taxonomy") }}';
+  const baseUrl = '{{ config("filesystems.disks.r2.url") ? config("filesystems.disks.r2.url") . "/images/taxonomy" : url("/images/taxonomy") }}';
   
   // Pour WonderSwan, Mega Drive, Sega Saturn et Game Gear : utiliser le nom nettoyé
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
@@ -862,7 +862,7 @@ function getLocalGameImage(game, platform) {
 
 // Fonction pour obtenir l'image de jeu avec fallback (cover > logo > artwork)
 async function getGameImageWithFallback(game, platform) {
-  const baseUrl = '{{ url("/images/taxonomy") }}';
+  const baseUrl = '{{ config("filesystems.disks.r2.url") ? config("filesystems.disks.r2.url") . "/images/taxonomy" : url("/images/taxonomy") }}';
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
   let identifier;
   
@@ -1169,8 +1169,9 @@ async function loadGameLogo(game, platform) {
     console.log('Mapping R2 non disponible, essai en local');
   }
   
-  // Fallback local
-  const localLogoUrl = `/stock-R4E/public/images/taxonomy/${folder}/${logoFilename}`;
+  // Fallback local ou R2
+  const r2BaseUrl = '{{ config("filesystems.disks.r2.url") }}';
+  const localLogoUrl = r2BaseUrl ? `${r2BaseUrl}/images/taxonomy/${folder}/${logoFilename}` : `/stock-R4E/public/images/taxonomy/${folder}/${logoFilename}`;
   const img = document.createElement('img');
   img.src = localLogoUrl;
   img.alt = game.name + ' logo';
@@ -1681,11 +1682,12 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
   
   // Recréer les images avec cache-busting
   const timestamp = Date.now();
+  const r2BaseUrl = '{{ config("filesystems.disks.r2.url") }}';
+  const baseUrl = r2BaseUrl ? `${r2BaseUrl}/images/taxonomy` : '/stock-R4E/public/images/taxonomy';
   imageTypes.forEach(imgType => {
     const imageCard = document.createElement('div');
     imageCard.className = 'relative group';
     
-    const baseUrl = '/stock-R4E/public/images/taxonomy';
     const fullPath = `${baseUrl}/${folder}/${identifier}-${imgType.type}.png?t=${timestamp}`;
     const encodedPath = encodeURI(fullPath);
     
@@ -2239,11 +2241,12 @@ async function displayGameResult(game, platform) {
     { type: 'gameplay', label: 'Gameplay' }
   ];
   
+  const r2BaseUrl = '{{ config("filesystems.disks.r2.url") }}';
+  const baseUrl = r2BaseUrl ? `${r2BaseUrl}/images/taxonomy` : '/stock-R4E/public/images/taxonomy';
   imageTypes.forEach(imgType => {
     const imageCard = document.createElement('div');
     imageCard.className = 'relative group';
     
-    const baseUrl = '/stock-R4E/public/images/taxonomy';
     const timestamp = Date.now();
     const fullPath = `${baseUrl}/${folder}/${identifier}-${imgType.type}.png?t=${timestamp}`;
     const encodedPath = encodeURI(fullPath);
