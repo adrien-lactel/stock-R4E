@@ -19,6 +19,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
+# R2 mapping doit être versionné pour Railway
+!/storage/app/taxonomy-r2-mapping.json
 /vendor
 Homestead.json
 Homestead.yaml

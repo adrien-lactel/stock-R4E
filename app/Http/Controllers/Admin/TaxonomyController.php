@@ -414,10 +414,411 @@ public function destroyType(ArticleType $type)
         return response()->json([
             'description' => $type->description ?? '',
             'publisher' => $type->publisher ?? '',
-            'images' => $type->images ?? [],
             'cover_image' => $type->cover_image ?? null,
+            'artwork_image' => $type->artwork_image ?? null,
             'gameplay_image' => $type->gameplay_image ?? null,
         ]);
+    }
+
+    /* =====================================================
+     | AJAX — Images des articles du même type
+     ===================================================== */
+    public function getArticleTypeImages($typeId)
+    {
+        // Récupérer tous les articles (consoles) de ce type
+        $articles = \App\Models\Console::where('article_type_id', $typeId)
+            ->whereNotNull('article_images')
+            ->get();
+
+        $allImages = [];
+
+        foreach ($articles as $article) {
+            $images = is_string($article->article_images) 
+                ? json_decode($article->article_images, true) 
+                : $article->article_images;
+
+            if (is_array($images)) {
+                foreach ($images as $imageUrl) {
+                    if (!in_array($imageUrl, $allImages)) {
+                        $allImages[] = $imageUrl;
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'images' => $allImages,
+            'count' => count($allImages)
+        ]);
+    }
+
+    /* =====================================================
+     | GET TAXONOMY IMAGES - Récupère toutes les images d'un jeu
+     | COMPATIBLE LOCAL + CLOUDINARY (Railway)
+     ===================================================== */
+    public function getTaxonomyImages(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'folder' => 'required|string',
+        ]);
+
+        $identifier = $request->identifier;
+        $folder = $request->folder;
+        $basePath = public_path("images/taxonomy/{$folder}");
+
+        $images = [];
+
+        // Mode LOCAL : lire depuis public/images/taxonomy/
+        if (file_exists($basePath)) {
+            $pattern = "{$basePath}/{$identifier}-*.png";
+            $files = glob($pattern);
+            
+            foreach ($files as $file) {
+                $filename = basename($file);
+                
+                // Extraire le type depuis le nom de fichier (ex: SNS-MK-cover.png -> cover)
+                if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.png$/i', $filename, $matches)) {
+                    $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork-3", etc.
+                    
+                    // Séparer le type de base et l'index
+                    if (preg_match('/^(cover|artwork|gameplay)(-\d+)?$/i', $fullType, $typeMatches)) {
+                        $baseType = $typeMatches[1];
+                        $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
+                        
+                        $images[] = [
+                            'filename' => $filename,
+                            'path' => "images/taxonomy/{$folder}/{$filename}",
+                            'url' => "/stock-R4E/public/images/taxonomy/{$folder}/{$filename}",
+                            'type' => $baseType,
+                            'full_type' => $fullType,
+                            'index' => $index,
+                            'size' => filesize($file),
+                            'source' => 'local'
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Mode R2 (Production/Railway) : lire depuis le mapping JSON
+        $mappingFile = storage_path('app/taxonomy-r2-mapping.json');
+        if (file_exists($mappingFile)) {
+            $mapping = json_decode(file_get_contents($mappingFile), true);
+            
+            if (isset($mapping[$folder])) {
+                foreach ($mapping[$folder] as $filename => $r2Url) {
+                    // Vérifier si correspond à l'identifier
+                    if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.(png|jpg|jpeg)$/i', $filename, $matches)) {
+                        $fullType = $matches[1];
+                        
+                        if (preg_match('/^(cover|artwork|gameplay)(-\d+)?$/i', $fullType, $typeMatches)) {
+                            $baseType = $typeMatches[1];
+                            $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
+                            
+                            $images[] = [
+                                'filename' => $filename,
+                                'path' => $r2Url,
+                                'url' => $r2Url,
+                                'type' => $baseType,
+                                'full_type' => $fullType,
+                                'index' => $index,
+                                'size' => 0,
+                                'source' => 'r2'
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Trier par type puis par index
+        usort($images, function($a, $b) {
+            $typeOrder = ['cover' => 1, 'artwork' => 2, 'gameplay' => 3];
+            $typeCompare = ($typeOrder[$a['type']] ?? 99) - ($typeOrder[$b['type']] ?? 99);
+            if ($typeCompare !== 0) return $typeCompare;
+            return $a['index'] - $b['index'];
+        });
+
+        return response()->json([
+            'success' => true,
+            'images' => $images,
+            'total' => count($images)
+        ]);
+    }
+
+    /* =====================================================
+     | UPLOAD IMAGE DE TAXONOMIE
+     | COMPATIBLE LOCAL + CLOUDINARY
+     ===================================================== */
+    public function uploadTaxonomyImage(Request $request)
+    {
+        $request->validate([
+            'images.*' => 'required|image|max:10240', // 10MB max
+            'identifier' => 'required|string',
+            'folder' => 'required|string',
+            'platform' => 'required|string',
+            'type' => 'required|string|in:cover,artwork,gameplay', // Type choisi par l'utilisateur
+        ]);
+
+        $identifier = $request->identifier;
+        $folder = $request->folder;
+        $type = $request->type;
+        
+        $uploadedCount = 0;
+        $uploadedUrls = [];
+
+        // Vérifier si on doit uploader sur Cloudinary (environnement production/Railway)
+        $useCloudinary = env('APP_ENV') === 'production' || !file_exists(public_path("images/taxonomy/{$folder}"));
+
+        foreach ($request->file('images') as $file) {
+            if ($useCloudinary) {
+                // Mode CLOUDINARY
+                try {
+                    // Générer le nom du fichier
+                    $filename = "{$identifier}-{$type}.png";
+                    
+                    // Vérifier si existe déjà dans le mapping
+                    $mappingFile = storage_path('app/taxonomy-cloudinary-mapping.json');
+                    $mapping = file_exists($mappingFile) 
+                        ? json_decode(file_get_contents($mappingFile), true) 
+                        : [];
+                    
+                    $counter = 1;
+                    $originalFilename = $filename;
+                    while (isset($mapping[$folder][$filename])) {
+                        $counter++;
+                        $filename = "{$identifier}-{$type}-{$counter}.png";
+                    }
+                    
+                    // Upload vers Cloudinary
+                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload(
+                        $file->getRealPath(),
+                        [
+                            'folder' => "taxonomy/{$folder}",
+                            'public_id' => pathinfo($filename, PATHINFO_FILENAME),
+                            'resource_type' => 'image'
+                        ]
+                    );
+
+                    $cloudinaryUrl = $result->getSecurePath();
+                    
+                    // Mettre à jour le mapping
+                    if (!isset($mapping[$folder])) {
+                        $mapping[$folder] = [];
+                    }
+                    $mapping[$folder][$filename] = $cloudinaryUrl;
+                    file_put_contents($mappingFile, json_encode($mapping, JSON_PRETTY_PRINT));
+                    
+                    $uploadedUrls[] = $cloudinaryUrl;
+                    $uploadedCount++;
+                } catch (\Exception $e) {
+                    \Log::error("Erreur upload Cloudinary: " . $e->getMessage());
+                }
+            } else {
+                // Mode LOCAL (développement)
+                $basePath = public_path("images/taxonomy/{$folder}");
+                
+                if (!file_exists($basePath)) {
+                    mkdir($basePath, 0755, true);
+                }
+                
+                $targetPath = "{$basePath}/{$identifier}-{$type}.png";
+                
+                if (file_exists($targetPath)) {
+                    $counter = 2;
+                    while (file_exists("{$basePath}/{$identifier}-{$type}-{$counter}.png")) {
+                        $counter++;
+                    }
+                    $targetPath = "{$basePath}/{$identifier}-{$type}-{$counter}.png";
+                }
+
+                $file->move($basePath, basename($targetPath));
+                $uploadedUrls[] = "/stock-R4E/public/images/taxonomy/{$folder}/" . basename($targetPath);
+                $uploadedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$uploadedCount} image(s) {$type} uploadée(s) avec succès",
+            'urls' => $uploadedUrls,
+            'mode' => $useCloudinary ? 'cloudinary' : 'local'
+        ]);
+    }
+
+    /* =====================================================
+     | RENAME IMAGE DE TAXONOMIE
+     ===================================================== */
+    public function renameTaxonomyImage(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'folder' => 'required|string',
+            'old_type' => 'required|string',
+            'new_type' => 'required|string',
+        ]);
+
+        $identifier = $request->identifier;
+        $folder = $request->folder;
+        $oldType = $request->old_type;
+        $newType = $request->new_type;
+
+        $basePath = public_path("images/taxonomy/{$folder}");
+        $oldPath = "{$basePath}/{$identifier}-{$oldType}.png";
+        $newPath = "{$basePath}/{$identifier}-{$newType}.png";
+
+        if (!file_exists($oldPath)) {
+            return response()->json([
+                'success' => false,
+                'message' => "L'image source n'existe pas"
+            ], 404);
+        }
+
+        // Si la cible existe déjà, créer un backup avec index
+        if (file_exists($newPath)) {
+            $counter = 2;
+            while (file_exists("{$basePath}/{$identifier}-{$newType}-{$counter}.png")) {
+                $counter++;
+            }
+            $newPath = "{$basePath}/{$identifier}-{$newType}-{$counter}.png";
+        }
+
+        rename($oldPath, $newPath);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Image renommée de '{$oldType}' vers '{$newType}'"
+        ]);
+    }
+
+    /* =====================================================
+     | SET PRIMARY IMAGE (DÉFINIR COMME PRINCIPALE)
+     ===================================================== */
+    public function setPrimaryImage(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'folder' => 'required|string',
+            'current_type' => 'required|string', // Ex: "cover-2"
+            'base_type' => 'required|string',    // Ex: "cover"
+        ]);
+
+        $identifier = $request->identifier;
+        $folder = $request->folder;
+        $currentType = $request->current_type; // Ex: "cover-2"
+        $baseType = $request->base_type;       // Ex: "cover"
+
+        $basePath = public_path("images/taxonomy/{$folder}");
+        $currentPath = "{$basePath}/{$identifier}-{$currentType}.png";
+        $primaryPath = "{$basePath}/{$identifier}-{$baseType}.png";
+
+        // Vérifier que l'image source existe
+        if (!file_exists($currentPath)) {
+            return response()->json([
+                'success' => false,
+                'message' => "L'image '{$currentType}' n'existe pas"
+            ], 404);
+        }
+
+        // Si l'image principale existe déjà, la renommer en -2, -3, etc.
+        if (file_exists($primaryPath)) {
+            $counter = 2;
+            while (file_exists("{$basePath}/{$identifier}-{$baseType}-{$counter}.png")) {
+                $counter++;
+            }
+            $oldPrimaryNewPath = "{$basePath}/{$identifier}-{$baseType}-{$counter}.png";
+            rename($primaryPath, $oldPrimaryNewPath);
+        }
+
+        // Renommer l'image sélectionnée comme principale
+        rename($currentPath, $primaryPath);
+
+        return response()->json([
+            'success' => true,
+            'message' => "'{$currentType}' est maintenant l'image principale '{$baseType}'"
+        ]);
+    }
+
+    /* =====================================================
+     | DELETE IMAGE DE TAXONOMIE
+     | COMPATIBLE LOCAL + CLOUDINARY
+     ===================================================== */
+    public function deleteTaxonomyImage(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'folder' => 'required|string',
+            'type' => 'required|string',
+        ]);
+
+        $identifier = $request->identifier;
+        $folder = $request->folder;
+        $type = $request->type;
+
+        // Vérifier si on utilise Cloudinary
+        $mappingFile = storage_path('app/taxonomy-cloudinary-mapping.json');
+        $useCloudinary = file_exists($mappingFile);
+        
+        if ($useCloudinary) {
+            // Mode CLOUDINARY
+            $mapping = json_decode(file_get_contents($mappingFile), true);
+            $filename = "{$identifier}-{$type}.png";
+            
+            if (isset($mapping[$folder][$filename])) {
+                $cloudinaryUrl = $mapping[$folder][$filename];
+                
+                try {
+                    // Extraire le public_id de l'URL Cloudinary
+                    // Format: https://res.cloudinary.com/.../taxonomy/gameboy/DMG-A1J-cover
+                    if (preg_match('/\/taxonomy\/' . preg_quote($folder, '/') . '\/(.+)$/', $cloudinaryUrl, $matches)) {
+                        $publicId = "taxonomy/{$folder}/" . $matches[1];
+                        
+                        // Supprimer de Cloudinary
+                        \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::destroy($publicId);
+                    }
+                    
+                    // Retirer du mapping
+                    unset($mapping[$folder][$filename]);
+                    file_put_contents($mappingFile, json_encode($mapping, JSON_PRETTY_PRINT));
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Image '{$type}' supprimée de Cloudinary avec succès"
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error("Erreur suppression Cloudinary: " . $e->getMessage());
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Erreur lors de la suppression: " . $e->getMessage()
+                    ], 500);
+                }
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => "L'image n'existe pas dans Cloudinary"
+            ], 404);
+        } else {
+            // Mode LOCAL
+            $basePath = public_path("images/taxonomy/{$folder}");
+            $imagePath = "{$basePath}/{$identifier}-{$type}.png";
+
+            if (!file_exists($imagePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "L'image n'existe pas"
+                ], 404);
+            }
+
+            unlink($imagePath);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Image '{$type}' supprimée avec succès"
+            ]);
+        }
     }
     
 }
