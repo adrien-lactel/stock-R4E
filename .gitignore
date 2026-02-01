@@ -17,6 +17,8 @@
 /public/build
 /public/hot
 /public/storage
+# Exception : mapping R2 nécessaire pour Railway
+!/public/storage/app/taxonomy-r2-mapping.json
 /storage/*.key
 /storage/pail
 # R2 mapping doit être versionné pour Railway

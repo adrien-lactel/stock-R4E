@@ -118,6 +118,16 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         })->name('google-vision-setup');
 
         /* =====================
+        | ÉDITEURS
+        ===================== */
+        Route::get('/publishers', [App\Http\Controllers\Admin\PublisherAdminController::class, 'index'])->name('publishers.index');
+        Route::get('/publishers/create', [App\Http\Controllers\Admin\PublisherAdminController::class, 'create'])->name('publishers.create');
+        Route::post('/publishers', [App\Http\Controllers\Admin\PublisherAdminController::class, 'store'])->name('publishers.store');
+        Route::get('/publishers/{publisher}/edit', [App\Http\Controllers\Admin\PublisherAdminController::class, 'edit'])->name('publishers.edit');
+        Route::put('/publishers/{publisher}', [App\Http\Controllers\Admin\PublisherAdminController::class, 'update'])->name('publishers.update');
+        Route::delete('/publishers/{publisher}', [App\Http\Controllers\Admin\PublisherAdminController::class, 'destroy'])->name('publishers.destroy');
+
+        /* =====================
         | RÉPARATEURS
         ===================== */
         Route::get('/repairers', [RepairerAdminController::class, 'index'])->name('repairers.index');
@@ -146,6 +156,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::post('/gameboy/import', [\App\Http\Controllers\Admin\GameBoyImportController::class, 'import'])
             ->name('gameboy.import.run');
 
+        Route::get('/test-autocomplete', function() {
+            return view('admin.test-autocomplete-debug');
+        })->name('test-autocomplete');
 
         Route::post('/taxonomy/category', [TaxonomyController::class, 'storeCategory'])
             ->name('taxonomy.category.store');
@@ -190,6 +203,23 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         ===================== */
         Route::post('/taxonomy/type/auto-create', [TaxonomyController::class, 'autoCreateType'])
             ->name('taxonomy.type.auto-create');
+        
+        // Gestion des images de taxonomie
+        Route::get('/taxonomy/get-images', [TaxonomyController::class, 'getTaxonomyImages'])
+            ->name('taxonomy.get-images');
+        
+        Route::post('/taxonomy/upload-image', [TaxonomyController::class, 'uploadTaxonomyImage'])
+            ->name('taxonomy.upload-image');
+        
+        Route::post('/taxonomy/rename-image', [TaxonomyController::class, 'renameTaxonomyImage'])
+            ->name('taxonomy.rename-image');
+        
+        Route::post('/taxonomy/set-primary-image', [TaxonomyController::class, 'setPrimaryImage'])
+            ->name('taxonomy.set-primary-image');
+        
+        Route::delete('/taxonomy/delete-image', [TaxonomyController::class, 'deleteTaxonomyImage'])
+            ->name('taxonomy.delete-image');
+        
         Route::get('/ajax/brands/{category}', [TaxonomyController::class, 'ajaxBrands'])
             ->name('ajax.brands');
 
@@ -202,8 +232,32 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/ajax/type-description/{type}', [TaxonomyController::class, 'ajaxTypeDescription'])
             ->name('ajax.type-description');
         
+        Route::get('/ajax/article-type-images/{typeId}', [TaxonomyController::class, 'getArticleTypeImages'])
+            ->name('ajax.article-type-images');
+        
         Route::get('/ajax/lookup-rom-id/{romId}', [TaxonomyController::class, 'lookupRomId'])
             ->name('ajax.lookup-rom-id');
+
+        /* =====================
+        | AJAX RECHERCHE JEUX
+        ===================== */
+        Route::get('/ajax/search-game', [ConsoleAdminController::class, 'searchGame'])
+            ->name('ajax.search-game');
+        
+        Route::get('/ajax/search-game-romid', [ConsoleAdminController::class, 'searchGameByRomId'])
+            ->name('ajax.search-game-romid');
+
+        Route::get('/ajax/search-game-name', [ConsoleAdminController::class, 'searchGameByName'])
+            ->name('ajax.search-game-name');
+        
+        Route::post('/ajax/update-game-field', [ConsoleAdminController::class, 'updateGameField'])
+            ->name('ajax.update-game-field');
+
+        Route::get('/ajax/search-publishers', [ConsoleAdminController::class, 'searchPublishers'])
+            ->name('ajax.search-publishers');
+        
+        Route::post('/ajax/create-publisher', [ConsoleAdminController::class, 'createPublisher'])
+            ->name('ajax.create-publisher');
 
         /* =====================
         | DASHBOARD
