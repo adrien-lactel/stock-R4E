@@ -1143,5 +1143,63 @@ class ConsoleAdminController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Recherche de jeux pour l'autocomplétion
+     */
+    public function searchGame(Request $request)
+    {
+        $platform = $request->get('platform');
+        $query = $request->get('query');
+
+        if (!$platform || !$query || strlen($query) < 2) {
+            return response()->json(['success' => true, 'games' => []]);
+        }
+
+        // Mapping des plateformes vers les tables de jeux
+        $tableMap = [
+            'gameboy' => \App\Models\GameBoyGame::class,
+            'snes' => \App\Models\SnesGame::class,
+            'nes' => \App\Models\NesGame::class,
+            'n64' => \App\Models\N64Game::class,
+            'gamegear' => \App\Models\GameGearGame::class,
+            'megadrive' => \App\Models\MegaDriveGame::class,
+            'saturn' => \App\Models\SegaSaturnGame::class,
+            'wonderswan' => \App\Models\WonderSwanGame::class,
+        ];
+
+        if (!isset($tableMap[$platform])) {
+            return response()->json(['success' => true, 'games' => []]);
+        }
+
+        $modelClass = $tableMap[$platform];
+        
+        try {
+            // Recherche par nom (name ou alternate_names si disponible)
+            $games = $modelClass::where('name', 'LIKE', "%{$query}%")
+                ->orWhere('alternate_names', 'LIKE', "%{$query}%")
+                ->limit(10)
+                ->get()
+                ->map(function($game) {
+                    return [
+                        'rom_id' => $game->rom_id ?? null,
+                        'name' => $game->name,
+                        'region' => $game->region ?? null,
+                        'publisher' => $game->publisher ?? null,
+                        'image_path' => $game->image_path ?? null,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'games' => $games
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
 
