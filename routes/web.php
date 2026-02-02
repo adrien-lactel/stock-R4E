@@ -72,6 +72,17 @@ Route::get('/debug/publishers', function() {
     }
 });
 
+Route::get('/debug/r2-config', function() {
+    return response()->json([
+        'R2_ACCESS_KEY_ID' => config('filesystems.disks.r2.key') ? 'SET' : 'NOT SET',
+        'R2_SECRET_ACCESS_KEY' => config('filesystems.disks.r2.secret') ? 'SET' : 'NOT SET',
+        'R2_BUCKET' => config('filesystems.disks.r2.bucket'),
+        'R2_ENDPOINT' => config('filesystems.disks.r2.endpoint'),
+        'R2_URL' => config('filesystems.disks.r2.url'),
+        'R2_PUBLIC_URL' => env('R2_PUBLIC_URL'),
+    ]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Auth dashboard fallback
