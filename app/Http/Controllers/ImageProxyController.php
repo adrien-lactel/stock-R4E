@@ -28,16 +28,11 @@ class ImageProxyController extends Controller
             ]);
         }
 
-        // En production, rediriger directement vers R2 (beaucoup plus rapide)
-        $r2PublicUrl = env('R2_PUBLIC_URL');
-        if ($r2PublicUrl) {
-            // Construire l'URL R2 : https://pub-xxx.r2.dev/taxonomy/{folder}/{filename}
-            $r2ImageUrl = "{$r2PublicUrl}/taxonomy/{$folder}/{$filename}";
-            
-            // Redirection permanente vers R2 (très rapide, pas de téléchargement)
-            return redirect($r2ImageUrl, 301);
-        }
-
-        abort(404);
+        // Si l'image n'existe pas localement, toujours rediriger vers R2 (prod ou dev)
+        // URL R2 publique hardcodée (les images sont publiques)
+        $r2ImageUrl = "https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/{$folder}/{$filename}";
+        
+        // Redirection permanente vers R2 (très rapide, pas de téléchargement)
+        return redirect($r2ImageUrl, 301);
     }
 }
