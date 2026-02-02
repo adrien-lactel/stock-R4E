@@ -12,39 +12,40 @@ class PublisherAdminController extends Controller
     public function index()
     {
         $publishers = Publisher::orderBy('name')->paginate(50);
-        return response()->json($publishers);
+        return view('admin.publishers.index', compact('publishers'));
     }
 
     public function create()
     {
-        return response()->json(['message' => 'Use POST /admin/publishers to create']);
+        return view('admin.publishers.create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'logo' => 'nullable|url',
+            'logo' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
 
-        $publisher = Publisher::create($validated);
+        Publisher::create($validated);
 
-        return response()->json($publisher, 201);
+        return redirect()->route('admin.publishers.index')
+            ->with('success', 'Éditeur créé avec succès');
     }
 
     public function edit(Publisher $publisher)
     {
-        return response()->json($publisher);
+        return view('admin.publishers.edit', compact('publisher'));
     }
 
     public function update(Request $request, Publisher $publisher)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'logo' => 'nullable|url',
+            'logo' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
@@ -52,13 +53,15 @@ class PublisherAdminController extends Controller
 
         $publisher->update($validated);
 
-        return response()->json($publisher);
+        return redirect()->back()
+            ->with('success', 'Éditeur mis à jour avec succès');
     }
 
     public function destroy(Publisher $publisher)
     {
         $publisher->delete();
 
-        return response()->json(['message' => 'Publisher deleted successfully']);
+        return redirect()->route('admin.publishers.index')
+            ->with('success', 'Éditeur supprimé avec succès');
     }
 }
