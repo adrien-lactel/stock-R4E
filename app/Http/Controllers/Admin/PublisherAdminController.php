@@ -64,4 +64,50 @@ class PublisherAdminController extends Controller
         return redirect()->route('admin.publishers.index')
             ->with('success', 'Éditeur supprimé avec succès');
     }
+
+    /**
+     * Upload du logo d'éditeur
+     */
+    public function uploadLogo(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|max:2048', // 2MB max
+            'publisher_id' => 'required|exists:publishers,id',
+        ]);
+
+        try {
+            $file = $request->file('image');
+            $publisher = Publisher::findOrFail($request->publisher_id);
+            
+            // Générer un nom de fichier
+            $extension = $file->getClientOriginalExtension();
+            $filename = Str::slug($publisher->name) . '.' . $extension;
+            $path = "images/taxonomy/editeurs/{$filename}";
+            
+            // Sauvegarder sur R2 si configuré
+            if (config('filesystems.disks.r2.key')) {
+                \Storage::disk('r2')->putFileAs(
+                    'taxonomy/editeurs',
+                    $file,
+                    $filename,
+                    'public'
+                );
+            }
+            
+            // Sauvegarder aussi en local pour compatibilité
+            $file->move(public_path('images/taxonomy/editeurs'), $filename);
+            
+            return response()->json([
+                'success' => true,
+                'logo_path' => $path,
+                'logo_url' => url("/proxy/images/taxonomy/editeurs/{$filename}")
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

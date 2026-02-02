@@ -186,6 +186,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/publishers', [App\Http\Controllers\Admin\PublisherAdminController::class, 'index'])->name('publishers.index');
         Route::get('/publishers/create', [App\Http\Controllers\Admin\PublisherAdminController::class, 'create'])->name('publishers.create');
         Route::post('/publishers', [App\Http\Controllers\Admin\PublisherAdminController::class, 'store'])->name('publishers.store');
+        Route::post('/publishers/upload-logo', [App\Http\Controllers\Admin\PublisherAdminController::class, 'uploadLogo'])->name('publishers.upload-logo');
         Route::get('/publishers/{publisher}/edit', [App\Http\Controllers\Admin\PublisherAdminController::class, 'edit'])->name('publishers.edit');
         Route::put('/publishers/{publisher}', [App\Http\Controllers\Admin\PublisherAdminController::class, 'update'])->name('publishers.update');
         Route::delete('/publishers/{publisher}', [App\Http\Controllers\Admin\PublisherAdminController::class, 'destroy'])->name('publishers.destroy');
