@@ -282,17 +282,6 @@
     </div>
 
     {{-- =====================
-         ÉDITEUR (jeux vidéo)
-    ===================== --}}
-    <div id="publisher_field" style="display: none;">
-        <label class="block text-sm font-medium mb-1">Éditeur</label>
-        <select id="publisher" name="publisher" class="w-full rounded border-gray-300">
-          <option value="">— Aucun —</option>
-        </select>
-        <p class="text-xs text-gray-500 mt-1">Éditeur du jeu vidéo (sélection via recherche ou autocomplete)</p>
-    </div>
-
-    {{-- =====================
          DESCRIPTION DU TYPE
     ===================== --}}
     <div class="md:col-span-3" id="description_field" style="display: none;">
@@ -2812,12 +2801,6 @@ window.fillFormFromGame = function(game, platform) {
     romIdField.value = game.rom_id;
   }
   
-  // Remplir l'éditeur (publisher)
-  const publisherField = document.querySelector('input[name="publisher"]');
-  if (publisherField && game.publisher) {
-    publisherField.value = game.publisher;
-  }
-  
   // Remplir le prix moyen si disponible
   const priceField = document.querySelector('input[name="average_market_price"]');
   if (priceField && game.price) {
@@ -2874,7 +2857,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Afficher/masquer les champs selon la catégorie
     const languageField = document.getElementById('language_field');
     const regionField = document.getElementById('region_field');
-    const publisherField = document.getElementById('publisher_field');
     const articleImagesField = document.getElementById('article_images_field');
     const completenessConsole = document.getElementById('completeness_console');
     const completenessGame = document.getElementById('completeness_game');
@@ -2904,7 +2886,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (selectedCategory.includes('Jeux vidéo')) {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'block';
       // Le champ images sera affiché par le listener du type
       if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'block';
@@ -2914,7 +2895,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'none';
       // Le champ images sera affiché par le listener du type
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
@@ -3000,7 +2980,6 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('DOMContentLoaded', () => {
     const languageField = document.getElementById('language_field');
     const regionField = document.getElementById('region_field');
-    const publisherField = document.getElementById('publisher_field');
     const completenessConsole = document.getElementById('completeness_console');
     const completenessGame = document.getElementById('completeness_game');
     const completenessHintConsole = document.getElementById('completeness_hint_console');
@@ -3029,7 +3008,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (selectedCategory.includes('Jeux vidéo')) {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'block';
       if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'block';
       if (completenessHintConsole) completenessHintConsole.style.display = 'none';
@@ -3038,7 +3016,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'none';
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
