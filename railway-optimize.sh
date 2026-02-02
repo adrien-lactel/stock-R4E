@@ -15,9 +15,8 @@ echo "✅ Caches cleared"
 php artisan config:cache
 echo "✅ Config cached"
 
-# Cache de routes
-php artisan route:cache
-echo "✅ Routes cached"
+# NE PAS cacher les routes - cela empêche les nouvelles routes de fonctionner
+# php artisan route:cache
 
 # Cache de views
 php artisan view:cache
