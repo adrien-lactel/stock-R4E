@@ -12,12 +12,12 @@ class PublisherAdminController extends Controller
     public function index()
     {
         $publishers = Publisher::orderBy('name')->paginate(50);
-        return view('admin.publishers.index', compact('publishers'));
+        return response()->json($publishers);
     }
 
     public function create()
     {
-        return view('admin.publishers.create');
+        return response()->json(['message' => 'Use POST /admin/publishers to create']);
     }
 
     public function store(Request $request)
@@ -30,15 +30,14 @@ class PublisherAdminController extends Controller
 
         $validated['slug'] = Str::slug($validated['name']);
 
-        Publisher::create($validated);
+        $publisher = Publisher::create($validated);
 
-        return redirect()->route('admin.publishers.index')
-            ->with('success', 'Éditeur créé avec succès');
+        return response()->json($publisher, 201);
     }
 
     public function edit(Publisher $publisher)
     {
-        return view('admin.publishers.edit', compact('publisher'));
+        return response()->json($publisher);
     }
 
     public function update(Request $request, Publisher $publisher)
@@ -53,15 +52,13 @@ class PublisherAdminController extends Controller
 
         $publisher->update($validated);
 
-        return redirect()->route('admin.publishers.index')
-            ->with('success', 'Éditeur mis à jour avec succès');
+        return response()->json($publisher);
     }
 
     public function destroy(Publisher $publisher)
     {
         $publisher->delete();
 
-        return redirect()->route('admin.publishers.index')
-            ->with('success', 'Éditeur supprimé avec succès');
+        return response()->json(['message' => 'Publisher deleted successfully']);
     }
 }
