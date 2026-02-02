@@ -468,7 +468,7 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function editArticle(Console $console)
     {
-        $console->load('repairer'); // ✅ pour affichage
+        $console->load(['repairer', 'articleSubCategory.articleBrand']); // ✅ Charger la marque via la sous-catégorie
 
         return view('admin.consoles.form', [
             'console' => $console,

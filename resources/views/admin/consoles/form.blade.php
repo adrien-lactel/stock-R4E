@@ -2842,7 +2842,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  const oldBrand = @json(old('article_brand_id', $console->article_brand_id ?? null));
+  const oldBrand = @json(old('article_brand_id', $console->articleSubCategory->articleBrand->id ?? $console->article_brand_id ?? null));
   const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id ?? null));
   const oldType = @json(old('article_type_id', $console->article_type_id ?? null));
 
@@ -2853,7 +2853,8 @@ document.addEventListener('DOMContentLoaded', function() {
     oldType,
     consoleBrandId: @json($console->article_brand_id),
     consoleSubCatId: @json($console->article_sub_category_id),
-    consoleTypeId: @json($console->article_type_id)
+    consoleTypeId: @json($console->article_type_id),
+    brandViaRelation: @json($console->articleSubCategory->articleBrand->id ?? null)
   });
 
   function clear(sel, placeholder = '— Choisir —') {
