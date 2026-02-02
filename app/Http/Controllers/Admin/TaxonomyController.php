@@ -18,10 +18,13 @@ class TaxonomyController extends Controller
      ===================================================== */
     public function index()
     {
-        // Optimisation mémoire : pas d'eager loading des 899 types
-        // Les relations sont chargées à la demande dans la vue
+        // Optimisation mémoire : uniquement les compteurs, pas les collections complètes
         return view('admin.taxonomy.index', [
-            'categories' => ArticleCategory::with('brands')->get(),
+            'categories' => ArticleCategory::withCount('subCategories')
+                ->with(['brands' => function($query) {
+                    $query->withCount('subCategories');
+                }])
+                ->get(),
         ]);
     }
 
