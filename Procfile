@@ -1,1 +1,1 @@
-web: vendor/bin/heroku-php-apache2 public/
+web: bash railway-optimize.sh && vendor/bin/heroku-php-apache2 public/

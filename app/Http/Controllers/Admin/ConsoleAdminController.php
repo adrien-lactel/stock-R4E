@@ -1493,24 +1493,32 @@ class ConsoleAdminController extends Controller
      */
     public function searchPublishers(Request $request)
     {
-        $query = $request->input('q', '');
-        
-        if (strlen($query) < 2) {
-            return response()->json([]);
+        try {
+            $query = $request->input('q', '');
+            
+            if (strlen($query) < 2) {
+                return response()->json([]);
+            }
+            
+            $publishers = \App\Models\Publisher::search($query, 20);
+            
+            return response()->json([
+                'publishers' => $publishers->map(function($publisher) {
+                    return [
+                        'id' => $publisher->id,
+                        'name' => $publisher->name,
+                        'slug' => $publisher->slug,
+                        'logo' => $publisher->logo,
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Publisher search error: ' . $e->getMessage());
+            return response()->json([
+                'error' => $e->getMessage(),
+                'publishers' => []
+            ], 200); // Return 200 to avoid breaking frontend
         }
-        
-        $publishers = \App\Models\Publisher::search($query, 20);
-        
-        return response()->json([
-            'publishers' => $publishers->map(function($publisher) {
-                return [
-                    'id' => $publisher->id,
-                    'name' => $publisher->name,
-                    'slug' => $publisher->slug,
-                    'logo' => $publisher->logo,
-                ];
-            })
-        ]);
     }
 
     /**

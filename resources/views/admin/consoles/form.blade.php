@@ -2376,7 +2376,21 @@ async function fetchGameSuggestions(query) {
       displayGameSuggestions(data.games);
     } else {
       console.log('❌ Pas de jeux à afficher ou data.success=false');
-      clearGameSuggestions();
+      if (!data.success && data.message) {
+        console.warn('⚠️ Message du serveur:', data.message);
+        // Afficher un message à l'utilisateur
+        const suggestionsDiv = document.getElementById('game-suggestions');
+        suggestionsDiv.innerHTML = `
+          <div class="px-4 py-3 text-sm text-gray-600">
+            <span class="font-medium">Aucun jeu trouvé</span><br>
+            <span class="text-xs">La base de données sur Railway ne contient peut-être pas encore de jeux pour cette plateforme.</span>
+          </div>
+        `;
+        suggestionsDiv.classList.remove('hidden');
+        suggestionsDiv.style.display = 'block';
+      } else {
+        clearGameSuggestions();
+      }
     }
   } catch (error) {
     console.error('Erreur suggestions jeux:', error);
