@@ -83,6 +83,22 @@ Route::get('/debug/r2-config', function() {
     ]);
 });
 
+Route::get('/debug/taxonomy', function() {
+    $categories = DB::table('article_categories')->get(['id', 'name']);
+    $brands = DB::table('article_brands')->limit(10)->get(['id', 'name']);
+    $subCategories = DB::table('article_sub_categories')->limit(10)->get(['id', 'name', 'article_brand_id']);
+    
+    return response()->json([
+        'categories_count' => $categories->count(),
+        'brands_count' => DB::table('article_brands')->count(),
+        'sub_categories_count' => DB::table('article_sub_categories')->count(),
+        'types_count' => DB::table('article_types')->count(),
+        'sample_categories' => $categories,
+        'sample_brands' => $brands,
+        'sample_sub_categories' => $subCategories,
+    ]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Auth dashboard fallback
