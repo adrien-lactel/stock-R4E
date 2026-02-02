@@ -49,6 +49,31 @@ Route::get('/proxy/images/taxonomy/{folder}/{filename}', [ImageProxyController::
 
 /*
 |--------------------------------------------------------------------------
+| Debug endpoint (temporary - remove in production)
+|--------------------------------------------------------------------------
+*/
+Route::get('/debug/publishers', function() {
+    try {
+        $query = request()->input('q', '');
+        $publishers = \App\Models\Publisher::where('name', 'LIKE', "%{$query}%")
+            ->limit(10)
+            ->get(['id', 'name', 'slug']);
+        return response()->json([
+            'success' => true,
+            'count' => $publishers->count(),
+            'publishers' => $publishers
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 200);
+    }
+});
+
+/*
+|--------------------------------------------------------------------------
 | Auth dashboard fallback
 |--------------------------------------------------------------------------
 */
