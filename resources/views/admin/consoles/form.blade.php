@@ -352,6 +352,27 @@
                     
                     <!-- Pour les jeux vidéo : bouton pour ouvrir la modal -->
                     <div id="game_images_section" style="display: none;">
+                        <!-- Bouton pour voir les photos génériques de la taxonomie (si article existant avec ROM ID) -->
+                        @if(isset($console->id) && $console->rom_id)
+                        <button type="button" 
+                                onclick="openTaxonomyImagesForArticle()"
+                                class="w-full border-2 border-blue-500 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 transition-colors bg-white mb-4">
+                            <div class="flex items-center justify-center gap-3">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <div class="text-left">
+                                    <p class="text-sm font-semibold text-blue-600">
+                                        🖼️ Voir les photos génériques ({{ $console->rom_id }})
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Photos de la taxonomie partagées avec tous les exemplaires
+                                    </p>
+                                </div>
+                            </div>
+                        </button>
+                        @endif
+                        
                         <button type="button" 
                                 onclick="openArticleImagesModal()"
                                 class="w-full border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors bg-indigo-50 mb-4">
@@ -1396,6 +1417,37 @@ window.applyGameTaxonomy = function(game, platform) {
     
     applyTaxonomyTimeout = null;
   }, 100); // Debounce de 100ms
+};
+
+// =====================================================
+// OUVRIR LE MODAL DE TAXONOMIE POUR L'ARTICLE EN COURS
+// =====================================================
+window.openTaxonomyImagesForArticle = function() {
+  const romId = @json($console->rom_id ?? null);
+  const articleType = @json($console->articleType->name ?? null);
+  const subCategory = @json($console->articleSubCategory->name ?? null);
+  
+  if (!romId) {
+    alert('❌ Pas de ROM ID défini pour cet article');
+    return;
+  }
+  
+  // Déterminer la plateforme/dossier depuis la sous-catégorie
+  let platform = subCategory || 'gameboy';
+  let folder = platform.toLowerCase().replace(/\s+/g, '');
+  
+  // Construire l'objet game pour le modal
+  const game = {
+    rom_id: romId,
+    name: articleType || 'Article',
+    platform: platform,
+    slug: romId
+  };
+  
+  console.log('📂 Ouverture modal taxonomie pour article:', { game, platform, folder });
+  
+  // Ouvrir le modal avec les données de l'article
+  openImageEditorModal(game, platform, romId, folder, 'cover');
 };
 
 // =====================================================
