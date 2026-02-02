@@ -438,6 +438,11 @@ class ConsoleAdminController extends Controller
         $quantity = (int) ($data['quantity'] ?? 1);
         unset($data['quantity']); // Ne pas insérer quantity dans la table consoles
         unset($data['article_type_description']); // Ne pas insérer dans consoles (c'est au niveau du type)
+        
+        // ✅ Retirer les champs d'images (non supportés en base pour l'instant)
+        unset($data['article_images']);
+        unset($data['primary_image_url']);
+        unset($data['image_captions']);
 
         $createdIds = [];
         for ($i = 0; $i < $quantity; $i++) {
