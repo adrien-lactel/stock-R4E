@@ -2843,8 +2843,18 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   const oldBrand = @json(old('article_brand_id', $console->article_brand_id ?? null));
-  const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id));
-  const oldType = @json(old('article_type_id', $console->article_type_id));
+  const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id ?? null));
+  const oldType = @json(old('article_type_id', $console->article_type_id ?? null));
+
+  console.log('🔍 Valeurs mode édition:', { 
+    catValue: cat.value, 
+    oldBrand, 
+    oldSub, 
+    oldType,
+    consoleBrandId: @json($console->article_brand_id),
+    consoleSubCatId: @json($console->article_sub_category_id),
+    consoleTypeId: @json($console->article_type_id)
+  });
 
   function clear(sel, placeholder = '— Choisir —') {
     sel.innerHTML = `<option value="">${placeholder}</option>`;
