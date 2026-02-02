@@ -4,6 +4,13 @@
 
 echo "🚀 Optimisation Laravel pour Railway..."
 
+# Clear all caches first to ensure fresh start
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+echo "✅ Caches cleared"
+
 # Cache de configuration
 php artisan config:cache
 echo "✅ Config cached"
