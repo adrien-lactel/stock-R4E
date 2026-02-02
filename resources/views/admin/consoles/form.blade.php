@@ -1075,8 +1075,6 @@ window.closePublisherEditModal = function() {
   const modal = document.getElementById('publisher-edit-modal');
   if (modal) {
     modal.remove();
-    // Recharger le logo après fermeture de la modale
-    location.reload();
   }
 };
 

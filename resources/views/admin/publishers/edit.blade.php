@@ -73,7 +73,6 @@
         alert('✅ {{ session('success') }}');
         if (window.parent && window.parent.closePublisherEditModal) {
             window.parent.closePublisherEditModal();
-            window.parent.location.reload();
         }
     </script>
     @endif
