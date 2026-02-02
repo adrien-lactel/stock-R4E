@@ -453,6 +453,16 @@ public function destroyType(ArticleType $type)
      ===================================================== */
     public function getArticleTypeImages($typeId)
     {
+        // ⚠️ DÉSACTIVÉ : colonne article_images n'existe pas sur Railway
+        // Cette fonctionnalité sera implémentée plus tard
+        return response()->json([
+            'success' => true,
+            'images' => [],
+            'count' => 0,
+            'message' => 'Fonctionnalité photos spécifiques désactivée temporairement'
+        ]);
+        
+        /* CODE ORIGINAL (à réactiver quand la colonne sera créée)
         // Récupérer tous les articles (consoles) de ce type
         $articles = \App\Models\Console::where('article_type_id', $typeId)
             ->whereNotNull('article_images')
@@ -479,6 +489,7 @@ public function destroyType(ArticleType $type)
             'images' => $allImages,
             'count' => count($allImages)
         ]);
+        */
     }
 
     /* =====================================================
