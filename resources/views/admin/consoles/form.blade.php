@@ -1304,11 +1304,13 @@ window.applyGameTaxonomy = function(game, platform) {
       }
     }
     
-    // Attendre que les marques se chargent
-    setTimeout(() => {
-      // 2. Sélectionner la marque
+    // Attendre que les marques se chargent (polling avec retry)
+    const waitForBrands = (attempts = 0) => {
       const brandSelect = document.getElementById('article_brand_id');
-      if (brandSelect) {
+      if (!brandSelect) return;
+      
+      // Vérifier si les marques sont chargées (plus qu'une option "Sélectionner")
+      if (brandSelect.options.length > 1) {
         const brandOption = Array.from(brandSelect.options).find(opt => 
           opt.text.toLowerCase().includes(mapping.brand.toLowerCase())
         );
@@ -1319,83 +1321,91 @@ window.applyGameTaxonomy = function(game, platform) {
         } else {
           console.warn('⚠️ Marque non trouvée dans les options:', mapping.brand, Array.from(brandSelect.options).map(o => o.text));
         }
-      }
-      
-      // Attendre que les sous-catégories se chargent
-      setTimeout(() => {
-        // 3. Sélectionner la sous-catégorie
-        const subCategorySelect = document.getElementById('article_sub_category_id');
-        if (subCategorySelect) {
-          const subCatOption = Array.from(subCategorySelect.options).find(opt => 
-            opt.text.toLowerCase().includes(mapping.subCategory.toLowerCase())
-          );
-          if (subCatOption) {
-            subCategorySelect.value = subCatOption.value;
-            subCategorySelect.dispatchEvent(new Event('change'));
-            console.log('✓ Sous-catégorie sélectionnée:', subCatOption.text);
-          } else {
-            console.warn('⚠️ Sous-catégorie non trouvée dans les options:', mapping.subCategory, Array.from(subCategorySelect.options).map(o => o.text));
-          }
-        }
         
-        // Attendre que les types se chargent
-        setTimeout(() => {
-          // 4. Créer automatiquement le type (ROM-ID + nom)
-          const romId = game.rom_id || game.slug || '';
-          const typeName = romId ? `${romId} - ${game.name}` : game.name;
-          
-          // Récupérer le sub_category_id sélectionné
+        // Attendre que les sous-catégories se chargent (polling avec retry)
+        const waitForSubCategories = (attempts = 0) => {
           const subCategorySelect = document.getElementById('article_sub_category_id');
-          const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
+          if (!subCategorySelect) return;
           
-          if (subCategoryId && typeName) {
-            console.log('🔨 Création du type:', { subCategoryId, typeName });
+          if (subCategorySelect.options.length > 1) {
+            const subCatOption = Array.from(subCategorySelect.options).find(opt => 
+              opt.text.toLowerCase().includes(mapping.subCategory.toLowerCase())
+            );
+            if (subCatOption) {
+              subCategorySelect.value = subCatOption.value;
+              subCategorySelect.dispatchEvent(new Event('change'));
+              console.log('✓ Sous-catégorie sélectionnée:', subCatOption.text);
+            } else {
+              console.warn('⚠️ Sous-catégorie non trouvée dans les options:', mapping.subCategory, Array.from(subCategorySelect.options).map(o => o.text));
+            }
             
-            // Créer le type via l'API
-            fetch('{{ route("admin.taxonomy.type.auto-create") }}', {
-              method: 'POST',
-              headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                article_sub_category_id: subCategoryId,
-                name: typeName,
-                publisher: game.publisher || null
-              })
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                console.log('✓ Type créé ou trouvé:', data.type);
+            // Attendre que les types se chargent (polling)
+            const waitForTypes = (attempts = 0) => {
+              // 4. Créer automatiquement le type (ROM-ID + nom)
+              const romId = game.rom_id || game.slug || '';
+              const typeName = romId ? `${romId} - ${game.name}` : game.name;
+              
+              // Récupérer le sub_category_id sélectionné
+              const subCategorySelect = document.getElementById('article_sub_category_id');
+              const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
+              
+              if (subCategoryId && typeName) {
+                console.log('🔨 Création du type:', { subCategoryId, typeName });
                 
-                // Sélectionner le type créé/trouvé dans le dropdown
-                const typeSelect = document.getElementById('article_type_id');
-                if (typeSelect) {
-                  // Ajouter l'option si elle n'existe pas
-                  let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
-                  if (!typeOption) {
-                    const newOption = new Option(data.type.name, data.type.id, true, true);
-                    typeSelect.add(newOption);
+                // Créer le type via l'API
+                fetch('{{ route("admin.taxonomy.type.auto-create") }}', {
+                  method: 'POST',
+                  headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    article_sub_category_id: subCategoryId,
+                    name: typeName,
+                    publisher: game.publisher || null
+                  })
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.success) {
+                    console.log('✓ Type créé ou trouvé:', data.type);
+                    
+                    // Sélectionner le type créé/trouvé dans le dropdown
+                    const typeSelect = document.getElementById('article_type_id');
+                    if (typeSelect) {
+                      // Ajouter l'option si elle n'existe pas
+                      let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
+                      if (!typeOption) {
+                        const newOption = new Option(data.type.name, data.type.id, true, true);
+                        typeSelect.add(newOption);
+                      } else {
+                        typeSelect.value = data.type.id;
+                      }
+                      typeSelect.dispatchEvent(new Event('change'));
+                      console.log('✓ Type appliqué:', data.type.name);
+                    }
                   } else {
-                    typeSelect.value = data.type.id;
+                    console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
                   }
-                  typeSelect.dispatchEvent(new Event('change'));
-                  console.log('✓ Type appliqué:', data.type.name);
-                }
+                })
+                .catch(error => {
+                  console.error('Erreur création type:', error);
+                });
               } else {
-                console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
+                console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
               }
-            })
-            .catch(error => {
-              console.error('Erreur création type:', error);
-            });
-          } else {
-            console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
+            };
+            waitForTypes();
+          } else if (attempts < 10) {
+            setTimeout(() => waitForSubCategories(attempts + 1), 200);
           }
-        }, 400);
-      }, 400);
-    }, 400);
+        };
+        waitForSubCategories();
+      } else if (attempts < 10) {
+        setTimeout(() => waitForBrands(attempts + 1), 200);
+      }
+    };
+    waitForBrands();
     
     applyTaxonomyTimeout = null;
   }, 100); // Debounce de 100ms
