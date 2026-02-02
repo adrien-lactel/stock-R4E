@@ -1508,7 +1508,7 @@ class ConsoleAdminController extends Controller
                         'id' => $publisher->id,
                         'name' => $publisher->name,
                         'slug' => $publisher->slug,
-                        'logo' => $publisher->logo,
+                        'logo' => $publisher->logo_url,
                     ];
                 })
             ]);

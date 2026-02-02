@@ -13,7 +13,7 @@ class ImageProxyController extends Controller
     public function proxyTaxonomyImage($folder, $filename)
     {
         // Vérifier que le dossier est valide
-        $allowedFolders = ['gameboy', 'game boy color', 'game boy advance', 'n64', 'snes', 'nes', 'gamegear', 'wonderswan', 'segasaturn', 'megadrive'];
+        $allowedFolders = ['gameboy', 'game boy color', 'game boy advance', 'n64', 'snes', 'nes', 'gamegear', 'wonderswan', 'segasaturn', 'megadrive', 'editeurs'];
         if (!in_array($folder, $allowedFolders)) {
             abort(404);
         }

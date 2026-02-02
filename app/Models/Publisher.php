@@ -14,6 +14,31 @@ class Publisher extends Model
         'description',
     ];
 
+    protected $appends = ['logo_url'];
+
+    /**
+     * Get the full logo URL with proxy
+     */
+    public function getLogoUrlAttribute()
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        // Si le logo commence par "images/taxonomy/editeurs/"
+        if (str_starts_with($this->logo, 'images/taxonomy/editeurs/')) {
+            $filename = basename($this->logo);
+            return url("/proxy/images/taxonomy/editeurs/{$filename}");
+        }
+
+        // Si c'est juste un nom de fichier
+        if (!str_starts_with($this->logo, 'http')) {
+            return url("/proxy/images/taxonomy/editeurs/{$this->logo}");
+        }
+
+        return $this->logo;
+    }
+
     /**
      * Créer ou récupérer un éditeur par son nom
      */
