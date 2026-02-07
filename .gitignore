@@ -19,6 +19,8 @@
 /public/storage
 # Exception : mapping R2 nécessaire pour Railway
 !/public/storage/app/taxonomy-r2-mapping.json
+# Images taxonomy stockées sur R2 uniquement
+/public/images/taxonomy/
 /storage/*.key
 /storage/pail
 # R2 mapping doit être versionné pour Railway
