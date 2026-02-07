@@ -874,9 +874,8 @@ function getLocalGameImage(game, platform) {
 
 // Fonction pour obtenir l'image de jeu avec fallback (cover > logo > artwork)
 async function getGameImageWithFallback(game, platform) {
-  // Utiliser le proxy Laravel pour éviter les problèmes CORS avec R2
-  const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '{{ url("/images/taxonomy") }}';
+  // Toujours utiliser le proxy (en local sert depuis public/ puis R2, en prod seulement R2)
+  const baseUrl = '/proxy/images/taxonomy';
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
   let identifier;
   
@@ -1184,8 +1183,7 @@ async function loadGameLogo(game, platform) {
   }
   
   // Construire l'URL du logo via le proxy (exactement comme pour cover)
-  const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '{{ url("/images/taxonomy") }}';
+  const baseUrl = '/proxy/images/taxonomy';
   const logoFilename = `${identifier}-logo.png`;
   const fullPath = `${baseUrl}/${folder}/${logoFilename}`;
   const logoUrl = encodeURI(fullPath);
