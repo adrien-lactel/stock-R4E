@@ -33,18 +33,23 @@ class ImageProxyController extends Controller
         }
 
         // Sinon, streamer depuis R2
-        $r2ImageUrl = "https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/{$folder}/{$filename}";
+        // IMPORTANT: Encoder les espaces et caractères spéciaux pour l'URL R2
+        $encodedFolder = rawurlencode($folder);
+        $encodedFilename = rawurlencode($filename);
+        $r2ImageUrl = "https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/{$encodedFolder}/{$encodedFilename}";
         
         try {
             // Requête vers R2
             $response = Http::timeout(10)->get($r2ImageUrl);
             
-            if (!$response->successful()) {
+            // Vérifier si on a reçu du contenu (même si status = 404)
+            $body = $response->body();
+            if (empty($body) || strlen($body) < 100) {
                 abort(404);
             }
             
             // Streamer l'image avec headers CORS
-            return response($response->body())
+            return response($body)
                 ->header('Content-Type', $response->header('Content-Type') ?? 'image/png')
                 ->header('Cache-Control', 'public, max-age=31536000')
                 ->header('Access-Control-Allow-Origin', '*')
