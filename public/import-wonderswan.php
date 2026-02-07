@@ -47,19 +47,23 @@ try {
         echo "\n✨ Import déjà effectué! Vous pouvez supprimer ce fichier.\n";
         
     } else {
+        // Vider la table existante
+        echo "🗑️  Suppression de l'ancienne table...\n";
+        DB::statement('DROP TABLE IF EXISTS wonderswan_games');
+        
         // Lire le fichier SQL
-        $sqlFile = __DIR__.'/../wonderswan_games_clean.sql';
+        $sqlFile = __DIR__.'/../wonderswan_games_complete.sql';
         
         if (!file_exists($sqlFile)) {
-            throw new Exception("❌ Fichier wonderswan_games_clean.sql introuvable!");
+            throw new Exception("❌ Fichier wonderswan_games_complete.sql introuvable!");
         }
         
-        echo "📁 Lecture du fichier SQL...\n";
+        echo "📁 Lecture du fichier SQL complet...\n";
         $sql = File::get($sqlFile);
         $fileSize = round(strlen($sql) / 1024, 2);
         echo "   Taille: {$fileSize} KB\n\n";
         
-        echo "⚙️  Création de la table...\n";
+        echo "⚙️  Import de 323 jeux WonderSwan Color...\n";
         
         // Exécuter le SQL
         DB::unprepared($sql);
