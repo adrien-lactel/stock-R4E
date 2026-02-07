@@ -338,6 +338,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::post('/feature-requests', [FeatureRequestController::class, 'store'])
             ->name('feature-requests.store');
         
+        Route::patch('/feature-requests/{featureRequest}', [FeatureRequestController::class, 'update'])
+            ->name('feature-requests.update');
+        
         Route::patch('/feature-requests/{featureRequest}/status', [FeatureRequestController::class, 'updateStatus'])
             ->name('feature-requests.update-status');
         

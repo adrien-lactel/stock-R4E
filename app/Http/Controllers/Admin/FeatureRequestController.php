@@ -57,6 +57,20 @@ class FeatureRequestController extends Controller
         return back()->with('success', 'Statut mis à jour !');
     }
 
+    public function update(FeatureRequest $featureRequest, Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:bug,feature',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'priority' => 'required|in:low,medium,high',
+        ]);
+
+        $featureRequest->update($validated);
+
+        return back()->with('success', 'Demande mise à jour !');
+    }
+
     public function addResponse(FeatureRequest $featureRequest)
     {
         $validated = request()->validate([

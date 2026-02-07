@@ -120,7 +120,7 @@
                                     <div class="text-sm font-medium text-gray-200">{{ $req->title }}</div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="text-sm text-gray-400 max-w-md truncate">{{ $req->description }}</div>
+                                    <div class="text-sm text-gray-400 max-w-md whitespace-pre-wrap">{{ $req->description }}</div>
                                 </td>
                                 <td class="px-4 py-3">
                                     @if($req->admin_response)
@@ -167,14 +167,21 @@
                                     {{ $req->created_at->format('d/m/Y') }}
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <form method="POST" action="{{ route('admin.feature-requests.destroy', $req) }}" 
-                                          onsubmit="return confirm('Supprimer cette demande ?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-400 hover:text-red-300">
-                                            🗑️
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button onclick="openEditModal({{ $req->id }}, '{{ addslashes($req->title) }}', '{{ addslashes($req->description) }}', '{{ $req->type }}', '{{ $req->priority }}')" 
+                                                data-url="{{ route('admin.feature-requests.update', $req) }}"
+                                                class="text-blue-400 hover:text-blue-300" title="Éditer">
+                                            ✏️
                                         </button>
-                                    </form>
+                                        <form method="POST" action="{{ route('admin.feature-requests.destroy', $req) }}" 
+                                              onsubmit="return confirm('Supprimer cette demande ?')" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-400 hover:text-red-300" title="Supprimer">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -187,6 +194,60 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    {{-- Modal d'édition --}}
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-2xl w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-200 mb-4">✏️ Modifier la demande</h3>
+            
+            <form id="editForm" method="POST">
+                @csrf
+                @method('PATCH')
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Type</label>
+                        <select id="editType" name="type" required class="w-full rounded-md bg-gray-700 border-gray-600 text-gray-200">
+                            <option value="bug">🐛 Bug</option>
+                            <option value="feature">✨ Évolution</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Priorité</label>
+                        <select id="editPriority" name="priority" required class="w-full rounded-md bg-gray-700 border-gray-600 text-gray-200">
+                            <option value="low">🟢 Basse</option>
+                            <option value="medium">🟡 Moyenne</option>
+                            <option value="high">🔴 Haute</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Titre</label>
+                    <input type="text" id="editTitle" name="title" required maxlength="255" 
+                           class="w-full rounded-md bg-gray-700 border-gray-600 text-gray-200">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                    <textarea id="editDescription" name="description" required rows="6" 
+                              class="w-full rounded-md bg-gray-700 border-gray-600 text-gray-200"></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeEditModal()" 
+                            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md">
+                        Annuler
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+                        💾 Enregistrer
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -217,6 +278,21 @@
     </div>
 
     <script>
+        function openEditModal(id, title, description, type, priority) {
+            const button = event.target;
+            const url = button.getAttribute('data-url');
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editType').value = type;
+            document.getElementById('editPriority').value = priority;
+            document.getElementById('editForm').action = url;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
         function openResponseModal(requestId, title) {
             const button = event.target;
             const url = button.getAttribute('data-url');
@@ -231,7 +307,10 @@
 
         // Fermer avec Escape
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeResponseModal();
+            if (e.key === 'Escape') {
+                closeResponseModal();
+                closeEditModal();
+            }
         });
     </script>
 @endsection
