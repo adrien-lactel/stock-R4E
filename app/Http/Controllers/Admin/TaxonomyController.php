@@ -632,74 +632,47 @@ public function destroyType(ArticleType $type)
         $uploadedCount = 0;
         $uploadedUrls = [];
 
-        // Vérifier si on doit uploader sur Cloudinary (environnement production/Railway)
-        $useCloudinary = env('APP_ENV') === 'production' || !file_exists(public_path("images/taxonomy/{$folder}"));
-
+        // Toujours uploader en double : local + R2
         foreach ($request->file('images') as $file) {
-            if ($useCloudinary) {
-                // Mode CLOUDINARY
-                try {
-                    // Générer le nom du fichier
-                    $filename = "{$identifier}-{$type}.png";
-                    
-                    // Vérifier si existe déjà dans le mapping
-                    $mappingFile = storage_path('app/taxonomy-cloudinary-mapping.json');
-                    $mapping = file_exists($mappingFile) 
-                        ? json_decode(file_get_contents($mappingFile), true) 
-                        : [];
-                    
-                    $counter = 1;
-                    $originalFilename = $filename;
-                    while (isset($mapping[$folder][$filename])) {
-                        $counter++;
-                        $filename = "{$identifier}-{$type}-{$counter}.png";
-                    }
-                    
-                    // Upload vers Cloudinary
-                    $result = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload(
-                        $file->getRealPath(),
-                        [
-                            'folder' => "taxonomy/{$folder}",
-                            'public_id' => pathinfo($filename, PATHINFO_FILENAME),
-                            'resource_type' => 'image'
-                        ]
-                    );
-
-                    $cloudinaryUrl = $result->getSecurePath();
-                    
-                    // Mettre à jour le mapping
-                    if (!isset($mapping[$folder])) {
-                        $mapping[$folder] = [];
-                    }
-                    $mapping[$folder][$filename] = $cloudinaryUrl;
-                    file_put_contents($mappingFile, json_encode($mapping, JSON_PRETTY_PRINT));
-                    
-                    $uploadedUrls[] = $cloudinaryUrl;
-                    $uploadedCount++;
-                } catch (\Exception $e) {
-                    \Log::error("Erreur upload Cloudinary: " . $e->getMessage());
-                }
-            } else {
-                // Mode LOCAL (développement)
+            try {
+                // 1. Upload LOCAL (pour développement)
                 $basePath = public_path("images/taxonomy/{$folder}");
                 
                 if (!file_exists($basePath)) {
                     mkdir($basePath, 0755, true);
                 }
                 
-                $targetPath = "{$basePath}/{$identifier}-{$type}.png";
+                $filename = "{$identifier}-{$type}.png";
+                $targetPath = "{$basePath}/{$filename}";
                 
+                // Si fichier existe, incrémenter
                 if (file_exists($targetPath)) {
                     $counter = 2;
                     while (file_exists("{$basePath}/{$identifier}-{$type}-{$counter}.png")) {
                         $counter++;
                     }
-                    $targetPath = "{$basePath}/{$identifier}-{$type}-{$counter}.png";
+                    $filename = "{$identifier}-{$type}-{$counter}.png";
+                    $targetPath = "{$basePath}/{$filename}";
                 }
 
-                $file->move($basePath, basename($targetPath));
-                $uploadedUrls[] = "/stock-R4E/public/images/taxonomy/{$folder}/" . basename($targetPath);
+                $file->move($basePath, $filename);
+                
+                // 2. Upload R2 (pour production Railway)
+                try {
+                    $r2Path = "taxonomy/{$folder}/{$filename}";
+                    \Storage::disk('r2')->put(
+                        $r2Path,
+                        file_get_contents($targetPath),
+                        'public'
+                    );
+                    $uploadedUrls[] = config('filesystems.disks.r2.url') . '/' . $r2Path;
+                } catch (\Exception $e) {
+                    \Log::warning("Erreur upload R2 (image locale sauvegardée): " . $e->getMessage());
+                }
+                
                 $uploadedCount++;
+            } catch (\Exception $e) {
+                \Log::error("Erreur upload image: " . $e->getMessage());
             }
         }
 
@@ -707,7 +680,7 @@ public function destroyType(ArticleType $type)
             'success' => true,
             'message' => "{$uploadedCount} image(s) {$type} uploadée(s) avec succès",
             'urls' => $uploadedUrls,
-            'mode' => $useCloudinary ? 'cloudinary' : 'local'
+            'mode' => 'dual' // Local + R2
         ]);
     }
 
