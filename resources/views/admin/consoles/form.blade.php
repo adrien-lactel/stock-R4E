@@ -855,7 +855,7 @@ function getLocalGameImage(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
@@ -1147,7 +1147,7 @@ async function loadGameLogo(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
@@ -2238,7 +2238,7 @@ async function displayGameResult(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
