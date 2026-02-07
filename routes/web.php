@@ -45,7 +45,7 @@ Route::get('/', function() {
 Route::get('/proxy/images/taxonomy/{folder}/{filename}', [ImageProxyController::class, 'proxyTaxonomyImage'])
     ->name('proxy.taxonomy-image')
     ->where('folder', '[a-z0-9 ]+')
-    ->where('filename', '[A-Za-z0-9\-\.]+');
+    ->where('filename', '.+');
 
 /*
 |--------------------------------------------------------------------------
