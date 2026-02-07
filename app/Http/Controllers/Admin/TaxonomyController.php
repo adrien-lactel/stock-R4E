@@ -509,6 +509,7 @@ public function destroyType(ArticleType $type)
         $r2Url = config('filesystems.disks.r2.url');
 
         $images = [];
+        $seenFilenames = []; // Éviter les doublons
 
         // Mode LOCAL : lire depuis public/images/taxonomy/
         if (file_exists($basePath)) {
@@ -517,6 +518,12 @@ public function destroyType(ArticleType $type)
             
             foreach ($files as $file) {
                 $filename = basename($file);
+                $fileSize = filesize($file);
+                
+                // Ignorer les fichiers vides/corrompus (< 100 octets)
+                if ($fileSize < 100) {
+                    continue;
+                }
                 
                 // Extraire le type depuis le nom de fichier (ex: SNS-MK-cover.png -> cover)
                 if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.png$/i', $filename, $matches)) {
@@ -527,10 +534,11 @@ public function destroyType(ArticleType $type)
                         $baseType = $typeMatches[1];
                         $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                         
-                        // Utiliser l'URL R2 si configurée, sinon l'URL locale
-                        $imageUrl = $r2Url 
-                            ? "{$r2Url}/images/taxonomy/{$folder}/{$filename}"
-                            : "/stock-R4E/public/images/taxonomy/{$folder}/{$filename}";
+                        // Utiliser le proxy pour toutes les images
+                        $imageUrl = route('proxy.taxonomy-image', [
+                            'folder' => $folder,
+                            'filename' => $filename
+                        ]);
                         
                         $images[] = [
                             'filename' => $filename,
@@ -539,15 +547,18 @@ public function destroyType(ArticleType $type)
                             'type' => $baseType,
                             'full_type' => $fullType,
                             'index' => $index,
-                            'size' => filesize($file),
+                            'size' => $fileSize,
                             'source' => 'local'
                         ];
+                        
+                        $seenFilenames[$filename] = true;
                     }
                 }
             }
         }
         
-        // Mode R2 (Production/Railway) : lire depuis le mapping JSON
+        // Mode R2 (Production/Railway) : lire depuis le mapping JSON SEULEMENT si pas d'images locales
+        if (empty($images)) {
         $mappingFile = storage_path('app/taxonomy-r2-mapping.json');
         if (file_exists($mappingFile)) {
             $mapping = json_decode(file_get_contents($mappingFile), true);
@@ -562,10 +573,16 @@ public function destroyType(ArticleType $type)
                             $baseType = $typeMatches[1];
                             $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                             
+                            // Utiliser le proxy pour toutes les images
+                            $imageUrl = route('proxy.taxonomy-image', [
+                                'folder' => $folder,
+                                'filename' => $filename
+                            ]);
+                            
                             $images[] = [
                                 'filename' => $filename,
                                 'path' => $r2Url,
-                                'url' => $r2Url,
+                                'url' => $imageUrl,
                                 'type' => $baseType,
                                 'full_type' => $fullType,
                                 'index' => $index,
@@ -576,6 +593,7 @@ public function destroyType(ArticleType $type)
                     }
                 }
             }
+        }
         }
 
         // Trier par type puis par index
@@ -604,7 +622,7 @@ public function destroyType(ArticleType $type)
             'identifier' => 'required|string',
             'folder' => 'required|string',
             'platform' => 'required|string',
-            'type' => 'required|string|in:cover,artwork,gameplay', // Type choisi par l'utilisateur
+            'type' => 'required|string|in:cover,logo,artwork,gameplay', // Type choisi par l'utilisateur
         ]);
 
         $identifier = $request->identifier;

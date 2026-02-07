@@ -1119,16 +1119,45 @@ async function loadGameLogo(game, platform) {
   const logoContainer = document.getElementById('game-logo-' + game.id);
   if (!logoContainer) return;
   
-  // Déterminer l'identifier et le folder
-  let identifier = game.rom_id || game.slug;
+  // Déterminer l'identifier de la même manière que dans displayGameResult
+  const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
+  let identifier;
   
-  // Pour Game Boy, nettoyer l'identifier
-  if (platform === 'gameboy') {
-    identifier = identifier
-      .replace(/\.gb$/i, '')
-      .replace(/\.gbc$/i, '')
-      .replace(/\.gba$/i, '')
+  if (nameBasedPlatforms.includes(platform)) {
+    // Pour ces plateformes, utiliser le nom (sans extension)
+    identifier = game.name
+      .replace(/\.ws$/i, '')
+      .replace(/\.md$/i, '')
+      .replace(/\.gg$/i, '')
+      .replace(/\.bin$/i, '')
       .trim();
+  } else {
+    // Pour Game Boy et autres, utiliser ROM ID
+    identifier = game.rom_id || game.slug;
+    
+    // Nettoyer les extensions selon la plateforme
+    if (platform === 'gameboy') {
+      identifier = identifier
+        .replace(/\.gb$/i, '')
+        .replace(/\.gbc$/i, '')
+        .replace(/\.gba$/i, '')
+        .trim();
+    } else if (platform === 'n64') {
+      identifier = identifier
+        .replace(/\.n64$/i, '')
+        .replace(/\.z64$/i, '')
+        .replace(/\.v64$/i, '')
+        .trim();
+    } else if (platform === 'nes') {
+      identifier = identifier
+        .replace(/\.nes$/i, '')
+        .trim();
+    } else if (platform === 'snes') {
+      identifier = identifier
+        .replace(/\.sfc$/i, '')
+        .replace(/\.smc$/i, '')
+        .trim();
+    }
   }
   
   // Déterminer le dossier
@@ -1154,45 +1183,34 @@ async function loadGameLogo(game, platform) {
     folder = platformFolders[platform] || platform;
   }
   
-  // Construire l'URL du logo
-  const logoFilename = `${identifier}-logo.png`;
-  
-  // Mode R2 (Production) : charger depuis le mapping
-  const mappingUrl = '{{ asset("storage/app/taxonomy-r2-mapping.json") }}';
-  
-  try {
-    const response = await fetch(mappingUrl);
-    const mapping = await response.json();
-    
-    if (mapping[folder] && mapping[folder][logoFilename]) {
-      const r2Url = mapping[folder][logoFilename];
-      const img = document.createElement('img');
-      img.src = r2Url;
-      img.alt = game.name + ' logo';
-      img.className = 'w-full h-full object-contain';
-      img.onerror = function() {
-        logoContainer.innerHTML = '<span class="text-gray-300 text-4xl">✕</span>';
-      };
-      logoContainer.innerHTML = '';
-      logoContainer.appendChild(img);
-      return;
-    }
-  } catch (error) {
-    console.log('Mapping R2 non disponible, essai en local');
-  }
-  
-  // Fallback avec proxy Laravel
+  // Construire l'URL du logo via le proxy (exactement comme pour cover)
   const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const localLogoUrl = useProxy 
-    ? `/proxy/images/taxonomy/${folder}/${logoFilename}`
-    : `/stock-R4E/public/images/taxonomy/${folder}/${logoFilename}`;
+  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '{{ url("/images/taxonomy") }}';
+  const logoFilename = `${identifier}-logo.png`;
+  const fullPath = `${baseUrl}/${folder}/${logoFilename}`;
+  const logoUrl = encodeURI(fullPath);
+  
+  // Ajouter timestamp pour forcer le rechargement (comme pour cover)
+  const timestamp = Date.now();
+  const logoUrlWithTimestamp = logoUrl.includes('?') ? `${logoUrl}&t=${timestamp}` : `${logoUrl}?t=${timestamp}`;
+  
+  console.log('🖼️ Chargement logo:', { identifier, folder, logoFilename, logoUrl, logoUrlWithTimestamp });
+  
+  // Méthode simple comme pour cover/artwork/gameplay
   const img = document.createElement('img');
-  img.src = localLogoUrl;
+  img.src = logoUrlWithTimestamp;
   img.alt = game.name + ' logo';
   img.className = 'w-full h-full object-contain';
+  
   img.onerror = function() {
+    console.error('❌ img.onerror déclenché pour:', logoUrlWithTimestamp);
     logoContainer.innerHTML = '<span class="text-gray-300 text-4xl">✕</span>';
   };
+  
+  img.onload = function() {
+    console.log('✅ Logo chargé!', { width: img.naturalWidth, height: img.naturalHeight });
+  };
+  
   logoContainer.innerHTML = '';
   logoContainer.appendChild(img);
 }
@@ -1497,17 +1515,20 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
   
   // Section Upload
   const uploadSection = document.createElement('div');
-  uploadSection.className = 'border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-gray-100 transition-colors';
+  uploadSection.className = 'border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer';
   uploadSection.innerHTML = `
     <div class="text-center">
       <div class="text-4xl mb-2">📤</div>
       <h4 class="font-semibold text-gray-700 mb-2">Ajouter des images</h4>
-      <p class="text-sm text-gray-500 mb-3">Sélectionnez le type d'image puis choisissez le(s) fichier(s)</p>
+      <p class="text-sm text-gray-500 mb-3">
+        <span class="font-semibold">Glissez-déposez vos images ici</span> ou sélectionnez-les
+      </p>
       
       <div class="flex items-center justify-center gap-3 mb-4">
         <label class="text-sm font-medium text-gray-700">Type d'image :</label>
         <select id="taxonomy-upload-type" class="border border-gray-300 rounded px-3 py-2 text-sm font-medium">
           <option value="cover">📖 Cover</option>
+          <option value="logo">🏷️ Logo</option>
           <option value="artwork">🎨 Artwork</option>
           <option value="gameplay">🎮 Gameplay</option>
         </select>
@@ -1516,7 +1537,7 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
       <input type="file" id="taxonomy-image-upload" accept="image/*" multiple class="hidden">
       <button onclick="document.getElementById('taxonomy-image-upload').click()" 
               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
-        Parcourir
+        📂 Parcourir
       </button>
     </div>
   `;
@@ -1524,19 +1545,50 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
   // Drag & Drop handlers
   uploadSection.ondragover = (e) => {
     e.preventDefault();
-    uploadSection.classList.add('border-blue-500', 'bg-blue-100');
+    e.stopPropagation();
+    uploadSection.classList.remove('bg-gray-50', 'border-gray-300');
+    uploadSection.classList.add('border-blue-500', 'bg-blue-100', 'border-4', 'scale-105');
   };
   
-  uploadSection.ondragleave = () => {
-    uploadSection.classList.remove('border-blue-500', 'bg-blue-100');
+  uploadSection.ondragenter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  
+  uploadSection.ondragleave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Vérifier qu'on quitte vraiment la zone (pas juste un enfant)
+    if (e.target === uploadSection) {
+      uploadSection.classList.remove('border-blue-500', 'bg-blue-100', 'border-4', 'scale-105');
+      uploadSection.classList.add('bg-gray-50', 'border-gray-300');
+    }
   };
   
   uploadSection.ondrop = (e) => {
     e.preventDefault();
-    uploadSection.classList.remove('border-blue-500', 'bg-blue-100');
+    e.stopPropagation();
+    uploadSection.classList.remove('border-blue-500', 'bg-blue-100', 'border-4', 'scale-105');
+    uploadSection.classList.add('bg-gray-50', 'border-gray-300');
+    
     const files = e.dataTransfer.files;
     const selectedType = document.getElementById('taxonomy-upload-type')?.value || 'cover';
-    handleTaxonomyImageUpload(files, identifier, folder, platform, selectedType);
+    
+    if (files.length > 0) {
+      // Feedback visuel
+      uploadSection.classList.add('animate-pulse');
+      setTimeout(() => uploadSection.classList.remove('animate-pulse'), 500);
+      
+      handleTaxonomyImageUpload(files, identifier, folder, platform, selectedType);
+    }
+  };
+  
+  // Clic sur toute la zone pour ouvrir le sélecteur
+  uploadSection.onclick = (e) => {
+    // Ne pas déclencher si on clique sur le select ou le bouton
+    if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION' && e.target.tagName !== 'BUTTON') {
+      document.getElementById('taxonomy-image-upload').click();
+    }
   };
   
   const fileInput = uploadSection.querySelector('#taxonomy-image-upload');
@@ -1550,8 +1602,8 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
   existingSection.className = 'space-y-4';
   existingSection.innerHTML = `
     <h4 class="font-semibold text-gray-700">Images existantes</h4>
-    <div id="taxonomy-images-grid" class="grid grid-cols-3 gap-4">
-      <div class="col-span-3 text-center text-gray-500">
+    <div id="taxonomy-images-grid" class="grid grid-cols-4 gap-4">
+      <div class="col-span-4 text-center text-gray-500">
         <div class="animate-pulse">Chargement des images...</div>
       </div>
     </div>
@@ -1614,6 +1666,7 @@ async function loadTaxonomyImages(identifier, folder) {
         select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
         select.innerHTML = `
           <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
+          <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
           <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
           <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
         `;
@@ -1664,13 +1717,13 @@ async function loadTaxonomyImages(identifier, folder) {
       
       // Ajouter un compteur
       const countInfo = document.createElement('div');
-      countInfo.className = 'col-span-3 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
+      countInfo.className = 'col-span-4 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
       countInfo.textContent = `Total : ${data.total} image${data.total > 1 ? 's' : ''}`;
       gridContainer.appendChild(countInfo);
       
     } else {
       gridContainer.innerHTML = `
-        <div class="col-span-3 text-center text-gray-400 py-8">
+        <div class="col-span-4 text-center text-gray-400 py-8">
           <div class="text-4xl mb-2">📭</div>
           <div>Aucune image trouvée pour ce jeu</div>
         </div>
@@ -1679,7 +1732,7 @@ async function loadTaxonomyImages(identifier, folder) {
   } catch (e) {
     console.error('Erreur chargement images:', e);
     gridContainer.innerHTML = `
-      <div class="col-span-3 text-center text-red-500 py-8">
+      <div class="col-span-4 text-center text-red-500 py-8">
         <div class="text-4xl mb-2">⚠️</div>
         <div>Erreur lors du chargement des images</div>
       </div>
@@ -1805,12 +1858,39 @@ async function handleTaxonomyImageUpload(files, identifier, folder, platform, se
       body: formData
     });
     
+    // Vérifier si la réponse est bien du JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('❌ Réponse HTML au lieu de JSON:', text.substring(0, 500));
+      throw new Error('Le serveur a retourné une erreur. Vérifiez la console pour plus de détails.');
+    }
+    
     const data = await response.json();
     
     if (data.success) {
       alert('✅ ' + data.message);
       // Recharger les images dans la modal au lieu de fermer
       loadTaxonomyImages(identifier, folder);
+      
+      // Si c'est un logo, rafraîchir aussi le logo dans la vue principale
+      if (selectedType === 'logo') {
+        const modal = document.getElementById('image-editor-modal');
+        if (modal && modal.dataset.game) {
+          try {
+            const game = JSON.parse(modal.dataset.game);
+            const platform = modal.dataset.platform;
+            
+            // Rafraîchir le logo du jeu dans la vue principale
+            setTimeout(() => {
+              loadGameLogo(game, platform);
+            }, 500); // Petit délai pour que l'image soit bien uploadée
+          } catch (e) {
+            console.error('Erreur lors du rafraîchissement du logo:', e);
+          }
+        }
+      }
+      
       // Réinitialiser l'input file
       const fileInput = document.getElementById('taxonomy-image-upload');
       if (fileInput) fileInput.value = '';
@@ -1852,6 +1932,23 @@ async function renameTaxonomyImage(identifier, folder, oldType, newType) {
       alert('✅ ' + data.message);
       // Recharger les images dans la modal au lieu de fermer
       loadTaxonomyImages(identifier, folder);
+      
+      // Si on a renommé vers un logo, rafraîchir le logo dans la vue principale
+      if (newType.startsWith('logo')) {
+        const modal = document.getElementById('image-editor-modal');
+        if (modal && modal.dataset.game) {
+          try {
+            const game = JSON.parse(modal.dataset.game);
+            const platform = modal.dataset.platform;
+            
+            setTimeout(() => {
+              loadGameLogo(game, platform);
+            }, 500);
+          } catch (e) {
+            console.error('Erreur lors du rafraîchissement du logo:', e);
+          }
+        }
+      }
     } else {
       alert('❌ Erreur: ' + data.message);
     }
@@ -2287,11 +2384,12 @@ async function displayGameResult(game, platform) {
   imagesSection.appendChild(imagesTitleRow);
   
   const imagesGrid = document.createElement('div');
-  imagesGrid.className = 'grid grid-cols-3 gap-3';
+  imagesGrid.className = 'grid grid-cols-4 gap-3';
   
   // Types d'images à afficher
   const imageTypes = [
     { type: 'cover', label: 'Cover' },
+    { type: 'logo', label: 'Logo' },
     { type: 'artwork', label: 'Artwork' },
     { type: 'gameplay', label: 'Gameplay' }
   ];
@@ -2821,30 +2919,8 @@ function attachGameSearchListeners() {
 // ========================================
 
 window.analyzeImageWithAI = async function(imageUrl, type) {
-  
-  const html = `
-    <div class="space-y-3 max-h-96 overflow-y-auto">
-      <p class="text-sm text-gray-600 mb-2">${games.length} résultat(s) trouvé(s)</p>
-      ${games.map(game => `
-        <div class="flex gap-3 items-start p-3 border rounded hover:bg-gray-50">
-          ${game.cloudinary_url ? `<img src="${game.cloudinary_url}" alt="${game.name}" class="w-16 h-16 object-cover rounded">` : ''}
-          <div class="flex-1 min-w-0">
-            <h4 class="font-semibold truncate">${game.name}</h4>
-            ${game.rom_id ? `<p class="text-xs text-gray-600">ROM ID: ${game.rom_id}</p>` : ''}
-            ${game.year ? `<p class="text-xs text-gray-600">Année: ${game.year}</p>` : ''}
-          </div>
-          <button type="button" 
-                  onclick='fillFormFromGame(${JSON.stringify(game).replace(/'/g, "\\'")},"${platform}")'
-                  class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 whitespace-nowrap">
-            ✓ Utiliser
-          </button>
-        </div>
-      `).join('')}
-    </div>
-  `;
-  
-  contentDiv.innerHTML = html;
-}
+  alert('⚠️ Analyse IA désactivée - fonctionnalité en cours de développement');
+};
 
 window.fillFormFromGame = function(game, platform) {
   // Remplir le ROM ID
@@ -3947,5 +4023,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
 })();
+
 </script>
+
 @endsection
