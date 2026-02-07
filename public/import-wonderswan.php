@@ -26,73 +26,72 @@ try {
     
     if (!empty($tableExists)) {
         $count = DB::table('wonderswan_games')->count();
-        echo "✅ Table wonderswan_games existe déjà avec $count jeux\n\n";
-        
-        // Afficher quelques exemples
-        $samples = DB::table('wonderswan_games')
-            ->select('id', 'name', 'publisher', 'year')
-            ->orderBy('name')
-            ->limit(10)
-            ->get();
-        
-        echo "📋 Exemples de jeux:\n";
-        foreach ($samples as $game) {
-            echo sprintf("  - %s (%s, %s)\n", 
-                $game->name, 
-                $game->publisher ?? 'N/A', 
-                $game->year ?? 'N/A'
-            );
-        }
-        
-        echo "\n✨ Import déjà effectué! Vous pouvez supprimer ce fichier.\n";
-        
-    } else {
-        // Vider la table existante
-        echo "🗑️  Suppression de l'ancienne table...\n";
-        DB::statement('DROP TABLE IF EXISTS wonderswan_games');
-        
-        // Lire le fichier SQL
-        $sqlFile = __DIR__.'/../wonderswan_games_complete.sql';
-        
-        if (!file_exists($sqlFile)) {
-            throw new Exception("❌ Fichier wonderswan_games_complete.sql introuvable!");
-        }
-        
-        echo "📁 Lecture du fichier SQL complet...\n";
-        $sql = File::get($sqlFile);
-        $fileSize = round(strlen($sql) / 1024, 2);
-        echo "   Taille: {$fileSize} KB\n\n";
-        
-        echo "⚙️  Import de 323 jeux WonderSwan Color...\n";
-        
-        // Exécuter le SQL
-        DB::unprepared($sql);
-        
-        // Vérifier le résultat
-        $count = DB::table('wonderswan_games')->count();
-        
-        echo "✅ Table créée avec succès!\n";
-        echo "📊 Nombre de jeux importés: $count\n\n";
-        
-        // Afficher quelques exemples
-        $samples = DB::table('wonderswan_games')
-            ->select('name', 'publisher', 'year')
-            ->orderBy('name')
-            ->limit(5)
-            ->get();
-        
-        echo "📋 Exemples de jeux:\n";
-        foreach ($samples as $game) {
-            echo sprintf("  - %s (%s, %s)\n", 
-                $game->name, 
-                $game->publisher ?? 'N/A', 
-                $game->year ?? 'N/A'
-            );
-        }
-        
-        echo "\n✨ Import terminé avec succès!\n";
-        echo "⚠️  N'oubliez pas de supprimer ce fichier (import-wonderswan.php)\n";
+        echo "⚠️  Table wonderswan_games existe avec $count jeux\n";
+        echo "🗑️  Suppression pour réimport complet...\n\n";
     }
+    
+    // Toujours vider la table existante
+    DB::statement('DROP TABLE IF EXISTS wonderswan_games');
+    
+    // Lire le fichier SQL
+    $sqlFile = __DIR__.'/../wonderswan_games_complete.sql';
+    
+    if (!file_exists($sqlFile)) {
+        throw new Exception("❌ Fichier wonderswan_games_complete.sql introuvable!");
+    }
+    
+    echo "📁 Lecture du fichier SQL complet...\n";
+    $sql = File::get($sqlFile);
+    $fileSize = round(strlen($sql) / 1024, 2);
+    echo "   Taille: {$fileSize} KB\n\n";
+    
+    echo "⚙️  Import de 323 jeux WonderSwan Color...\n";
+    
+    // Exécuter le SQL
+    DB::unprepared($sql);
+    
+    // Vérifier le résultat
+    $count = DB::table('wonderswan_games')->count();
+    
+    echo "✅ Table créée avec succès!\n";
+    echo "📊 Nombre de jeux importés: $count\n\n";
+    
+    // Vérifier Final Fantasy
+    $ff = DB::table('wonderswan_games')
+        ->where('name', 'LIKE', '%Final Fantasy%')
+        ->get();
+    
+    if ($ff->count() > 0) {
+        echo "🎮 Final Fantasy trouvé:\n";
+        foreach ($ff as $game) {
+            echo sprintf("  - ID %d: %s (%s)\n", 
+                $game->id,
+                $game->name, 
+                $game->publisher ?? 'N/A'
+            );
+        }
+        echo "\n";
+    }
+    
+    // Afficher quelques exemples
+    $samples = DB::table('wonderswan_games')
+        ->select('id', 'name', 'publisher', 'year')
+        ->orderBy('name')
+        ->limit(5)
+        ->get();
+    
+    echo "📋 Exemples de jeux:\n";
+    foreach ($samples as $game) {
+        echo sprintf("  - ID %d: %s (%s, %s)\n",
+            $game->id, 
+            $game->name, 
+            $game->publisher ?? 'N/A', 
+            $game->year ?? 'N/A'
+        );
+    }
+    
+    echo "\n✨ Import terminé avec succès!\n";
+    echo "⚠️  N'oubliez pas de supprimer ce fichier (import-wonderswan.php)\n";
     
 } catch (Exception $e) {
     echo "❌ ERREUR:\n";
