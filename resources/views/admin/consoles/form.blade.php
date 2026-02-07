@@ -2392,8 +2392,7 @@ async function displayGameResult(game, platform) {
     { type: 'gameplay', label: 'Gameplay' }
   ];
   
-  const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '/stock-R4E/public/images/taxonomy';
+  const baseUrl = '/proxy/images/taxonomy';
   imageTypes.forEach(imgType => {
     const imageCard = document.createElement('div');
     imageCard.className = 'relative group';

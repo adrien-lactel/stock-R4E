@@ -557,43 +557,60 @@ public function destroyType(ArticleType $type)
             }
         }
         
-        // Mode R2 (Production/Railway) : lire depuis le mapping JSON SEULEMENT si pas d'images locales
-        if (empty($images)) {
-        $mappingFile = storage_path('app/taxonomy-r2-mapping.json');
-        if (file_exists($mappingFile)) {
-            $mapping = json_decode(file_get_contents($mappingFile), true);
-            
-            if (isset($mapping[$folder])) {
-                foreach ($mapping[$folder] as $filename => $r2Url) {
+        // Mode R2 (Production/Railway) : lister directement depuis R2
+        if (empty($images) || app()->environment('production')) {
+            try {
+                $r2Path = "taxonomy/{$folder}/";
+                $files = \Storage::disk('r2')->files($r2Path);
+                
+                foreach ($files as $filePath) {
+                    $filename = basename($filePath);
+                    
                     // Vérifier si correspond à l'identifier
                     if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.(png|jpg|jpeg)$/i', $filename, $matches)) {
+                        // Éviter les doublons si déjà dans les images locales
+                        if (isset($seenFilenames[$filename])) {
+                            continue;
+                        }
+                        
                         $fullType = $matches[1];
                         
                         if (preg_match('/^(cover|artwork|gameplay|logo)(-\d+)?$/i', $fullType, $typeMatches)) {
                             $baseType = $typeMatches[1];
                             $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                             
-                            // Utiliser le proxy pour toutes les images
+                            // Utiliser le proxy
                             $imageUrl = route('proxy.taxonomy-image', [
                                 'folder' => $folder,
                                 'filename' => $filename
                             ]);
                             
+                            // Essayer de récupérer la taille
+                            $fileSize = 0;
+                            try {
+                                $fileSize = \Storage::disk('r2')->size($filePath);
+                            } catch (\Exception $e) {
+                                // Taille non disponible
+                            }
+                            
                             $images[] = [
                                 'filename' => $filename,
-                                'path' => $r2Url,
+                                'path' => $filePath,
                                 'url' => $imageUrl,
                                 'type' => $baseType,
                                 'full_type' => $fullType,
                                 'index' => $index,
-                                'size' => 0,
+                                'size' => $fileSize,
                                 'source' => 'r2'
                             ];
+                            
+                            $seenFilenames[$filename] = true;
                         }
                     }
                 }
+            } catch (\Exception $e) {
+                \Log::error("Erreur lecture R2: " . $e->getMessage());
             }
-        }
         }
 
         // Trier par type puis par index
