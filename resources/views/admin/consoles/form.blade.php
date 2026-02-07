@@ -420,7 +420,7 @@
                         <input type="file" id="file-input" accept="image/*" multiple class="hidden">
 
                         <!-- Prévisualisation des images -->
-                        <div id="preview-container" class="grid grid-cols-3 gap-4 mt-4"></div>
+                        <div id="preview-container" class="grid grid-cols-4 gap-4 mt-4"></div>
 
                         <p class="text-xs text-gray-500 mt-2">
                             💾 Les images sont automatiquement enregistrées dans la taxonomie de l'article
@@ -1770,8 +1770,8 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
   const contentDiv = document.getElementById('game-results-content');
   if (!contentDiv) return;
   
-  // Trouver la grille d'images (class 'grid grid-cols-3 gap-3')
-  const imagesGrid = contentDiv.querySelector('.grid.grid-cols-3');
+  // Trouver la grille d'images (class 'grid grid-cols-4 gap-3')
+  const imagesGrid = contentDiv.querySelector('.grid.grid-cols-4');
   if (!imagesGrid) {
     console.warn('⚠️ Grille d\'images non trouvée');
     return;
@@ -1782,6 +1782,7 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
   
   const imageTypes = [
     { type: 'cover', label: '📖 Cover', icon: '📖' },
+    { type: 'logo', label: '🏷️ Logo', icon: '🏷️' },
     { type: 'artwork', label: '🎨 Artwork', icon: '🎨' },
     { type: 'gameplay', label: '🎮 Gameplay', icon: '🎮' }
   ];
