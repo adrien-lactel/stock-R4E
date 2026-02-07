@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 
 class ImageProxyController extends Controller
 {
     /**
      * Proxy pour servir les images R2 avec CORS headers
-     * Redirige directement vers R2 pour de meilleures performances
+     * Stream l'image depuis R2 pour éviter les problèmes CORS avec les requêtes HEAD
      */
     public function proxyTaxonomyImage($folder, $filename)
     {
@@ -25,14 +26,33 @@ class ImageProxyController extends Controller
             return response()->file(public_path($path), [
                 'Content-Type' => 'image/png',
                 'Cache-Control' => 'public, max-age=31536000',
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
             ]);
         }
 
-        // Si l'image n'existe pas localement, toujours rediriger vers R2 (prod ou dev)
-        // URL R2 publique hardcodée (les images sont publiques)
+        // Si l'image n'existe pas localement, la récupérer depuis R2 et la streamer
+        // (au lieu de redirect pour éviter les problèmes CORS avec HEAD requests)
         $r2ImageUrl = "https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/{$folder}/{$filename}";
         
-        // Redirection permanente vers R2 (très rapide, pas de téléchargement)
-        return redirect($r2ImageUrl, 301);
+        try {
+            // Faire une requête vers R2
+            $response = Http::timeout(10)->get($r2ImageUrl);
+            
+            // Si l'image n'existe pas sur R2
+            if (!$response->successful()) {
+                abort(404);
+            }
+            
+            // Streamer l'image avec les headers CORS
+            return response($response->body())
+                ->header('Content-Type', $response->header('Content-Type') ?? 'image/png')
+                ->header('Cache-Control', 'public, max-age=31536000')
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+                
+        } catch (\Exception $e) {
+            abort(404);
+        }
     }
 }
