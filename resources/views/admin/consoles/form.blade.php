@@ -874,8 +874,11 @@ function getLocalGameImage(game, platform) {
 
 // Fonction pour obtenir l'image de jeu avec fallback (cover > logo > artwork)
 async function getGameImageWithFallback(game, platform) {
-  // Toujours utiliser le proxy (en local sert depuis public/ puis R2, en prod seulement R2)
-  const baseUrl = '/proxy/images/taxonomy';
+  // En production: servir directement depuis R2 (plus rapide)
+  // En local: utiliser le proxy (sert depuis public/)
+  const isProduction = '{{ config("app.env") }}' === 'production';
+  const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+  const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
   let identifier;
   
@@ -1182,8 +1185,11 @@ async function loadGameLogo(game, platform) {
     folder = platformFolders[platform] || platform;
   }
   
-  // Construire l'URL du logo via le proxy (exactement comme pour cover)
-  const baseUrl = '/proxy/images/taxonomy';
+  // En production: servir directement depuis R2 (plus rapide)
+  // En local: utiliser le proxy
+  const isProduction = '{{ config("app.env") }}' === 'production';
+  const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+  const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   const logoFilename = `${identifier}-logo.png`;
   const fullPath = `${baseUrl}/${folder}/${logoFilename}`;
   const logoUrl = encodeURI(fullPath);
@@ -1789,7 +1795,9 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
   
   // Recréer les images avec cache-busting
   const timestamp = Date.now();
-  const baseUrl = '/proxy/images/taxonomy';
+  const isProduction = '{{ config("app.env") }}' === 'production';
+  const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+  const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   imageTypes.forEach(imgType => {
     const imageCard = document.createElement('div');
     imageCard.className = 'relative group';
@@ -2392,7 +2400,9 @@ async function displayGameResult(game, platform) {
     { type: 'gameplay', label: 'Gameplay' }
   ];
   
-  const baseUrl = '/proxy/images/taxonomy';
+  const isProduction = '{{ config("app.env") }}' === 'production';
+  const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+  const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   imageTypes.forEach(imgType => {
     const imageCard = document.createElement('div');
     imageCard.className = 'relative group';
