@@ -855,7 +855,7 @@ function getLocalGameImage(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan color color',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
@@ -910,7 +910,7 @@ async function getGameImageWithFallback(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
