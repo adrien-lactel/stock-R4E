@@ -4376,17 +4376,9 @@ document.addEventListener('DOMContentLoaded', function() {
       grid.innerHTML = '';
       
       if (data.success && data.images && data.images.length > 0) {
-        // D'abord, identifier les images génériques déjà utilisées dans cet article
-        data.images.forEach(url => {
-          if (uploadedGameImages.includes(url) && !genericArticleImages.includes(url)) {
-            genericArticleImages.push(url);
-            console.log('🔗 Image générique identifiée:', url);
-          }
-        });
-        
-        // Recharger les cartes avec le flag isGeneric mis à jour
+        // Recharger les cartes avec le flag isGeneric correct (seulement celles déjà marquées)
         const gridContainer = document.getElementById('article-images-grid');
-        if (gridContainer && gridContainer.children.length > 0) {
+        if (gridContainer && gridContainer.children.length > 0 && genericArticleImages.length > 0) {
           // Supprimer toutes les cartes et les recréer avec le bon flag
           gridContainer.innerHTML = '';
           uploadedGameImages.forEach((url, index) => {
