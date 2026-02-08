@@ -815,9 +815,11 @@ function guessBrandFromRomId(romId) {
 function getLocalGameImage(game, platform) {
   if (!game) return null;
   
-  // Utiliser le proxy Laravel pour éviter les problèmes CORS avec R2
-  const useProxy = '{{ config("filesystems.disks.r2.url") ? "true" : "false" }}' === 'true';
-  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '{{ url("/images/taxonomy") }}';
+  // En production: servir directement depuis R2 (plus rapide)
+  // En local: utiliser le proxy (sert depuis public/)
+  const isProduction = '{{ config("app.env") }}' === 'production';
+  const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+  const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   
   // Pour WonderSwan, Mega Drive, Sega Saturn et Game Gear : utiliser le nom nettoyé
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
