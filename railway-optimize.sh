@@ -4,10 +4,14 @@
 
 echo "🚀 Optimisation Laravel pour Railway..."
 
+# Créer les dossiers storage nécessaires s'ils n'existent pas
+mkdir -p storage/framework/{sessions,views,cache}
+mkdir -p storage/logs
+echo "✅ Storage directories created"
+
 # Clear all caches first to ensure fresh start
 php artisan config:clear
 php artisan route:clear
-php artisan view:clear
 php artisan cache:clear
 echo "✅ Caches cleared"
 
@@ -18,9 +22,8 @@ echo "✅ Config cached"
 # NE PAS cacher les routes - cela empêche les nouvelles routes de fonctionner
 # php artisan route:cache
 
-# Cache de views
-php artisan view:cache
-echo "✅ Views cached"
+# NE PAS cacher les views - cela empêche les modifications Blade de fonctionner
+# php artisan view:cache
 
 # Optimisation autoload Composer
 composer install --optimize-autoloader --no-dev
