@@ -4374,14 +4374,23 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
         
-        availableImages.forEach(url => {
+        // Limiter l'affichage initial à 30 images pour performances
+        const imagesToShow = availableImages.slice(0, 30);
+        const hasMore = availableImages.length > 30;
+        
+        // Stocker toutes les images pour "Charger plus"
+        if (!window.allGenericImages) window.allGenericImages = [];
+        window.allGenericImages = availableImages;
+        window.currentGenericOffset = 30;
+        
+        imagesToShow.forEach(url => {
           const card = document.createElement('div');
           card.className = 'relative group cursor-pointer border-2 border-gray-200 rounded-lg overflow-hidden hover:border-indigo-500 transition-all hover:shadow-lg';
           card.onclick = () => addGenericImageToArticle(url);
           
           card.innerHTML = `
             <div class="aspect-square bg-gray-100">
-              <img src="${url}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-gray-400\\'>❌ Image introuvable</div>'">
+              <img loading="lazy" src="${url}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-gray-400\\'>❌ Image introuvable</div>'">
             </div>
             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
               <div class="opacity-0 group-hover:opacity-100 transition-opacity bg-white text-indigo-600 px-3 py-1.5 rounded-full font-medium text-sm">
@@ -4395,6 +4404,20 @@ document.addEventListener('DOMContentLoaded', function() {
           
           grid.appendChild(card);
         });
+        
+        // Bouton "Charger plus" si plus de 30 images
+        if (hasMore) {
+          const loadMoreBtn = document.createElement('div');
+          loadMoreBtn.id = 'load-more-generic-btn';
+          loadMoreBtn.className = 'col-span-full text-center py-4';
+          loadMoreBtn.innerHTML = `
+            <button type="button" onclick="loadMoreGenericImages()" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
+              📥 Charger ${availableImages.length - 30} photos supplémentaires
+            </button>
+          `;
+          grid.appendChild(loadMoreBtn);
+        }
       } else {
         if (countEl) countEl.textContent = 'Aucune photo';
         grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-6">📭 Aucune photo d\'autres articles de ce type</div>';
@@ -4409,6 +4432,59 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Ajouter une photo générique à l'article
+  // Charger plus d'images génériques (pagination)
+  window.loadMoreGenericImages = function() {
+    const grid = document.getElementById('generic-images-grid');
+    const loadMoreBtn = document.getElementById('load-more-generic-btn');
+    
+    if (!grid || !window.allGenericImages) return;
+    
+    const nextBatch = window.allGenericImages.slice(window.currentGenericOffset, window.currentGenericOffset + 30);
+    const remaining = window.allGenericImages.length - window.currentGenericOffset - 30;
+    
+    // Retirer le bouton "Charger plus"
+    if (loadMoreBtn) loadMoreBtn.remove();
+    
+    // Ajouter les nouvelles images
+    nextBatch.forEach(url => {
+      const card = document.createElement('div');
+      card.className = 'relative group cursor-pointer border-2 border-gray-200 rounded-lg overflow-hidden hover:border-indigo-500 transition-all hover:shadow-lg';
+      card.onclick = () => addGenericImageToArticle(url);
+      
+      card.innerHTML = `
+        <div class="aspect-square bg-gray-100">
+          <img loading="lazy" src="${url}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-gray-400\\'>❌ Image introuvable</div>'">
+        </div>
+        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity bg-white text-indigo-600 px-3 py-1.5 rounded-full font-medium text-sm">
+            ➕ Ajouter
+          </div>
+        </div>
+        <div class="absolute top-2 left-2 bg-indigo-600 bg-opacity-90 text-white text-xs px-2 py-1 rounded">
+          📸 Autre article
+        </div>
+      `;
+      
+      grid.appendChild(card);
+    });
+    
+    window.currentGenericOffset += 30;
+    
+    // Rajouter le bouton s'il reste encore des images
+    if (remaining > 0) {
+      const newLoadMoreBtn = document.createElement('div');
+      newLoadMoreBtn.id = 'load-more-generic-btn';
+      newLoadMoreBtn.className = 'col-span-full text-center py-4';
+      newLoadMoreBtn.innerHTML = `
+        <button type="button" onclick="loadMoreGenericImages()" 
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all">
+          📥 Charger ${remaining} photos supplémentaires
+        </button>
+      `;
+      grid.appendChild(newLoadMoreBtn);
+    }
+  };
+
   async function addGenericImageToArticle(imageUrl) {
     if (uploadedGameImages.includes(imageUrl)) {
       alert('Cette photo est déjà ajoutée');
