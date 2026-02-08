@@ -3432,7 +3432,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  const oldBrand = @json(old('article_brand_id', $console->articleSubCategory->brand->id ?? $console->article_brand_id ?? null));
+  const oldBrand = @json(old('article_brand_id', $console->article_brand_id ?? null));
   const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id ?? null));
   const oldType = @json(old('article_type_id', $console->article_type_id ?? null));
 
