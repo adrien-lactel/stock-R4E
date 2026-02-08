@@ -339,7 +339,6 @@
             <option value="PAL" @selected(old('region', $console->region) === 'PAL')>🇪🇺 PAL (Europe)</option>
             <option value="NTSC-U" @selected(old('region', $console->region) === 'NTSC-U')>🇺🇸 NTSC-U (USA)</option>
             <option value="NTSC-J" @selected(old('region', $console->region) === 'NTSC-J')>🇯🇵 NTSC-J (Japon)</option>
-            <option value="Région libre" @selected(old('region', $console->region) === 'Région libre')>🌍 Région libre</option>
         </select>
         <p class="text-xs text-gray-500 mt-1">Important pour N64, SNES, GameCube, etc.</p>
     </div>
