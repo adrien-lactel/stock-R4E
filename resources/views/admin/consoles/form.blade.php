@@ -384,8 +384,18 @@
                             <option value="Avec boîte et notice" @selected(old('completeness', $console->completeness) === 'Avec boîte et notice')>📦📄 Avec boîte et notice</option>
                         </select>
                         
+                        <!-- Pour les cartes à collectionner -->
+                        <select name="completeness" id="completeness_cards" class="w-full rounded border-gray-300" style="display: none;">
+                            <option value="">— Non spécifié —</option>
+                            <option value="Neuf scellé" @selected(old('completeness', $console->completeness) === 'Neuf scellé')>🎁 Neuf scellé</option>
+                            <option value="Carte à l'unité" @selected(old('completeness', $console->completeness) === 'Carte à l\'unité')>🃏 Carte à l'unité</option>
+                            <option value="Carte gradée" @selected(old('completeness', $console->completeness) === 'Carte gradée')>⭐ Carte gradée</option>
+                            <option value="Case scellée" @selected(old('completeness', $console->completeness) === 'Case scellée')>📦 Case scellée</option>
+                        </select>
+                        
                         <p class="text-xs text-gray-500 mt-1" id="completeness_hint_console">Console seule, avec sa boîte, ou complète avec accessoires</p>
                         <p class="text-xs text-gray-500 mt-1" id="completeness_hint_game" style="display: none;">Jeu seul (loose), avec boîte, ou complet avec notice</p>
+                        <p class="text-xs text-gray-500 mt-1" id="completeness_hint_cards" style="display: none;">Neuf scellé, carte individuelle, carte gradée PSA/CGC, ou case complète</p>
                     </div>
 
                 <div id="language_field" style="display: none;">
@@ -3459,8 +3469,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const articleImagesField = document.getElementById('article_images_field');
     const completenessConsole = document.getElementById('completeness_console');
     const completenessGame = document.getElementById('completeness_game');
+    const completenessCards = document.getElementById('completeness_cards');
     const completenessHintConsole = document.getElementById('completeness_hint_console');
     const completenessHintGame = document.getElementById('completeness_hint_game');
+    const completenessHintCards = document.getElementById('completeness_hint_cards');
     const brandLabel = document.getElementById('brand_label');
     const selectedCategory = cat.options[cat.selectedIndex].text;
     
@@ -3468,10 +3480,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (languageField) languageField.style.display = 'block';
       if (regionField) regionField.style.display = 'none';
       if (publisherField) publisherField.style.display = 'none';
-      if (completenessConsole) completenessConsole.style.display = 'block';
+      if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'none';
-      if (completenessHintConsole) completenessHintConsole.style.display = 'block';
+      if (completenessCards) completenessCards.style.display = 'block';
+      if (completenessHintConsole) completenessHintConsole.style.display = 'none';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
+      if (completenessHintCards) completenessHintCards.style.display = 'block';
       if (brandLabel) brandLabel.textContent = 'Marque';
     } else if (selectedCategory.includes('Accessoires')) {
       if (languageField) languageField.style.display = 'none';
@@ -3479,8 +3493,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (publisherField) publisherField.style.display = 'none';
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
+      if (completenessCards) completenessCards.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
+      if (completenessHintCards) completenessHintCards.style.display = 'none';
       if (brandLabel) brandLabel.textContent = 'Compatibilité *';
     } else if (selectedCategory.includes('Jeux vidéo')) {
       if (languageField) languageField.style.display = 'none';
@@ -3488,8 +3504,10 @@ document.addEventListener('DOMContentLoaded', function() {
       // Le champ images sera affiché par le listener du type
       if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'block';
+      if (completenessCards) completenessCards.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'none';
       if (completenessHintGame) completenessHintGame.style.display = 'block';
+      if (completenessHintCards) completenessHintCards.style.display = 'none';
       if (brandLabel) brandLabel.textContent = 'Marque';
     } else {
       if (languageField) languageField.style.display = 'none';
@@ -3497,6 +3515,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Le champ images sera affiché par le listener du type
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
+      if (completenessCards) completenessCards.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
       if (brandLabel) brandLabel.textContent = 'Marque';
@@ -3581,8 +3600,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const regionField = document.getElementById('region_field');
     const completenessConsole = document.getElementById('completeness_console');
     const completenessGame = document.getElementById('completeness_game');
+    const completenessCards = document.getElementById('completeness_cards');
     const completenessHintConsole = document.getElementById('completeness_hint_console');
     const completenessHintGame = document.getElementById('completeness_hint_game');
+    const completenessHintCards = document.getElementById('completeness_hint_cards');
     const brandLabel = document.getElementById('brand_label');
     const selectedCategory = cat.options[cat.selectedIndex]?.text || '';
     
@@ -3590,10 +3611,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (languageField) languageField.style.display = 'block';
       if (regionField) regionField.style.display = 'none';
       if (publisherField) publisherField.style.display = 'none';
-      if (completenessConsole) completenessConsole.style.display = 'block';
+      if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'none';
-      if (completenessHintConsole) completenessHintConsole.style.display = 'block';
+      if (completenessCards) completenessCards.style.display = 'block';
+      if (completenessHintConsole) completenessHintConsole.style.display = 'none';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
+      if (completenessHintCards) completenessHintCards.style.display = 'block';
       if (brandLabel) brandLabel.textContent = 'Marque';
     } else if (selectedCategory.includes('Accessoires')) {
       if (languageField) languageField.style.display = 'none';
@@ -3601,24 +3624,30 @@ document.addEventListener('DOMContentLoaded', function() {
       if (publisherField) publisherField.style.display = 'none';
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
+      if (completenessCards) completenessCards.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
+      if (completenessHintCards) completenessHintCards.style.display = 'none';
       if (brandLabel) brandLabel.textContent = 'Compatibilité *';
     } else if (selectedCategory.includes('Jeux vidéo')) {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
       if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'block';
+      if (completenessCards) completenessCards.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'none';
       if (completenessHintGame) completenessHintGame.style.display = 'block';
+      if (completenessHintCards) completenessHintCards.style.display = 'none';
       if (brandLabel) brandLabel.textContent = 'Marque';
     } else {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
+      if (completenessCards) completenessCards.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
+      if (completenessHintCards) completenessHintCards.style.display = 'none';
       if (brandLabel) brandLabel.textContent = 'Marque';
     }
   });
