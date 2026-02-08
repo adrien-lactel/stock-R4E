@@ -25,6 +25,14 @@ use App\Http\Controllers\Admin\RepairerAdminController;
 use App\Http\Controllers\Admin\FeatureRequestController;
 use App\Http\Controllers\ImageProxyController;
 
+/*
+|--------------------------------------------------------------------------
+| Health Check Route for Railway
+|--------------------------------------------------------------------------
+*/
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok'], 200);
+});
 
 
 
