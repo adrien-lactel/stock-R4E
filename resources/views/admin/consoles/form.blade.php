@@ -1031,6 +1031,9 @@ window.openPublisherEditModal = function(publisherId, publisherName) {
   modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50';
   modal.id = 'publisher-edit-modal';
   modal.style.cssText = 'padding: 20px;';
+  // Stocker les informations de l'éditeur pour rafraîchir à la fermeture
+  modal.dataset.publisherId = publisherId;
+  modal.dataset.publisherName = publisherName;
   
   const modalContent = document.createElement('div');
   modalContent.className = 'bg-white rounded-lg shadow-xl flex flex-col';
@@ -1088,6 +1091,27 @@ window.openPublisherEditModal = function(publisherId, publisherName) {
 window.closePublisherEditModal = function() {
   const modal = document.getElementById('publisher-edit-modal');
   if (modal) {
+    // Récupérer le nom de l'éditeur avant de fermer le modal
+    const publisherName = modal.dataset.publisherName;
+    
+    if (publisherName) {
+      console.log('🔄 Rafraîchissement des logos de l\'éditeur lors de la fermeture:', publisherName);
+      
+      // Rafraîchir tous les logos d'éditeur affichés avec ce nom
+      document.querySelectorAll('[id^="publisher-logo-display-"]').forEach(container => {
+        const gameId = container.id.replace('publisher-logo-display-', '');
+        // Vérifier si ce container affiche cet éditeur
+        const gameCard = container.closest('.border');
+        if (gameCard) {
+          const publisherText = gameCard.querySelector('.text-gray-600');
+          if (publisherText && publisherText.textContent.includes(publisherName)) {
+            console.log('🔄 Rafraîchissement logo pour game ID:', gameId);
+            loadPublisherLogoDisplay(publisherName, gameId);
+          }
+        }
+      });
+    }
+    
     modal.remove();
   }
 };
