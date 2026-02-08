@@ -1234,8 +1234,7 @@ window.applyGameTaxonomy = function(game, platform) {
   }
   
   applyTaxonomyTimeout = setTimeout(() => {
-    console.log('✓ Application taxonomie (v2026-02-08-15h30):', { game, platform });
-    console.log('📊 Données complètes du jeu:', JSON.stringify(game, null, 2));
+    console.log('✓ Application taxonomie (v2026-02-08-16h00):', { game, platform });
     
     // Mapping plateforme → marque et sous-catégorie
     const platformMapping = {
@@ -1270,17 +1269,21 @@ window.applyGameTaxonomy = function(game, platform) {
     
     const yearField = document.getElementById('year_field');
     const yearInput = document.getElementById('year');
+    console.log('🗓️ ANNÉE - yearField:', yearField, 'yearInput:', yearInput, 'game.year:', game.year);
     
     if (yearField && yearInput) {
       yearField.style.display = 'block';
       // Essayer plusieurs formats possibles
       const year = game.year || game.release_year || game.release_date?.substring(0, 4) || '';
+      console.log('🗓️ ANNÉE extraite:', year);
       if (year) {
         yearInput.value = year;
         console.log('✓ Année remplie:', year);
       } else {
-        console.log('📅 Pas d\'année dans la BDD pour ce jeu (normal pour certaines plateformes)');
+        console.log('📅 Pas d\'année dans la BDD pour ce jeu');
       }
+    } else {
+      console.error('❌ Champs année introuvables!', { yearField, yearInput });
     }
     
     // Remplir région
