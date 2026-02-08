@@ -170,6 +170,15 @@
                     progressBar.style.width = '0%';
                 }, 500);
                 
+                // Rafraîchir l'image affichée avec le nouveau logo
+                const logoPreview = document.getElementById('logo-preview');
+                if (logoPreview) {
+                    const timestamp = Date.now();
+                    logoPreview.src = data.logo_path + '?t=' + timestamp;
+                    logoPreview.classList.remove('hidden');
+                    console.log('✅ Logo rafraîchi:', logoPreview.src);
+                }
+                
                 // Notifier le parent (formulaire principal) que le logo a été mis à jour
                 if (window.parent !== window) {
                     window.parent.postMessage({

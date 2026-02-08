@@ -2202,8 +2202,21 @@ async function deleteTaxonomyImage(identifier, folder, type) {
     
     if (data.success) {
       alert('✅ ' + data.message);
-      // Recharger les images dans la modal au lieu de fermer
+      // Recharger les images dans la modal
       loadTaxonomyImages(identifier, folder);
+      
+      // Rafraîchir aussi les images dans l'affichage principal
+      const modal = document.getElementById('image-editor-modal');
+      if (modal && modal.dataset.game) {
+        try {
+          const game = JSON.parse(modal.dataset.game);
+          const platform = modal.dataset.platform;
+          console.log('🔄 Rafraîchissement après suppression:', { game, platform, identifier, folder });
+          refreshGameImages(game, platform, identifier, folder);
+        } catch (e) {
+          console.error('Erreur rafraîchissement après suppression:', e);
+        }
+      }
     } else {
       alert('❌ Erreur: ' + data.message);
     }
