@@ -1204,7 +1204,7 @@ async function loadGameLogo(game, platform) {
   const img = document.createElement('img');
   img.src = logoUrlWithTimestamp;
   img.alt = game.name + ' logo';
-  img.className = 'w-full h-full object-contain';
+  img.className = 'w-full h-auto max-w-full object-contain';
   
   img.onerror = function() {
     console.error('❌ img.onerror déclenché pour:', logoUrlWithTimestamp);
@@ -2050,7 +2050,7 @@ async function displayGameResult(game, platform) {
   
   // Créer la structure du résultat
   const resultContainer = document.createElement('div');
-  resultContainer.className = 'flex gap-4';
+  resultContainer.className = 'flex flex-col sm:flex-row gap-4';
   
   // Colonne gauche: Image + Logo éditeur
   const leftColumn = document.createElement('div');
@@ -2093,7 +2093,7 @@ async function displayGameResult(game, platform) {
   
   // Container principal pour infos + logo (2 colonnes)
   const mainInfoContainer = document.createElement('div');
-  mainInfoContainer.className = 'flex-1 flex gap-4';
+  mainInfoContainer.className = 'flex-1 flex flex-col sm:flex-row gap-4';
   
   // Première colonne: Informations de base uniquement
   const basicInfoColumn = document.createElement('div');
@@ -2159,10 +2159,10 @@ async function displayGameResult(game, platform) {
   
   // Deuxième colonne: Logo du jeu
   const logoColumn = document.createElement('div');
-  logoColumn.className = 'flex-shrink-0 flex items-start justify-center';
+  logoColumn.className = 'w-full sm:w-auto flex-shrink-0 flex items-start justify-center';
   
   const gameLogo = document.createElement('div');
-  gameLogo.className = 'w-48 h-36 flex items-center justify-center flex-shrink-0';
+  gameLogo.className = 'w-full max-w-xs sm:w-48 h-auto sm:h-36 flex items-center justify-center';
   gameLogo.id = 'game-logo-' + game.id;
   gameLogo.innerHTML = '<span class="text-gray-300 text-5xl">✕</span>';
   
