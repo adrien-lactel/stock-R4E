@@ -1,3 +1,5 @@
+
+
 <?php $__env->startSection('content'); ?>
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
@@ -264,15 +266,6 @@
     </div>
 
     
-    <div id="publisher_field" style="display: none;">
-        <label class="block text-sm font-medium mb-1">Éditeur</label>
-        <select id="publisher" name="publisher" class="w-full rounded border-gray-300">
-          <option value="">— Aucun —</option>
-        </select>
-        <p class="text-xs text-gray-500 mt-1">Éditeur du jeu vidéo (sélection via recherche ou autocomplete)</p>
-    </div>
-
-    
     <div class="md:col-span-3" id="description_field" style="display: none;">
         <label class="block text-sm font-medium mb-1">Description du produit</label>
         <textarea id="article_type_description"
@@ -337,6 +330,27 @@
                     
                     <!-- Pour les jeux vidéo : bouton pour ouvrir la modal -->
                     <div id="game_images_section" style="display: none;">
+                        <!-- Bouton pour voir les photos génériques de la taxonomie (si article existant avec ROM ID) -->
+                        <?php if(isset($console->id) && $console->rom_id): ?>
+                        <button type="button" 
+                                onclick="openTaxonomyImagesForArticle()"
+                                class="w-full border-2 border-blue-500 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 transition-colors bg-white mb-4">
+                            <div class="flex items-center justify-center gap-3">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <div class="text-left">
+                                    <p class="text-sm font-semibold text-blue-600">
+                                        🖼️ Voir les photos génériques (<?php echo e($console->rom_id); ?>)
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        Photos de la taxonomie partagées avec tous les exemplaires
+                                    </p>
+                                </div>
+                            </div>
+                        </button>
+                        <?php endif; ?>
+                        
                         <button type="button" 
                                 onclick="openArticleImagesModal()"
                                 class="w-full border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors bg-indigo-50 mb-4">
@@ -811,7 +825,7 @@ function getLocalGameImage(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
@@ -866,7 +880,7 @@ async function getGameImageWithFallback(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
@@ -1041,8 +1055,6 @@ window.closePublisherEditModal = function() {
   const modal = document.getElementById('publisher-edit-modal');
   if (modal) {
     modal.remove();
-    // Recharger le logo après fermeture de la modale
-    location.reload();
   }
 };
 
@@ -1077,16 +1089,45 @@ async function loadGameLogo(game, platform) {
   const logoContainer = document.getElementById('game-logo-' + game.id);
   if (!logoContainer) return;
   
-  // Déterminer l'identifier et le folder
-  let identifier = game.rom_id || game.slug;
+  // Déterminer l'identifier de la même manière que dans displayGameResult
+  const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
+  let identifier;
   
-  // Pour Game Boy, nettoyer l'identifier
-  if (platform === 'gameboy') {
-    identifier = identifier
-      .replace(/\.gb$/i, '')
-      .replace(/\.gbc$/i, '')
-      .replace(/\.gba$/i, '')
+  if (nameBasedPlatforms.includes(platform)) {
+    // Pour ces plateformes, utiliser le nom (sans extension)
+    identifier = game.name
+      .replace(/\.ws$/i, '')
+      .replace(/\.md$/i, '')
+      .replace(/\.gg$/i, '')
+      .replace(/\.bin$/i, '')
       .trim();
+  } else {
+    // Pour Game Boy et autres, utiliser ROM ID
+    identifier = game.rom_id || game.slug;
+    
+    // Nettoyer les extensions selon la plateforme
+    if (platform === 'gameboy') {
+      identifier = identifier
+        .replace(/\.gb$/i, '')
+        .replace(/\.gbc$/i, '')
+        .replace(/\.gba$/i, '')
+        .trim();
+    } else if (platform === 'n64') {
+      identifier = identifier
+        .replace(/\.n64$/i, '')
+        .replace(/\.z64$/i, '')
+        .replace(/\.v64$/i, '')
+        .trim();
+    } else if (platform === 'nes') {
+      identifier = identifier
+        .replace(/\.nes$/i, '')
+        .trim();
+    } else if (platform === 'snes') {
+      identifier = identifier
+        .replace(/\.sfc$/i, '')
+        .replace(/\.smc$/i, '')
+        .trim();
+    }
   }
   
   // Déterminer le dossier
@@ -1105,52 +1146,41 @@ async function loadGameLogo(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
     folder = platformFolders[platform] || platform;
   }
   
-  // Construire l'URL du logo
-  const logoFilename = `${identifier}-logo.png`;
-  
-  // Mode R2 (Production) : charger depuis le mapping
-  const mappingUrl = '<?php echo e(asset("storage/app/taxonomy-r2-mapping.json")); ?>';
-  
-  try {
-    const response = await fetch(mappingUrl);
-    const mapping = await response.json();
-    
-    if (mapping[folder] && mapping[folder][logoFilename]) {
-      const r2Url = mapping[folder][logoFilename];
-      const img = document.createElement('img');
-      img.src = r2Url;
-      img.alt = game.name + ' logo';
-      img.className = 'w-full h-full object-contain';
-      img.onerror = function() {
-        logoContainer.innerHTML = '<span class="text-gray-300 text-4xl">✕</span>';
-      };
-      logoContainer.innerHTML = '';
-      logoContainer.appendChild(img);
-      return;
-    }
-  } catch (error) {
-    console.log('Mapping R2 non disponible, essai en local');
-  }
-  
-  // Fallback avec proxy Laravel
+  // Construire l'URL du logo via le proxy (exactement comme pour cover)
   const useProxy = '<?php echo e(config("filesystems.disks.r2.url") ? "true" : "false"); ?>' === 'true';
-  const localLogoUrl = useProxy 
-    ? `/proxy/images/taxonomy/${folder}/${logoFilename}`
-    : `/stock-R4E/public/images/taxonomy/${folder}/${logoFilename}`;
+  const baseUrl = useProxy ? '/proxy/images/taxonomy' : '<?php echo e(url("/images/taxonomy")); ?>';
+  const logoFilename = `${identifier}-logo.png`;
+  const fullPath = `${baseUrl}/${folder}/${logoFilename}`;
+  const logoUrl = encodeURI(fullPath);
+  
+  // Ajouter timestamp pour forcer le rechargement (comme pour cover)
+  const timestamp = Date.now();
+  const logoUrlWithTimestamp = logoUrl.includes('?') ? `${logoUrl}&t=${timestamp}` : `${logoUrl}?t=${timestamp}`;
+  
+  console.log('🖼️ Chargement logo:', { identifier, folder, logoFilename, logoUrl, logoUrlWithTimestamp });
+  
+  // Méthode simple comme pour cover/artwork/gameplay
   const img = document.createElement('img');
-  img.src = localLogoUrl;
+  img.src = logoUrlWithTimestamp;
   img.alt = game.name + ' logo';
   img.className = 'w-full h-full object-contain';
+  
   img.onerror = function() {
+    console.error('❌ img.onerror déclenché pour:', logoUrlWithTimestamp);
     logoContainer.innerHTML = '<span class="text-gray-300 text-4xl">✕</span>';
   };
+  
+  img.onload = function() {
+    console.log('✅ Logo chargé!', { width: img.naturalWidth, height: img.naturalHeight });
+  };
+  
   logoContainer.innerHTML = '';
   logoContainer.appendChild(img);
 }
@@ -1270,11 +1300,13 @@ window.applyGameTaxonomy = function(game, platform) {
       }
     }
     
-    // Attendre que les marques se chargent
-    setTimeout(() => {
-      // 2. Sélectionner la marque
+    // Attendre que les marques se chargent (polling avec retry)
+    const waitForBrands = (attempts = 0) => {
       const brandSelect = document.getElementById('article_brand_id');
-      if (brandSelect) {
+      if (!brandSelect) return;
+      
+      // Vérifier si les marques sont chargées (plus qu'une option "Sélectionner")
+      if (brandSelect.options.length > 1) {
         const brandOption = Array.from(brandSelect.options).find(opt => 
           opt.text.toLowerCase().includes(mapping.brand.toLowerCase())
         );
@@ -1285,86 +1317,125 @@ window.applyGameTaxonomy = function(game, platform) {
         } else {
           console.warn('⚠️ Marque non trouvée dans les options:', mapping.brand, Array.from(brandSelect.options).map(o => o.text));
         }
-      }
-      
-      // Attendre que les sous-catégories se chargent
-      setTimeout(() => {
-        // 3. Sélectionner la sous-catégorie
-        const subCategorySelect = document.getElementById('article_sub_category_id');
-        if (subCategorySelect) {
-          const subCatOption = Array.from(subCategorySelect.options).find(opt => 
-            opt.text.toLowerCase().includes(mapping.subCategory.toLowerCase())
-          );
-          if (subCatOption) {
-            subCategorySelect.value = subCatOption.value;
-            subCategorySelect.dispatchEvent(new Event('change'));
-            console.log('✓ Sous-catégorie sélectionnée:', subCatOption.text);
-          } else {
-            console.warn('⚠️ Sous-catégorie non trouvée dans les options:', mapping.subCategory, Array.from(subCategorySelect.options).map(o => o.text));
-          }
-        }
         
-        // Attendre que les types se chargent
-        setTimeout(() => {
-          // 4. Créer automatiquement le type (ROM-ID + nom)
-          const romId = game.rom_id || game.slug || '';
-          const typeName = romId ? `${romId} - ${game.name}` : game.name;
-          
-          // Récupérer le sub_category_id sélectionné
+        // Attendre que les sous-catégories se chargent (polling avec retry)
+        const waitForSubCategories = (attempts = 0) => {
           const subCategorySelect = document.getElementById('article_sub_category_id');
-          const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
+          if (!subCategorySelect) return;
           
-          if (subCategoryId && typeName) {
-            console.log('🔨 Création du type:', { subCategoryId, typeName });
+          if (subCategorySelect.options.length > 1) {
+            const subCatOption = Array.from(subCategorySelect.options).find(opt => 
+              opt.text.toLowerCase().includes(mapping.subCategory.toLowerCase())
+            );
+            if (subCatOption) {
+              subCategorySelect.value = subCatOption.value;
+              subCategorySelect.dispatchEvent(new Event('change'));
+              console.log('✓ Sous-catégorie sélectionnée:', subCatOption.text);
+            } else {
+              console.warn('⚠️ Sous-catégorie non trouvée dans les options:', mapping.subCategory, Array.from(subCategorySelect.options).map(o => o.text));
+            }
             
-            // Créer le type via l'API
-            fetch('<?php echo e(route("admin.taxonomy.type.auto-create")); ?>', {
-              method: 'POST',
-              headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                article_sub_category_id: subCategoryId,
-                name: typeName,
-                publisher: game.publisher || null
-              })
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                console.log('✓ Type créé ou trouvé:', data.type);
+            // Attendre que les types se chargent (polling)
+            const waitForTypes = (attempts = 0) => {
+              // 4. Créer automatiquement le type (ROM-ID + nom)
+              const romId = game.rom_id || game.slug || '';
+              const typeName = romId ? `${romId} - ${game.name}` : game.name;
+              
+              // Récupérer le sub_category_id sélectionné
+              const subCategorySelect = document.getElementById('article_sub_category_id');
+              const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
+              
+              if (subCategoryId && typeName) {
+                console.log('🔨 Création du type:', { subCategoryId, typeName });
                 
-                // Sélectionner le type créé/trouvé dans le dropdown
-                const typeSelect = document.getElementById('article_type_id');
-                if (typeSelect) {
-                  // Ajouter l'option si elle n'existe pas
-                  let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
-                  if (!typeOption) {
-                    const newOption = new Option(data.type.name, data.type.id, true, true);
-                    typeSelect.add(newOption);
+                // Créer le type via l'API
+                fetch('<?php echo e(route("admin.taxonomy.type.auto-create")); ?>', {
+                  method: 'POST',
+                  headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    article_sub_category_id: subCategoryId,
+                    name: typeName,
+                    publisher: game.publisher || null
+                  })
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.success) {
+                    console.log('✓ Type créé ou trouvé:', data.type);
+                    
+                    // Sélectionner le type créé/trouvé dans le dropdown
+                    const typeSelect = document.getElementById('article_type_id');
+                    if (typeSelect) {
+                      // Ajouter l'option si elle n'existe pas
+                      let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
+                      if (!typeOption) {
+                        const newOption = new Option(data.type.name, data.type.id, true, true);
+                        typeSelect.add(newOption);
+                      } else {
+                        typeSelect.value = data.type.id;
+                      }
+                      typeSelect.dispatchEvent(new Event('change'));
+                      console.log('✓ Type appliqué:', data.type.name);
+                    }
                   } else {
-                    typeSelect.value = data.type.id;
+                    console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
                   }
-                  typeSelect.dispatchEvent(new Event('change'));
-                  console.log('✓ Type appliqué:', data.type.name);
-                }
+                })
+                .catch(error => {
+                  console.error('Erreur création type:', error);
+                });
               } else {
-                console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
+                console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
               }
-            })
-            .catch(error => {
-              console.error('Erreur création type:', error);
-            });
-          } else {
-            console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
+            };
+            waitForTypes();
+          } else if (attempts < 10) {
+            setTimeout(() => waitForSubCategories(attempts + 1), 200);
           }
-        }, 400);
-      }, 400);
-    }, 400);
+        };
+        waitForSubCategories();
+      } else if (attempts < 10) {
+        setTimeout(() => waitForBrands(attempts + 1), 200);
+      }
+    };
+    waitForBrands();
     
     applyTaxonomyTimeout = null;
   }, 100); // Debounce de 100ms
+};
+
+// =====================================================
+// OUVRIR LE MODAL DE TAXONOMIE POUR L'ARTICLE EN COURS
+// =====================================================
+window.openTaxonomyImagesForArticle = function() {
+  const romId = <?php echo json_encode($console->rom_id ?? null, 15, 512) ?>;
+  const articleType = <?php echo json_encode($console->articleType->name ?? null, 15, 512) ?>;
+  const subCategory = <?php echo json_encode($console->articleSubCategory->name ?? null, 15, 512) ?>;
+  
+  if (!romId) {
+    alert('❌ Pas de ROM ID défini pour cet article');
+    return;
+  }
+  
+  // Déterminer la plateforme/dossier depuis la sous-catégorie
+  let platform = subCategory || 'gameboy';
+  let folder = platform.toLowerCase().replace(/\s+/g, '');
+  
+  // Construire l'objet game pour le modal
+  const game = {
+    rom_id: romId,
+    name: articleType || 'Article',
+    platform: platform,
+    slug: romId
+  };
+  
+  console.log('📂 Ouverture modal taxonomie pour article:', { game, platform, folder });
+  
+  // Ouvrir le modal avec les données de l'article
+  openImageEditorModal(game, platform, romId, folder, 'cover');
 };
 
 // =====================================================
@@ -1414,17 +1485,20 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
   
   // Section Upload
   const uploadSection = document.createElement('div');
-  uploadSection.className = 'border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-gray-100 transition-colors';
+  uploadSection.className = 'border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer';
   uploadSection.innerHTML = `
     <div class="text-center">
       <div class="text-4xl mb-2">📤</div>
       <h4 class="font-semibold text-gray-700 mb-2">Ajouter des images</h4>
-      <p class="text-sm text-gray-500 mb-3">Sélectionnez le type d'image puis choisissez le(s) fichier(s)</p>
+      <p class="text-sm text-gray-500 mb-3">
+        <span class="font-semibold">Glissez-déposez vos images ici</span> ou sélectionnez-les
+      </p>
       
       <div class="flex items-center justify-center gap-3 mb-4">
         <label class="text-sm font-medium text-gray-700">Type d'image :</label>
         <select id="taxonomy-upload-type" class="border border-gray-300 rounded px-3 py-2 text-sm font-medium">
           <option value="cover">📖 Cover</option>
+          <option value="logo">🏷️ Logo</option>
           <option value="artwork">🎨 Artwork</option>
           <option value="gameplay">🎮 Gameplay</option>
         </select>
@@ -1433,7 +1507,7 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
       <input type="file" id="taxonomy-image-upload" accept="image/*" multiple class="hidden">
       <button onclick="document.getElementById('taxonomy-image-upload').click()" 
               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
-        Parcourir
+        📂 Parcourir
       </button>
     </div>
   `;
@@ -1441,19 +1515,50 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
   // Drag & Drop handlers
   uploadSection.ondragover = (e) => {
     e.preventDefault();
-    uploadSection.classList.add('border-blue-500', 'bg-blue-100');
+    e.stopPropagation();
+    uploadSection.classList.remove('bg-gray-50', 'border-gray-300');
+    uploadSection.classList.add('border-blue-500', 'bg-blue-100', 'border-4', 'scale-105');
   };
   
-  uploadSection.ondragleave = () => {
-    uploadSection.classList.remove('border-blue-500', 'bg-blue-100');
+  uploadSection.ondragenter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  
+  uploadSection.ondragleave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Vérifier qu'on quitte vraiment la zone (pas juste un enfant)
+    if (e.target === uploadSection) {
+      uploadSection.classList.remove('border-blue-500', 'bg-blue-100', 'border-4', 'scale-105');
+      uploadSection.classList.add('bg-gray-50', 'border-gray-300');
+    }
   };
   
   uploadSection.ondrop = (e) => {
     e.preventDefault();
-    uploadSection.classList.remove('border-blue-500', 'bg-blue-100');
+    e.stopPropagation();
+    uploadSection.classList.remove('border-blue-500', 'bg-blue-100', 'border-4', 'scale-105');
+    uploadSection.classList.add('bg-gray-50', 'border-gray-300');
+    
     const files = e.dataTransfer.files;
     const selectedType = document.getElementById('taxonomy-upload-type')?.value || 'cover';
-    handleTaxonomyImageUpload(files, identifier, folder, platform, selectedType);
+    
+    if (files.length > 0) {
+      // Feedback visuel
+      uploadSection.classList.add('animate-pulse');
+      setTimeout(() => uploadSection.classList.remove('animate-pulse'), 500);
+      
+      handleTaxonomyImageUpload(files, identifier, folder, platform, selectedType);
+    }
+  };
+  
+  // Clic sur toute la zone pour ouvrir le sélecteur
+  uploadSection.onclick = (e) => {
+    // Ne pas déclencher si on clique sur le select ou le bouton
+    if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION' && e.target.tagName !== 'BUTTON') {
+      document.getElementById('taxonomy-image-upload').click();
+    }
   };
   
   const fileInput = uploadSection.querySelector('#taxonomy-image-upload');
@@ -1467,8 +1572,8 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
   existingSection.className = 'space-y-4';
   existingSection.innerHTML = `
     <h4 class="font-semibold text-gray-700">Images existantes</h4>
-    <div id="taxonomy-images-grid" class="grid grid-cols-3 gap-4">
-      <div class="col-span-3 text-center text-gray-500">
+    <div id="taxonomy-images-grid" class="grid grid-cols-4 gap-4">
+      <div class="col-span-4 text-center text-gray-500">
         <div class="animate-pulse">Chargement des images...</div>
       </div>
     </div>
@@ -1531,6 +1636,7 @@ async function loadTaxonomyImages(identifier, folder) {
         select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
         select.innerHTML = `
           <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
+          <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
           <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
           <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
         `;
@@ -1581,13 +1687,13 @@ async function loadTaxonomyImages(identifier, folder) {
       
       // Ajouter un compteur
       const countInfo = document.createElement('div');
-      countInfo.className = 'col-span-3 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
+      countInfo.className = 'col-span-4 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
       countInfo.textContent = `Total : ${data.total} image${data.total > 1 ? 's' : ''}`;
       gridContainer.appendChild(countInfo);
       
     } else {
       gridContainer.innerHTML = `
-        <div class="col-span-3 text-center text-gray-400 py-8">
+        <div class="col-span-4 text-center text-gray-400 py-8">
           <div class="text-4xl mb-2">📭</div>
           <div>Aucune image trouvée pour ce jeu</div>
         </div>
@@ -1596,7 +1702,7 @@ async function loadTaxonomyImages(identifier, folder) {
   } catch (e) {
     console.error('Erreur chargement images:', e);
     gridContainer.innerHTML = `
-      <div class="col-span-3 text-center text-red-500 py-8">
+      <div class="col-span-4 text-center text-red-500 py-8">
         <div class="text-4xl mb-2">⚠️</div>
         <div>Erreur lors du chargement des images</div>
       </div>
@@ -1722,12 +1828,39 @@ async function handleTaxonomyImageUpload(files, identifier, folder, platform, se
       body: formData
     });
     
+    // Vérifier si la réponse est bien du JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('❌ Réponse HTML au lieu de JSON:', text.substring(0, 500));
+      throw new Error('Le serveur a retourné une erreur. Vérifiez la console pour plus de détails.');
+    }
+    
     const data = await response.json();
     
     if (data.success) {
       alert('✅ ' + data.message);
       // Recharger les images dans la modal au lieu de fermer
       loadTaxonomyImages(identifier, folder);
+      
+      // Si c'est un logo, rafraîchir aussi le logo dans la vue principale
+      if (selectedType === 'logo') {
+        const modal = document.getElementById('image-editor-modal');
+        if (modal && modal.dataset.game) {
+          try {
+            const game = JSON.parse(modal.dataset.game);
+            const platform = modal.dataset.platform;
+            
+            // Rafraîchir le logo du jeu dans la vue principale
+            setTimeout(() => {
+              loadGameLogo(game, platform);
+            }, 500); // Petit délai pour que l'image soit bien uploadée
+          } catch (e) {
+            console.error('Erreur lors du rafraîchissement du logo:', e);
+          }
+        }
+      }
+      
       // Réinitialiser l'input file
       const fileInput = document.getElementById('taxonomy-image-upload');
       if (fileInput) fileInput.value = '';
@@ -1769,6 +1902,23 @@ async function renameTaxonomyImage(identifier, folder, oldType, newType) {
       alert('✅ ' + data.message);
       // Recharger les images dans la modal au lieu de fermer
       loadTaxonomyImages(identifier, folder);
+      
+      // Si on a renommé vers un logo, rafraîchir le logo dans la vue principale
+      if (newType.startsWith('logo')) {
+        const modal = document.getElementById('image-editor-modal');
+        if (modal && modal.dataset.game) {
+          try {
+            const game = JSON.parse(modal.dataset.game);
+            const platform = modal.dataset.platform;
+            
+            setTimeout(() => {
+              loadGameLogo(game, platform);
+            }, 500);
+          } catch (e) {
+            console.error('Erreur lors du rafraîchissement du logo:', e);
+          }
+        }
+      }
     } else {
       alert('❌ Erreur: ' + data.message);
     }
@@ -2155,7 +2305,7 @@ async function displayGameResult(game, platform) {
       'nes': 'nes',
       'snes': 'snes',
       'gamegear': 'gamegear',
-      'wonderswan': 'wonderswan',
+      'wonderswan': 'wonderswan color',
       'segasaturn': 'segasaturn',
       'megadrive': 'megadrive'
     };
@@ -2204,11 +2354,12 @@ async function displayGameResult(game, platform) {
   imagesSection.appendChild(imagesTitleRow);
   
   const imagesGrid = document.createElement('div');
-  imagesGrid.className = 'grid grid-cols-3 gap-3';
+  imagesGrid.className = 'grid grid-cols-4 gap-3';
   
   // Types d'images à afficher
   const imageTypes = [
     { type: 'cover', label: 'Cover' },
+    { type: 'logo', label: 'Logo' },
     { type: 'artwork', label: 'Artwork' },
     { type: 'gameplay', label: 'Gameplay' }
   ];
@@ -2738,42 +2889,14 @@ function attachGameSearchListeners() {
 // ========================================
 
 window.analyzeImageWithAI = async function(imageUrl, type) {
-  
-  const html = `
-    <div class="space-y-3 max-h-96 overflow-y-auto">
-      <p class="text-sm text-gray-600 mb-2">${games.length} résultat(s) trouvé(s)</p>
-      ${games.map(game => `
-        <div class="flex gap-3 items-start p-3 border rounded hover:bg-gray-50">
-          ${game.cloudinary_url ? `<img src="${game.cloudinary_url}" alt="${game.name}" class="w-16 h-16 object-cover rounded">` : ''}
-          <div class="flex-1 min-w-0">
-            <h4 class="font-semibold truncate">${game.name}</h4>
-            ${game.rom_id ? `<p class="text-xs text-gray-600">ROM ID: ${game.rom_id}</p>` : ''}
-            ${game.year ? `<p class="text-xs text-gray-600">Année: ${game.year}</p>` : ''}
-          </div>
-          <button type="button" 
-                  onclick='fillFormFromGame(${JSON.stringify(game).replace(/'/g, "\\'")},"${platform}")'
-                  class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 whitespace-nowrap">
-            ✓ Utiliser
-          </button>
-        </div>
-      `).join('')}
-    </div>
-  `;
-  
-  contentDiv.innerHTML = html;
-}
+  alert('⚠️ Analyse IA désactivée - fonctionnalité en cours de développement');
+};
 
 window.fillFormFromGame = function(game, platform) {
   // Remplir le ROM ID
   const romIdField = document.querySelector('input[name="rom_id"]');
   if (romIdField && game.rom_id) {
     romIdField.value = game.rom_id;
-  }
-  
-  // Remplir l'éditeur (publisher)
-  const publisherField = document.querySelector('input[name="publisher"]');
-  if (publisherField && game.publisher) {
-    publisherField.value = game.publisher;
   }
   
   // Remplir le prix moyen si disponible
@@ -2817,9 +2940,20 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  const oldBrand = <?php echo json_encode(old('article_brand_id', $console->article_brand_id ?? null), 512) ?>;
-  const oldSub = <?php echo json_encode(old('article_sub_category_id', $console->article_sub_category_id), 512) ?>;
-  const oldType = <?php echo json_encode(old('article_type_id', $console->article_type_id), 512) ?>;
+  const oldBrand = <?php echo json_encode(old('article_brand_id', $console->articleSubCategory->brand->id ?? $console->article_brand_id ?? null), 512) ?>;
+  const oldSub = <?php echo json_encode(old('article_sub_category_id', $console->article_sub_category_id ?? null), 512) ?>;
+  const oldType = <?php echo json_encode(old('article_type_id', $console->article_type_id ?? null), 512) ?>;
+
+  console.log('🔍 Valeurs mode édition:', { 
+    catValue: cat.value, 
+    oldBrand, 
+    oldSub, 
+    oldType,
+    consoleBrandId: <?php echo json_encode($console->article_brand_id, 15, 512) ?>,
+    consoleSubCatId: <?php echo json_encode($console->article_sub_category_id, 15, 512) ?>,
+    consoleTypeId: <?php echo json_encode($console->article_type_id, 15, 512) ?>,
+    brandViaRelation: <?php echo json_encode($console->articleSubCategory->brand->id ?? null, 15, 512) ?>
+  });
 
   function clear(sel, placeholder = '— Choisir —') {
     sel.innerHTML = `<option value="">${placeholder}</option>`;
@@ -2832,7 +2966,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Afficher/masquer les champs selon la catégorie
     const languageField = document.getElementById('language_field');
     const regionField = document.getElementById('region_field');
-    const publisherField = document.getElementById('publisher_field');
     const articleImagesField = document.getElementById('article_images_field');
     const completenessConsole = document.getElementById('completeness_console');
     const completenessGame = document.getElementById('completeness_game');
@@ -2862,7 +2995,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (selectedCategory.includes('Jeux vidéo')) {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'block';
       // Le champ images sera affiché par le listener du type
       if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'block';
@@ -2872,7 +3004,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'none';
       // Le champ images sera affiché par le listener du type
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
@@ -2958,7 +3089,6 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('DOMContentLoaded', () => {
     const languageField = document.getElementById('language_field');
     const regionField = document.getElementById('region_field');
-    const publisherField = document.getElementById('publisher_field');
     const completenessConsole = document.getElementById('completeness_console');
     const completenessGame = document.getElementById('completeness_game');
     const completenessHintConsole = document.getElementById('completeness_hint_console');
@@ -2987,7 +3117,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (selectedCategory.includes('Jeux vidéo')) {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'block';
       if (completenessConsole) completenessConsole.style.display = 'none';
       if (completenessGame) completenessGame.style.display = 'block';
       if (completenessHintConsole) completenessHintConsole.style.display = 'none';
@@ -2996,7 +3125,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
-      if (publisherField) publisherField.style.display = 'none';
       if (completenessConsole) completenessConsole.style.display = 'block';
       if (completenessGame) completenessGame.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
@@ -3865,7 +3993,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
 })();
+
 </script>
+
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/consoles/form.blade.php ENDPATH**/ ?>

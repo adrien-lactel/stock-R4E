@@ -1234,7 +1234,8 @@ window.applyGameTaxonomy = function(game, platform) {
   }
   
   applyTaxonomyTimeout = setTimeout(() => {
-    console.log('✓ Application taxonomie:', { game, platform });
+    console.log('✓ Application taxonomie (v2026-02-08-15h30):', { game, platform });
+    console.log('📊 Données complètes du jeu:', JSON.stringify(game, null, 2));
     
     // Mapping plateforme → marque et sous-catégorie
     const platformMapping = {
@@ -1268,17 +1269,27 @@ window.applyGameTaxonomy = function(game, platform) {
     
     const yearField = document.getElementById('year_field');
     const yearInput = document.getElementById('year');
-    console.log('🔍 Données année:', { yearField, yearInput, 'game.year': game.year });
+    console.log('🔍 DEBUG ANNÉE:', {
+      yearField: !!yearField,
+      yearInput: !!yearInput, 
+      'game.year': game.year,
+      'typeof game.year': typeof game.year,
+      'game contient year?': 'year' in game,
+      'toutes les clés de game': Object.keys(game)
+    });
+    
     if (yearField && yearInput) {
       yearField.style.display = 'block';
-      if (game.year) {
-        yearInput.value = game.year;
-        console.log('✓ Année remplie:', game.year);
+      // Essayer plusieurs formats possibles
+      const year = game.year || game.release_year || game.release_date?.substring(0, 4) || '';
+      if (year) {
+        yearInput.value = year;
+        console.log('✓ Année remplie:', year);
       } else {
-        console.warn('⚠️ Pas d\'année dans les données du jeu:', game);
+        console.warn('⚠️ Aucune année trouvée dans:', game);
       }
     } else {
-      console.error('❌ Champs année introuvables:', { yearField, yearInput });
+      console.error('❌ Champs année introuvables!');
     }
     
     // Remplir région
