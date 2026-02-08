@@ -4124,8 +4124,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Ajouter une carte d'image dans la modal
-  function addArticleImageCard(imageSrc, fileName, status = 'uploaded', isGeneric = false) {
+  // Ajouter une carte d'image dans la modal (fonction globale)
+  window.addArticleImageCard = function(imageSrc, fileName, status = 'uploaded', isGeneric = false) {
     const gridContainer = document.getElementById('article-images-grid');
     
     // Retirer le message "Aucune photo"
@@ -4541,7 +4541,8 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // Rafraîchir la prévisualisation dans le formulaire
-  function refreshArticleImagesPreview() {
+  // Rafraîchir l'aperçu des images d'article (fonction globale)
+  window.refreshArticleImagesPreview = function() {
     console.log('🔄 refreshArticleImagesPreview appelé');
     console.log('📦 uploadedGameImages:', uploadedGameImages);
     
