@@ -4128,6 +4128,12 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addArticleImageCard = function(imageSrc, fileName, status = 'uploaded', isGeneric = false) {
     const gridContainer = document.getElementById('article-images-grid');
     
+    // Si la modal n'est pas ouverte, ne rien faire
+    if (!gridContainer) {
+      console.log('⚠️ Modal non ouverte, carte non ajoutée visuellement (image ajoutée à la liste)');
+      return;
+    }
+    
     // Retirer le message "Aucune photo"
     if (gridContainer.querySelector('.col-span-full')) {
       gridContainer.innerHTML = '';
