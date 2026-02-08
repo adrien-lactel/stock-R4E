@@ -1234,7 +1234,7 @@ window.applyGameTaxonomy = function(game, platform) {
   }
   
   applyTaxonomyTimeout = setTimeout(() => {
-    console.log('✓ Application taxonomie (v2026-02-08-16h00):', { game, platform });
+    console.log('✓ Application taxonomie (v2026-02-08-16h15):', { game, platform });
     
     // Mapping plateforme → marque et sous-catégorie
     const platformMapping = {
@@ -1256,14 +1256,18 @@ window.applyGameTaxonomy = function(game, platform) {
       return;
     }
     
-    // 0. Remplir ROM ID et année de sortie
+    // 0. Remplir ROM ID et année de sortie (UNIQUEMENT si vides)
     const romIdField = document.getElementById('rom_id_field');
     const romIdInput = document.getElementById('rom_id');
     if (romIdField && romIdInput) {
       romIdField.style.display = 'block';
-      if (game.rom_id) {
-        romIdInput.value = game.rom_id;
-        console.log('✓ ROM ID rempli:', game.rom_id);
+      if (!romIdInput.value || romIdInput.value.trim() === '') {
+        if (game.rom_id) {
+          romIdInput.value = game.rom_id;
+          console.log('✓ ROM ID rempli:', game.rom_id);
+        }
+      } else {
+        console.log('⏭️ ROM ID déjà rempli, conservation:', romIdInput.value);
       }
     }
     
@@ -1273,38 +1277,46 @@ window.applyGameTaxonomy = function(game, platform) {
     
     if (yearField && yearInput) {
       yearField.style.display = 'block';
-      // Essayer plusieurs formats possibles
-      const year = game.year || game.release_year || game.release_date?.substring(0, 4) || '';
-      console.log('🗓️ ANNÉE extraite:', year);
-      if (year) {
-        yearInput.value = year;
-        console.log('✓ Année remplie:', year);
+      // Ne remplir l'année QUE si le champ est vide (pour ne pas écraser une valeur modifiée manuellement)
+      if (!yearInput.value || yearInput.value.trim() === '') {
+        const year = game.year || game.release_year || game.release_date?.substring(0, 4) || '';
+        console.log('🗓️ ANNÉE extraite:', year);
+        if (year) {
+          yearInput.value = year;
+          console.log('✓ Année remplie:', year);
+        } else {
+          console.log('📅 Pas d\'année dans la BDD pour ce jeu');
+        }
       } else {
-        console.log('📅 Pas d\'année dans la BDD pour ce jeu');
+        console.log('⏭️ Année déjà remplie, conservation de la valeur:', yearInput.value);
       }
     } else {
       console.error('❌ Champs année introuvables!', { yearField, yearInput });
     }
     
-    // Remplir région
+    // Remplir région (UNIQUEMENT si vide)
     const regionField = document.getElementById('region_field');
     const regionSelect = document.getElementById('region');
     if (regionField && regionSelect) {
       regionField.style.display = 'block';
-      if (game.region) {
-        regionSelect.value = game.region;
-        console.log('✓ Région remplie:', game.region);
+      if (!regionSelect.value || regionSelect.value.trim() === '') {
+        if (game.region) {
+          regionSelect.value = game.region;
+          console.log('✓ Région remplie:', game.region);
+        } else {
+          console.warn('⚠️ Pas de région dans les données du jeu');
+        }
       } else {
-        console.warn('⚠️ Pas de région dans les données du jeu');
+        console.log('⏭️ Région déjà remplie, conservation:', regionSelect.value);
       }
     }
     
-    // Remplir éditeur
+    // Remplir éditeur (UNIQUEMENT si vide)
     const publisherField = document.getElementById('publisher_field');
     const publisherSelect = document.getElementById('publisher');
     if (publisherField && publisherSelect) {
       publisherField.style.display = 'block';
-      if (game.publisher) {
+      if ((!publisherSelect.value || publisherSelect.value.trim() === '') && game.publisher) {
         // Vérifier si l'option existe
         const publisherOption = Array.from(publisherSelect.options).find(opt => 
           opt.value.toLowerCase() === game.publisher.toLowerCase()
@@ -1328,6 +1340,8 @@ window.applyGameTaxonomy = function(game, platform) {
           }
           console.log('✓ Éditeur créé et rempli:', game.publisher);
         }
+      } else if (publisherSelect.value && publisherSelect.value.trim() !== '') {
+        console.log('⏭️ Éditeur déjà rempli, conservation:', publisherSelect.value);
       } else {
         console.warn('⚠️ Pas d\'éditeur dans les données du jeu');
       }
