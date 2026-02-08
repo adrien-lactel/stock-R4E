@@ -298,6 +298,13 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/ajax/brands/{category}', [TaxonomyController::class, 'ajaxBrands'])
             ->name('ajax.brands');
 
+        // Chargement progressif pour éviter saturation mémoire
+        Route::get('/ajax/taxonomy/subcategories/{brand}', [TaxonomyController::class, 'ajaxSubCategories'])
+            ->name('ajax.taxonomy.subcategories');
+        
+        Route::get('/ajax/taxonomy/types', [TaxonomyController::class, 'ajaxAllTypes'])
+            ->name('ajax.taxonomy.alltypes');
+
         Route::get('/ajax/sub-categories/{brand}', [TaxonomyController::class, 'ajaxSubCategories'])
             ->name('ajax.sub-categories');
 
