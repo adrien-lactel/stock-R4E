@@ -478,43 +478,71 @@ public function destroyType(ArticleType $type)
      ===================================================== */
     public function getArticleTypeImages($typeId)
     {
-        // ⚠️ DÉSACTIVÉ : colonne article_images n'existe pas sur Railway
-        // Cette fonctionnalité sera implémentée plus tard
-        return response()->json([
-            'success' => true,
-            'images' => [],
-            'count' => 0,
-            'message' => 'Fonctionnalité photos spécifiques désactivée temporairement'
-        ]);
-        
-        /* CODE ORIGINAL (à réactiver quand la colonne sera créée)
-        // Récupérer tous les articles (consoles) de ce type
-        $articles = \App\Models\Console::where('article_type_id', $typeId)
-            ->whereNotNull('article_images')
-            ->get();
+        try {
+            // Récupérer le type d'article
+            $articleType = \App\Models\ArticleType::find($typeId);
+            
+            if (!$articleType) {
+                return response()->json([
+                    'success' => false,
+                    'images' => [],
+                    'count' => 0,
+                    'message' => 'Type d\'article introuvable'
+                ]);
+            }
 
-        $allImages = [];
+            $allImages = [];
 
-        foreach ($articles as $article) {
-            $images = is_string($article->article_images) 
-                ? json_decode($article->article_images, true) 
-                : $article->article_images;
+            // Ajouter cover_image si elle existe
+            if (!empty($articleType->cover_image)) {
+                $allImages[] = $articleType->cover_image;
+            }
 
-            if (is_array($images)) {
-                foreach ($images as $imageUrl) {
-                    if (!in_array($imageUrl, $allImages)) {
-                        $allImages[] = $imageUrl;
+            // Ajouter artwork_image si elle existe
+            if (!empty($articleType->artwork_image)) {
+                $allImages[] = $articleType->artwork_image;
+            }
+
+            // Ajouter gameplay_image si elle existe
+            if (!empty($articleType->gameplay_image)) {
+                $allImages[] = $articleType->gameplay_image;
+            }
+
+            // Ajouter les images du tableau JSON si elles existent
+            if (!empty($articleType->images)) {
+                $images = is_string($articleType->images) 
+                    ? json_decode($articleType->images, true) 
+                    : $articleType->images;
+
+                if (is_array($images)) {
+                    foreach ($images as $imageUrl) {
+                        // Éviter les doublons
+                        if (!in_array($imageUrl, $allImages)) {
+                            $allImages[] = $imageUrl;
+                        }
                     }
                 }
             }
-        }
 
-        return response()->json([
-            'success' => true,
-            'images' => $allImages,
-            'count' => count($allImages)
-        ]);
-        */
+            \Log::info('Images du type d\'article récupérées', [
+                'type_id' => $typeId,
+                'count' => count($allImages)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'images' => $allImages,
+                'count' => count($allImages)
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur getArticleTypeImages: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'images' => [],
+                'count' => 0,
+                'message' => 'Erreur lors de la récupération des images'
+            ], 500);
+        }
     }
 
     /* =====================================================
