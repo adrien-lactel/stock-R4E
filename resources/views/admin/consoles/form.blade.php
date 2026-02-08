@@ -42,6 +42,37 @@
             </svg>
         </button>
         
+        {{-- Titre et actions contextuelles --}}
+        <div id="lightbox-header" class="absolute top-4 left-4 flex items-center gap-3 z-10">
+            <div id="lightbox-filename" class="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium"></div>
+            <div id="lightbox-actions" class="flex gap-2"></div>
+        </div>
+        
+        {{-- Contrôles d'édition (gauche) --}}
+        <div class="absolute top-1/2 left-4 transform -translate-y-1/2 flex flex-col gap-3 z-10">
+            <button type="button" onclick="rotateLeft(); event.stopPropagation();" 
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-lg transition-colors group"
+                    title="Rotation 90° gauche">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                </svg>
+            </button>
+            <button type="button" onclick="rotateRight(); event.stopPropagation();" 
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-lg transition-colors group"
+                    title="Rotation 90° droite">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"></path>
+                </svg>
+            </button>
+            <button type="button" onclick="downloadLightboxImage(); event.stopPropagation();" 
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-lg transition-colors group"
+                    title="Télécharger">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+            </button>
+        </div>
+        
         {{-- Contrôles de zoom --}}
         <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
             <button type="button" onclick="zoomOut(); event.stopPropagation();" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded transition-colors">
@@ -590,19 +621,62 @@ window.laravelAssetBase = '{{ asset('') }}';
 let currentZoom = 1;
 let currentX = 0;
 let currentY = 0;
+let currentRotation = 0;
 let isDragging = false;
 let startX = 0;
 let startY = 0;
 
-window.openImageLightbox = function(imageUrl) {
+window.openImageLightbox = function(imageUrl, context = {}) {
   const lightbox = document.getElementById('image-lightbox');
   const lightboxImage = document.getElementById('lightbox-image');
   if (lightbox && lightboxImage) {
     lightboxImage.src = imageUrl;
+    lightboxImage.dataset.originalUrl = imageUrl;
     lightbox.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     resetZoom();
     initZoomControls();
+    
+    // Mettre à jour le nom du fichier
+    const filenameEl = document.getElementById('lightbox-filename');
+    if (filenameEl) {
+      const filename = imageUrl.split('/').pop().split('?')[0];
+      filenameEl.textContent = filename;
+    }
+    
+    // Actions contextuelles pour les photos d'articles
+    const actionsEl = document.getElementById('lightbox-actions');
+    if (actionsEl) {
+      actionsEl.innerHTML = '';
+      
+      if (context.isArticleImage) {
+        // Bouton définir comme principale
+        if (!context.isPrimary) {
+          const setPrimaryBtn = document.createElement('button');
+          setPrimaryBtn.type = 'button';
+          setPrimaryBtn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors';
+          setPrimaryBtn.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg> Définir comme principale';
+          setPrimaryBtn.onclick = (e) => {
+            e.stopPropagation();
+            setPrimaryImage(imageUrl);
+            closeImageLightbox();
+          };
+          actionsEl.appendChild(setPrimaryBtn);
+        }
+        
+        // Bouton supprimer
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors';
+        deleteBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Supprimer';
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteArticleImage(imageUrl);
+          closeImageLightbox();
+        };
+        actionsEl.appendChild(deleteBtn);
+      }
+    }
   }
 };
 
@@ -614,6 +688,8 @@ window.closeImageLightbox = function() {
     currentZoom = 1;
     currentX = 0;
     currentY = 0;
+    currentRotation = 0;
+    updateTransform();
   }
 };
 
@@ -634,10 +710,39 @@ window.resetZoom = function() {
   updateTransform();
 };
 
+window.rotateLeft = function() {
+  currentRotation = (currentRotation - 90) % 360;
+  updateTransform();
+};
+
+window.rotateRight = function() {
+  currentRotation = (currentRotation + 90) % 360;
+  updateTransform();
+};
+
+window.downloadLightboxImage = function() {
+  const img = document.getElementById('lightbox-image');
+  if (!img || !img.dataset.originalUrl) return;
+  
+  const url = img.dataset.originalUrl;
+  const filename = url.split('/').pop().split('?')[0];
+  
+  // Créer un lien de téléchargement
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  console.log('💾 Téléchargement:', filename);
+};
+
 function updateTransform() {
   const img = document.getElementById('lightbox-image');
   if (img) {
-    img.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
+    img.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom}) rotate(${currentRotation}deg)`;
   }
 }
 
@@ -3899,7 +4004,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     card.innerHTML = `
       <div class="relative group">
-        <img src="${imageSrc}" class="w-full aspect-square object-cover rounded cursor-pointer hover:opacity-90" onclick="window.openImageLightbox('${imageSrc}')">
+        <img src="${imageSrc}" class="w-full aspect-square object-cover rounded cursor-pointer hover:opacity-90" 
+             onclick="event.stopPropagation(); window.openImageLightbox('${imageSrc}', {isArticleImage: true, isPrimary: ${isPrimary}})">
         
         ${isPrimary ? `
           <div class="absolute top-2 left-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center gap-1">
