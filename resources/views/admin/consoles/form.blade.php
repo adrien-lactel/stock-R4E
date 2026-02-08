@@ -646,9 +646,10 @@
      JS CLASSIFICATION
 ===================== --}}
 <script>
-// ✅ Base URLs pour les images (défini en PREMIER avant tout code)
+// ✅ Configuration globale
 window.gameboyImageBaseUrl = '{{ asset('images/taxonomy/gameboy') }}';
 window.laravelAssetBase = '{{ asset('') }}';
+window.ajaxSearchGameUrl = '{{ url('admin/ajax/search-game') }}';
 
 // ✅ Lightbox avec zoom et pan
 let currentZoom = 1;
@@ -3203,197 +3204,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Autocomplétion jeux (ROM ID + nom)
-let gameDebounceTimer = null;
-let currentGameSuggestionIndex = -1;
-
-window.onGameInput = function() {
-  clearTimeout(gameDebounceTimer);
-  const input = document.getElementById('game-search');
-  const value = input.value.trim();
-  
-  if (value.length < 2) {
-    clearGameSuggestions();
-    return;
-  }
-  
-  gameDebounceTimer = setTimeout(() => {
-    fetchGameSuggestions(value);
-  }, 300);
-};
-
-async function fetchGameSuggestions(query) {
-  const platform = document.getElementById('game-platform').value;
-  
-  try {
-    const url = `{{ url('admin/ajax/search-game') }}?platform=${platform}&query=${encodeURIComponent(query)}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.success && data.games && data.games.length > 0) {
-      displayGameSuggestions(data.games);
-    } else {
-      if (!data.success && data.message) {
-        const suggestionsDiv = document.getElementById('game-suggestions');
-        suggestionsDiv.innerHTML = `
-          <div class="px-4 py-3 text-sm text-gray-600">
-            <span class="font-medium">Aucun jeu trouvé</span><br>
-            <span class="text-xs">La base de données sur Railway ne contient peut-être pas encore de jeux pour cette plateforme.</span>
-          </div>
-        `;
-        suggestionsDiv.classList.remove('hidden');
-        suggestionsDiv.style.display = 'block';
-      } else {
-        clearGameSuggestions();
-      }
-    }
-  } catch (error) {
-    console.error('Erreur suggestions jeux:', error);
-  }
-}
-
-function displayGameSuggestions(games) {
-  const suggestionsDiv = document.getElementById('game-suggestions');
-  const platform = document.getElementById('game-platform').value;
-  currentGameSuggestionIndex = -1;
-  
-  suggestionsDiv.innerHTML = '';
-  
-  games.forEach((game, index) => {
-    const imageUrl = getLocalGameImage(game, platform);
-    const gameJson = btoa(encodeURIComponent(JSON.stringify(game)));
-    
-    const div = document.createElement('div');
-    div.className = 'suggestion-item flex items-center gap-3 px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0';
-    div.style.cssText = 'background-color: white !important; color: black !important; min-height: 60px;';
-    div.setAttribute('data-index', index);
-    div.setAttribute('data-game-json', gameJson);
-    div.onclick = function() { selectGameSuggestionFromData(this); };
-    
-    if (imageUrl) {
-      const img = document.createElement('img');
-      // Ajouter timestamp pour éviter le cache
-      const timestamp = Date.now();
-      img.src = imageUrl.includes('?') ? `${imageUrl}&t=${timestamp}` : `${imageUrl}?t=${timestamp}`;
-      img.alt = '';
-      img.className = 'w-12 h-12 object-cover rounded flex-shrink-0';
-      
-      // Fonction pour remplacer par le placeholder
-      const replacePlaceholder = function() {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'w-12 h-12 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center text-gray-400 text-xs';
-        placeholder.textContent = '?';
-        img.replaceWith(placeholder);
-      };
-      
-      img.onerror = replacePlaceholder;
-      
-      div.appendChild(img);
-    } else {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'w-12 h-12 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center text-gray-400 text-xs';
-      placeholder.textContent = '?';
-      div.appendChild(placeholder);
-    }
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'flex-1 min-w-0';
-    
-    const gameName = document.createElement('div');
-    gameName.className = 'font-semibold text-sm text-gray-900 truncate';
-    gameName.textContent = game.name;
-    
-    const gameId = document.createElement('div');
-    gameId.className = 'text-xs text-gray-500 truncate';
-    gameId.textContent = game.rom_id || game.slug || '';
-    
-    contentDiv.appendChild(gameName);
-    contentDiv.appendChild(gameId);
-    
-    // Afficher les noms alternatifs si disponibles
-    if (game.alternate_names) {
-      const alternateNames = game.alternate_names.split('|');
-      if (alternateNames.length > 0) {
-        const altDiv = document.createElement('div');
-        altDiv.className = 'text-xs text-blue-600 mt-1 truncate';
-        altDiv.textContent = '→ ' + alternateNames.join(' • ');
-        contentDiv.appendChild(altDiv);
-      }
-    }
-    
-    div.appendChild(contentDiv);
-    
-    suggestionsDiv.appendChild(div);
-  });
-  
-  suggestionsDiv.classList.remove('hidden');
-  suggestionsDiv.style.display = 'block';
-  suggestionsDiv.style.backgroundColor = '#ffffff';
-  suggestionsDiv.style.border = '2px solid #3b82f6';
-}
-
-window.selectGameSuggestionFromData = function(element) {
-  const gameJson = element.getAttribute('data-game-json');
-  const game = JSON.parse(decodeURIComponent(atob(gameJson)));
-  const identifier = game.rom_id || game.slug || game.name || '';
-  document.getElementById('game-search').value = identifier;
-  clearGameSuggestions();
-  
-  // Afficher le résultat avec l'image
-  displayGameResult(game, document.getElementById('game-platform').value);
-};
-
-window.clearGameSuggestions = function() {
-  const suggestionsDiv = document.getElementById('game-suggestions');
-  suggestionsDiv.innerHTML = '';
-  suggestionsDiv.classList.add('hidden');
-  currentGameSuggestionIndex = -1;
-};
-
-window.onGameKeydown = function(e) {
-  const suggestions = document.querySelectorAll('#game-suggestions .suggestion-item');
-  
-  if (e.key === 'Enter') {
-    e.preventDefault(); // Toujours empêcher la soumission du formulaire
-    if (currentGameSuggestionIndex >= 0 && suggestions.length > 0) {
-      suggestions[currentGameSuggestionIndex].click();
-    }
-    return;
-  }
-  
-  if (suggestions.length === 0) return;
-  
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    currentGameSuggestionIndex = Math.min(currentGameSuggestionIndex + 1, suggestions.length - 1);
-    highlightGameSuggestion();
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    currentGameSuggestionIndex = Math.max(currentGameSuggestionIndex - 1, 0);
-    highlightGameSuggestion();
-  } else if (e.key === 'Escape') {
-    clearGameSuggestions();
-  }
-};
-
-function highlightGameSuggestion() {
-  const suggestions = document.querySelectorAll('#game-suggestions .suggestion-item');
-  suggestions.forEach((el, idx) => {
-    if (idx === currentGameSuggestionIndex) {
-      el.classList.add('bg-blue-100');
-      el.scrollIntoView({ block: 'nearest' });
-    } else {
-      el.classList.remove('bg-blue-100');
-    }
-  });
-}
-
-// Fermer les suggestions en cliquant ailleurs
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#game-search') && !e.target.closest('#game-suggestions')) {
-    clearGameSuggestions();
-  }
-});
+// Autocomplétion jeux - voir public/js/game-autocomplete.js
 
 // Fonction pour afficher un toast notification
 window.showToast = function(message, type = 'success') {
@@ -4873,5 +4684,8 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 
 </script>
+
+{{-- Script externe pour l'autocomplétion des jeux --}}
+<script src="{{ asset('js/game-autocomplete.js') }}"></script>
 
 @endsection

@@ -1,0 +1,141 @@
+// Autocomplétion jeux (ROM ID + nom)
+let gameDebounceTimer = null;
+let currentGameSuggestionIndex = -1;
+
+window.onGameInput = function() {
+  clearTimeout(gameDebounceTimer);
+  const input = document.getElementById('game-search');
+  if (!input) return;
+  
+  const value = input.value.trim();
+  
+  if (value.length < 2) {
+    clearGameSuggestions();
+    return;
+  }
+  
+  gameDebounceTimer = setTimeout(() => {
+    fetchGameSuggestions(value);
+  }, 300);
+};
+
+async function fetchGameSuggestions(query) {
+  const platform = document.getElementById('game-platform')?.value || 'gameboy';
+  
+  try {
+    const url = window.ajaxSearchGameUrl + `?platform=${platform}&query=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success && data.games && data.games.length > 0) {
+      displayGameSuggestions(data.games);
+    } else {
+      clearGameSuggestions();
+    }
+  } catch (error) {
+    console.error('Erreur suggestions jeux:', error);
+  }
+}
+
+function displayGameSuggestions(games) {
+  const suggestionsDiv = document.getElementById('game-suggestions');
+  if (!suggestionsDiv) return;
+  
+  const platform = document.getElementById('game-platform')?.value || 'gameboy';
+  currentGameSuggestionIndex = -1;
+  
+  suggestionsDiv.innerHTML = '';
+  
+  games.forEach((game, index) => {
+    const div = document.createElement('div');
+    div.className = 'suggestion-item flex items-center gap-3 px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0';
+    div.setAttribute('data-index', index);
+    div.setAttribute('data-game-json', btoa(encodeURIComponent(JSON.stringify(game))));
+    div.onclick = function() { selectGameSuggestionFromData(this); };
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'flex-1 min-w-0';
+    
+    const gameName = document.createElement('div');
+    gameName.className = 'font-semibold text-sm text-gray-900 truncate';
+    gameName.textContent = game.name;
+    
+    const gameId = document.createElement('div');
+    gameId.className = 'text-xs text-gray-500 truncate';
+    gameId.textContent = game.rom_id || game.slug || '';
+    
+    contentDiv.appendChild(gameName);
+    contentDiv.appendChild(gameId);
+    div.appendChild(contentDiv);
+    suggestionsDiv.appendChild(div);
+  });
+  
+  suggestionsDiv.classList.remove('hidden');
+  suggestionsDiv.style.display = 'block';
+}
+
+window.selectGameSuggestionFromData = function(element) {
+  const gameJson = element.getAttribute('data-game-json');
+  const game = JSON.parse(decodeURIComponent(atob(gameJson)));
+  const identifier = game.rom_id || game.slug || game.name || '';
+  document.getElementById('game-search').value = identifier;
+  clearGameSuggestions();
+  
+  if (window.displayGameResult) {
+    const platform = document.getElementById('game-platform')?.value || 'gameboy';
+    window.displayGameResult(game, platform);
+  }
+};
+
+window.clearGameSuggestions = function() {
+  const suggestionsDiv = document.getElementById('game-suggestions');
+  if (!suggestionsDiv) return;
+  suggestionsDiv.innerHTML = '';
+  suggestionsDiv.classList.add('hidden');
+  currentGameSuggestionIndex = -1;
+};
+
+window.onGameKeydown = function(e) {
+  const suggestions = document.querySelectorAll('#game-suggestions .suggestion-item');
+  
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (currentGameSuggestionIndex >= 0 && suggestions.length > 0) {
+      suggestions[currentGameSuggestionIndex].click();
+    }
+    return;
+  }
+  
+  if (suggestions.length === 0) return;
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    currentGameSuggestionIndex = Math.min(currentGameSuggestionIndex + 1, suggestions.length - 1);
+    highlightGameSuggestion();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    currentGameSuggestionIndex = Math.max(currentGameSuggestionIndex - 1, 0);
+    highlightGameSuggestion();
+  } else if (e.key === 'Escape') {
+    clearGameSuggestions();
+  }
+};
+
+function highlightGameSuggestion() {
+  const suggestions = document.querySelectorAll('#game-suggestions .suggestion-item');
+  suggestions.forEach((el, idx) => {
+    if (idx === currentGameSuggestionIndex) {
+      el.classList.add('bg-blue-100');
+      el.scrollIntoView({ block: 'nearest' });
+    } else {
+      el.classList.remove('bg-blue-100');
+    }
+  });
+}
+
+// Fermer les suggestions en cliquant ailleurs
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#game-search') && !e.target.closest('#game-suggestions')) {
+    clearGameSuggestions();
+  }
+});
