@@ -1178,54 +1178,6 @@ function initZoomControls() {
     lastTouchDistance = 0;
   };
 }
-      img.style.cursor = 'grab';
-    }
-  };
-
-  // Support tactile (pinch-to-zoom)
-  let initialDistance = 0;
-  let initialZoom = 1;
-
-  container.ontouchstart = function(e) {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      initialDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      );
-      initialZoom = currentZoom;
-    } else if (e.touches.length === 1 && currentZoom > 1) {
-      isDragging = true;
-      startX = e.touches[0].clientX - currentX;
-      startY = e.touches[0].clientY - currentY;
-    }
-  };
-
-  container.ontouchmove = function(e) {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const distance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      );
-      currentZoom = Math.max(0.5, Math.min(5, initialZoom * (distance / initialDistance)));
-      updateTransform();
-    } else if (e.touches.length === 1 && isDragging) {
-      e.preventDefault();
-      currentX = e.touches[0].clientX - startX;
-      currentY = e.touches[0].clientY - startY;
-      updateTransform();
-    }
-  };
-
-  container.ontouchend = function() {
-    isDragging = false;
-  };
-}
 
 // Fermer avec la touche Échap
 document.addEventListener('keydown', function(e) {
