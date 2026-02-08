@@ -1247,6 +1247,7 @@ async function loadGameLogo(game, platform) {
 // FONCTION APPLIQUER LA TAXONOMIE DU JEU AU FORMULAIRE
 // =====================================================
 let applyTaxonomyTimeout = null;
+const gamesCache = new Map(); // Cache pour stocker les objets game et leurs modifications
 
 window.applyGameTaxonomy = function(game, platform) {
   // Debounce pour éviter les doubles exécutions
@@ -1256,7 +1257,10 @@ window.applyGameTaxonomy = function(game, platform) {
   }
   
   applyTaxonomyTimeout = setTimeout(() => {
-    console.log('✓ Application taxonomie (v2026-02-08-16h15):', { game, platform });
+    // Récupérer la version à jour du jeu depuis le cache si elle existe
+    const cachedGame = gamesCache.get(game.id);
+    const gameToUse = cachedGame || game;
+    console.log('✓ Application taxonomie (v2026-02-08-16h30):', { gameToUse, platform, cached: !!cachedGame });
     
     // Mapping plateforme → marque et sous-catégorie
     const platformMapping = {
@@ -1284,8 +1288,8 @@ window.applyGameTaxonomy = function(game, platform) {
     if (romIdField && romIdInput) {
       romIdField.style.display = 'block';
       if (!romIdInput.value || romIdInput.value.trim() === '') {
-        if (game.rom_id) {
-          romIdInput.value = game.rom_id;
+        if (gameToUse.rom_id) {
+          romIdInput.value = gameToUse.rom_id;
           console.log('✓ ROM ID rempli:', game.rom_id);
         }
       } else {
@@ -1301,7 +1305,7 @@ window.applyGameTaxonomy = function(game, platform) {
       yearField.style.display = 'block';
       // Ne remplir l'année QUE si le champ est vide (pour ne pas écraser une valeur modifiée manuellement)
       if (!yearInput.value || yearInput.value.trim() === '') {
-        const year = game.year || game.release_year || game.release_date?.substring(0, 4) || '';
+        const year = gameToUse.year || gameToUse.release_year || gameToUse.release_date?.substring(0, 4) || '';
         console.log('🗓️ ANNÉE extraite:', year);
         if (year) {
           yearInput.value = year;
@@ -1322,8 +1326,8 @@ window.applyGameTaxonomy = function(game, platform) {
     if (regionField && regionSelect) {
       regionField.style.display = 'block';
       if (!regionSelect.value || regionSelect.value.trim() === '') {
-        if (game.region) {
-          regionSelect.value = game.region;
+        if (gameToUse.region) {
+          regionSelect.value = gameToUse.region;
           console.log('✓ Région remplie:', game.region);
         } else {
           console.warn('⚠️ Pas de région dans les données du jeu');
@@ -1338,19 +1342,19 @@ window.applyGameTaxonomy = function(game, platform) {
     const publisherSelect = document.getElementById('publisher');
     if (publisherField && publisherSelect) {
       publisherField.style.display = 'block';
-      if ((!publisherSelect.value || publisherSelect.value.trim() === '') && game.publisher) {
+      if ((!publisherSelect.value || publisherSelect.value.trim() === '') && gameToUse.publisher) {
         // Vérifier si l'option existe
         const publisherOption = Array.from(publisherSelect.options).find(opt => 
-          opt.value.toLowerCase() === game.publisher.toLowerCase()
+          opt.value.toLowerCase() === gameToUse.publisher.toLowerCase()
         );
         
         if (publisherOption) {
           // L'option existe, la sélectionner
           publisherSelect.value = publisherOption.value;
-          console.log('✓ Éditeur rempli:', game.publisher);
+          console.log('✓ Éditeur rempli:', gameToUse.publisher);
         } else {
           // L'option n'existe pas, la créer
-          const newOption = new Option(game.publisher, game.publisher, true, true);
+          const newOption = new Option(gameToUse.publisher, gameToUse.publisher, true, true);
           // Insérer dans le groupe "Autres"
           const autresGroup = Array.from(publisherSelect.querySelectorAll('optgroup')).find(g => 
             g.label.includes('Autres')
@@ -1360,7 +1364,7 @@ window.applyGameTaxonomy = function(game, platform) {
           } else {
             publisherSelect.add(newOption);
           }
-          console.log('✓ Éditeur créé et rempli:', game.publisher);
+          console.log('✓ Éditeur créé et rempli:', gameToUse.publisher);
         }
       } else if (publisherSelect.value && publisherSelect.value.trim() !== '') {
         console.log('⏭️ Éditeur déjà rempli, conservation:', publisherSelect.value);
@@ -1423,8 +1427,8 @@ window.applyGameTaxonomy = function(game, platform) {
           console.log('✓ Select des types chargé, options:', typeSelect.options.length);
           
           // 4. Créer automatiquement le type (ROM-ID + nom)
-          const romId = game.rom_id || game.slug || '';
-          const typeName = romId ? `${romId} - ${game.name}` : game.name;
+          const romId = gameToUse.rom_id || gameToUse.slug || '';
+          const typeName = romId ? `${romId} - ${gameToUse.name}` : gameToUse.name;
           
           // Récupérer le sub_category_id sélectionné
           const subCategorySelect = document.getElementById('article_sub_category_id');
@@ -1443,7 +1447,7 @@ window.applyGameTaxonomy = function(game, platform) {
               body: JSON.stringify({
                 article_sub_category_id: subCategoryId,
                 name: typeName,
-                publisher: game.publisher || null
+                publisher: gameToUse.publisher || null
               })
             })
             .then(response => response.json())
@@ -2172,6 +2176,10 @@ async function deleteTaxonomyImage(identifier, folder, type) {
 // Afficher le résultat de la recherche avec l'image (v2.1 - Structure mise à jour)
 async function displayGameResult(game, platform) {
   console.log('🎮 displayGameResult v2.1 - Début', { game, platform });
+  
+  // Stocker l'objet game dans le cache pour pouvoir le mettre à jour
+  gamesCache.set(game.id, game);
+  
   const resultsDiv = document.getElementById('game-search-results');
   const contentDiv = document.getElementById('game-results-content');
   
@@ -2930,6 +2938,12 @@ window.updateGameField = async function(gameId, platform, field, value) {
     const data = await response.json();
     
     if (data.success) {
+      // Mettre à jour le cache avec la nouvelle valeur
+      const cachedGame = gamesCache.get(gameId);
+      if (cachedGame) {
+        cachedGame[field] = value;
+        console.log(`📝 Cache mis à jour pour game ${gameId}, ${field} = ${value}`);
+      }
       showToast(`Champ "${field}" mis à jour`, 'success');
     } else {
       showToast('Erreur: ' + data.message, 'error');
