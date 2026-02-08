@@ -1268,12 +1268,17 @@ window.applyGameTaxonomy = function(game, platform) {
     
     const yearField = document.getElementById('year_field');
     const yearInput = document.getElementById('year');
+    console.log('🔍 Données année:', { yearField, yearInput, 'game.year': game.year });
     if (yearField && yearInput) {
       yearField.style.display = 'block';
       if (game.year) {
         yearInput.value = game.year;
         console.log('✓ Année remplie:', game.year);
+      } else {
+        console.warn('⚠️ Pas d\'année dans les données du jeu:', game);
       }
+    } else {
+      console.error('❌ Champs année introuvables:', { yearField, yearInput });
     }
     
     // Remplir région
@@ -1373,58 +1378,98 @@ window.applyGameTaxonomy = function(game, platform) {
             
             // Attendre que les types se chargent (polling)
             const waitForTypes = (attempts = 0) => {
-              // 4. Créer automatiquement le type (ROM-ID + nom)
-              const romId = game.rom_id || game.slug || '';
-              const typeName = romId ? `${romId} - ${game.name}` : game.name;
+              const typeSelect = document.getElementById('article_type_id');
+              if (!typeSelect) {
+                console.error('❌ Select des types introuvable');
+                return;
+              }
               
-              // Récupérer le sub_category_id sélectionné
-              const subCategorySelect = document.getElementById('article_sub_category_id');
-              const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
-              
-              if (subCategoryId && typeName) {
-                console.log('🔨 Création du type:', { subCategoryId, typeName });
+              // Vérifier si les types sont chargés (plus qu'une option "Sélectionner")
+              if (typeSelect.options.length > 1 || attempts >= 10) {
+                console.log('✓ Select des types chargé, options:', typeSelect.options.length);
                 
-                // Créer le type via l'API
-                fetch('{{ route("admin.taxonomy.type.auto-create") }}', {
-                  method: 'POST',
-                  headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    article_sub_category_id: subCategoryId,
-                    name: typeName,
-                    publisher: game.publisher || null
+                // 4. Créer automatiquement le type (ROM-ID + nom)
+                const romId = game.rom_id || game.slug || '';
+                const typeName = romId ? `${romId} - ${game.name}` : game.name;
+                
+                // Récupérer le sub_category_id sélectionné
+                const subCategorySelect = document.getElementById('article_sub_category_id');
+                const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
+                
+                if (subCategoryId && typeName) {
+                  console.log('🔨 Création du type:', { subCategoryId, typeName });
+                  
+                  // Créer le type via l'API
+                  fetch('{{ route("admin.taxonomy.type.auto-create") }}', {
+                    method: 'POST',
+                    headers: {
+                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      article_sub_category_id: subCategoryId,
+                      name: typeName,
+                      publisher: game.publisher || null
+                    })
                   })
-                })
-                .then(response => response.json())
-                .then(data => {
-                  if (data.success) {
-                    console.log('✓ Type créé ou trouvé:', data.type);
-                    
-                    // Sélectionner le type créé/trouvé dans le dropdown
-                    const typeSelect = document.getElementById('article_type_id');
-                    if (typeSelect) {
-                      // Ajouter l'option si elle n'existe pas
-                      let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
-                      if (!typeOption) {
-                        const newOption = new Option(data.type.name, data.type.id, true, true);
-                        typeSelect.add(newOption);
-                      } else {
-                        typeSelect.value = data.type.id;
-                      }
-                      typeSelect.dispatchEvent(new Event('change'));
-                      console.log('✓ Type appliqué:', data.type.name);
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.success) {
+                      console.log('✓ Type créé ou trouvé:', data.type);
+                      
+                      // Polling pour attendre que le select soit prêt à recevoir la nouvelle option
+                      const selectTypeOption = (retryCount = 0) => {
+                        const typeSelect = document.getElementById('article_type_id');
+                        if (!typeSelect) {
+                          console.error('❌ Select des types introuvable lors de la sélection');
+                          return;
+                        }
+                        
+                        // Vérifier si l'option existe déjà
+                        let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
+                        
+                        if (!typeOption && retryCount < 5) {
+                          // L'option n'existe pas encore et on n'a pas dépassé le nombre de tentatives
+                          console.log(`⏳ Tentative ${retryCount + 1}/5 : ajout de l'option type`);
+                          const newOption = new Option(data.type.name, data.type.id, true, true);
+                          typeSelect.add(newOption);
+                          
+                          // Vérifier si l'option a bien été ajoutée
+                          setTimeout(() => {
+                            const verifyOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
+                            if (verifyOption) {
+                              typeSelect.value = data.type.id;
+                              typeSelect.dispatchEvent(new Event('change'));
+                              console.log('✓ Type sélectionné:', data.type.name);
+                            } else {
+                              selectTypeOption(retryCount + 1);
+                            }
+                          }, 200);
+                        } else if (typeOption) {
+                          // L'option existe déjà, la sélectionner
+                          typeSelect.value = data.type.id;
+                          typeSelect.dispatchEvent(new Event('change'));
+                          console.log('✓ Type sélectionné (existant):', data.type.name);
+                        } else {
+                          console.error('❌ Impossible d\'ajouter/sélectionner le type après 5 tentatives');
+                        }
+                      };
+                      
+                      selectTypeOption();
+                    } else {
+                      console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
                     }
-                  } else {
-                    console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
-                  }
-                })
-                .catch(error => {
-                  console.error('Erreur création type:', error);
-                });
+                  })
+                  .catch(error => {
+                    console.error('Erreur création type:', error);
+                  });
+                } else {
+                  console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
+                }
               } else {
-                console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
+                // Les types ne sont pas encore chargés, réessayer
+                console.log(`⏳ Attente chargement types (tentative ${attempts + 1}/10)`);
+                setTimeout(() => waitForTypes(attempts + 1), 200);
               }
             };
             waitForTypes();
