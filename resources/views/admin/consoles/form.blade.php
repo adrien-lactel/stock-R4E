@@ -1299,22 +1299,23 @@ window.applyGameTaxonomy = function(game, platform) {
     
     const yearField = document.getElementById('year_field');
     const yearInput = document.getElementById('year');
-    console.log('🗓️ ANNÉE - yearField:', yearField, 'yearInput:', yearInput, 'game.year:', game.year);
+    console.log('🗓️ ANNÉE - yearField:', yearField, 'yearInput:', yearInput, 'gameToUse.year:', gameToUse.year);
     
     if (yearField && yearInput) {
       yearField.style.display = 'block';
-      // Ne remplir l'année QUE si le champ est vide (pour ne pas écraser une valeur modifiée manuellement)
-      if (!yearInput.value || yearInput.value.trim() === '') {
-        const year = gameToUse.year || gameToUse.release_year || gameToUse.release_date?.substring(0, 4) || '';
-        console.log('🗓️ ANNÉE extraite:', year);
-        if (year) {
-          yearInput.value = year;
-          console.log('✓ Année remplie:', year);
+      // Toujours remplir l'année depuis gameToUse (permet de corriger les erreurs)
+      const year = gameToUse.year || gameToUse.release_year || gameToUse.release_date?.substring(0, 4) || '';
+      console.log('🗓️ ANNÉE extraite:', year);
+      if (year) {
+        const oldValue = yearInput.value;
+        yearInput.value = year;
+        if (oldValue && oldValue !== year) {
+          console.log('🔄 Année mise à jour:', oldValue, '→', year);
         } else {
-          console.log('📅 Pas d\'année dans la BDD pour ce jeu');
+          console.log('✓ Année remplie:', year);
         }
       } else {
-        console.log('⏭️ Année déjà remplie, conservation de la valeur:', yearInput.value);
+        console.log('📅 Pas d\'année dans la BDD pour ce jeu');
       }
     } else {
       console.error('❌ Champs année introuvables!', { yearField, yearInput });
