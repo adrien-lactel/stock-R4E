@@ -3709,14 +3709,70 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
+  // Compresser une image avant l'upload
+  async function compressImage(file, maxWidth = 1920, quality = 0.85) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Calculer les nouvelles dimensions
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          // Créer un canvas pour la compression
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convertir en blob compressé
+          canvas.toBlob((blob) => {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            
+            const originalSize = (file.size / 1024 / 1024).toFixed(2);
+            const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
+            console.log(`🗜️ Compression: ${originalSize}MB → ${compressedSize}MB (${((1 - compressedFile.size / file.size) * 100).toFixed(0)}% réduction)`);
+            
+            resolve(compressedFile);
+          }, 'image/jpeg', quality);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   // Gérer l'upload des images d'article
-  function handleArticleImagesUpload(files) {
+  async function handleArticleImagesUpload(files) {
     const gridContainer = document.getElementById('article-images-grid');
     
-    Array.from(files).forEach(file => {
+    for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) {
         console.warn('Fichier ignoré (pas une image):', file.name);
-        return;
+        continue;
+      }
+      
+      const originalSize = (file.size / 1024 / 1024).toFixed(2);
+      console.log(`📁 Fichier original: ${file.name} (${originalSize}MB)`);
+      
+      // Compresser l'image si elle dépasse 2MB
+      let processedFile = file;
+      if (file.size > 2 * 1024 * 1024) {
+        console.log('🔄 Compression en cours...');
+        processedFile = await compressImage(file);
+      } else {
+        console.log('✓ Pas besoin de compression (< 2MB)');
       }
       
       // Créer une prévisualisation immédiate avec légende
@@ -3724,20 +3780,30 @@ document.addEventListener('DOMContentLoaded', function() {
       reader.onload = (e) => {
         addArticleImageCard(e.target.result, file.name, 'uploading');
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(processedFile);
       
       // Upload vers le serveur
-      uploadArticleImage(file);
-    });
+      uploadArticleImage(processedFile, file.name);
+    }
   }
 
   // Upload une image vers le serveur
-  async function uploadArticleImage(file) {
-    console.log('📤 Upload image:', file.name);
+  async function uploadArticleImage(file, originalFileName = null) {
+    const fileName = originalFileName || file.name;
+    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+    
+    console.log(`📤 Upload image: ${fileName} (${fileSize}MB)`);
     console.log('🎯 currentArticleTypeId:', currentArticleTypeId);
     
     if (!currentArticleTypeId) {
       alert('Veuillez d\'abord sélectionner un type d\'article');
+      return;
+    }
+
+    // Vérifier la taille (limite à 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert(`❌ Fichier trop volumineux: ${fileSize}MB (limite: 50MB)\n\nLa photo a été automatiquement compressée mais reste trop grande.`);
+      removeArticleImageCard(fileName);
       return;
     }
 
@@ -3754,6 +3820,22 @@ document.addEventListener('DOMContentLoaded', function() {
         body: formData
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Erreur HTTP:', response.status, errorText);
+        
+        // Messages d'erreur plus explicites
+        if (response.status === 413) {
+          alert(`❌ Image trop volumineuse (${fileSize}MB)\n\nLimite serveur dépassée. Veuillez utiliser une image plus petite.`);
+        } else if (response.status === 500) {
+          alert(`❌ Erreur serveur lors de l'upload\n\nTaille: ${fileSize}MB\nCode: ${response.status}`);
+        } else {
+          alert(`❌ Erreur upload: ${response.status}\n\nVeuillez réessayer.`);
+        }
+        removeArticleImageCard(fileName);
+        return;
+      }
+
       const data = await response.json();
       console.log('📡 Réponse serveur:', data);
 
@@ -3762,7 +3844,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('📦 Avant push, uploadedGameImages:', uploadedGameImages);
         
         // Mettre à jour la carte avec l'URL finale
-        updateArticleImageCard(file.name, data.url);
+        updateArticleImageCard(fileName, data.url);
         uploadedGameImages.push(data.url);
         
         // Si c'est la première image, la définir comme principale automatiquement
@@ -3777,11 +3859,13 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshArticleImagesPreview();
       } else {
         console.error('Erreur upload:', data.message);
-        alert('Erreur upload: ' + data.message);
+        alert(`❌ Erreur: ${data.message}`);
+        removeArticleImageCard(fileName);
       }
     } catch (e) {
-      console.error('Erreur upload:', e);
-      alert('Erreur lors de l\'upload');
+      console.error('❌ Exception upload:', e);
+      alert(`❌ Erreur lors de l'upload\n\nTaille du fichier: ${fileSize}MB\nErreur: ${e.message}`);
+      removeArticleImageCard(fileName);
     }
   }
 
@@ -3869,6 +3953,28 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const input = card.querySelector('input');
       if (input) input.dataset.imageUrl = finalUrl;
+    }
+  }
+
+  // Retirer une carte d'image (en cas d'erreur d'upload)
+  function removeArticleImageCard(fileName) {
+    const card = Array.from(document.querySelectorAll('[data-file-name]')).find(
+      el => el.dataset.fileName === fileName
+    );
+    
+    if (card) {
+      card.remove();
+      updateArticleImagesCount();
+      
+      // S'il ne reste plus aucune image, afficher le message
+      const gridContainer = document.getElementById('article-images-grid');
+      if (gridContainer && gridContainer.children.length === 0) {
+        gridContainer.innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-8">
+            📭 Aucune photo pour le moment
+          </div>
+        `;
+      }
     }
   }
 
