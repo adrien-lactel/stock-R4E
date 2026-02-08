@@ -415,9 +415,9 @@
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">📷 Images de l'article</h3>
                     
                     <!-- Pour les jeux vidéo : bouton pour ouvrir la modal -->
-                    <div id="game_images_section" style="display: none;">
-                        <!-- Bouton pour voir les photos génériques de la taxonomie (si article existant avec ROM ID) -->
-                        @if(isset($console->id) && $console->rom_id)
+                    <div id="game_images_section" style="display: block;">
+                        <!-- Bouton pour voir les photos génériques de la taxonomie (si article existant avec type) -->
+                        @if(isset($console->id) && ($console->rom_id || $console->article_type_id))
                         <button type="button" 
                                 onclick="openTaxonomyImagesForArticle()"
                                 class="w-full border-2 border-blue-500 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 transition-colors bg-white mb-4">
@@ -427,10 +427,10 @@
                                 </svg>
                                 <div class="text-left">
                                     <p class="text-sm font-semibold text-blue-600">
-                                        🖼️ Voir les photos génériques ({{ $console->rom_id }})
+                                        🖼️ Voir les photos génériques ({{ $console->rom_id ?? $console->articleType->name ?? 'Type' }})
                                     </p>
                                     <p class="text-xs text-gray-500">
-                                        Photos de la taxonomie partagées avec tous les exemplaires
+                                        Photos de la taxonomie partagées avec tous les exemplaires de ce type
                                     </p>
                                 </div>
                             </div>
@@ -2103,30 +2103,44 @@ window.applyGameTaxonomy = function(game, platform) {
 // =====================================================
 window.openTaxonomyImagesForArticle = function() {
   const romId = @json($console->rom_id ?? null);
-  const articleType = @json($console->articleType->name ?? null);
-  const subCategory = @json($console->articleSubCategory->name ?? null);
+  const articleTypeId = @json($console->article_type_id ?? null);
+  const articleTypeName = @json($console->articleType->name ?? null);
+  const subCategoryName = @json($console->articleSubCategory->name ?? null);
+  const categoryName = @json($console->articleCategory->name ?? null);
   
-  if (!romId) {
-    alert('❌ Pas de ROM ID défini pour cet article');
+  // Utiliser ROM ID pour les jeux vidéo, sinon utiliser le type d'article
+  const identifier = romId || articleTypeName;
+  
+  if (!identifier) {
+    alert('❌ Pas d\'identifiant défini pour cet article (ROM ID ou Type requis)');
     return;
   }
   
-  // Déterminer la plateforme/dossier depuis la sous-catégorie
-  let platform = subCategory || 'gameboy';
-  let folder = platform.toLowerCase().replace(/\s+/g, '');
+  // Déterminer le dossier de stockage
+  let folder = '';
   
-  // Construire l'objet game pour le modal
-  const game = {
-    rom_id: romId,
-    name: articleType || 'Article',
-    platform: platform,
-    slug: romId
+  if (categoryName && categoryName.includes('Jeux vidéo')) {
+    // Pour les jeux : utiliser la sous-catégorie (plateforme)
+    folder = (subCategoryName || 'gameboy').toLowerCase().replace(/\s+/g, '');
+  } else if (categoryName) {
+    // Pour autres catégories : utiliser la catégorie (consoles, accessoires)
+    folder = categoryName.toLowerCase().replace(/\s+/g, '');
+  } else {
+    folder = 'other';
+  }
+  
+  // Construire l'objet pour le modal
+  const item = {
+    rom_id: identifier,
+    name: articleTypeName || 'Article',
+    platform: subCategoryName || categoryName || 'Generic',
+    slug: identifier.toLowerCase().replace(/\s+/g, '-')
   };
   
-  console.log('📂 Ouverture modal taxonomie pour article:', { game, platform, folder });
+  console.log('📂 Ouverture modal taxonomie pour article:', { item, folder, identifier, isGame: !!romId });
   
   // Ouvrir le modal avec les données de l'article
-  openImageEditorModal(game, platform, romId, folder, 'cover');
+  openImageEditorModal(item, item.platform, identifier, folder, 'cover');
 };
 
 // =====================================================
@@ -4706,16 +4720,17 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('🔄 Mise à jour visibilité sections, catégorie:', categoryText);
       
+      // Toujours afficher la section game_images (avec gestion avancée des photos)
+      gameImagesSection.style.display = 'block';
+      genericImagesSection.style.display = 'none';
+      
+      // Afficher rom_id et year uniquement pour les jeux vidéo
       if (categoryText.includes('Jeux vidéo')) {
-        console.log('✅ Affichage section jeux');
-        gameImagesSection.style.display = 'block';
-        genericImagesSection.style.display = 'none';
+        console.log('✅ Catégorie jeux vidéo - champs ROM ID et Year visibles');
         if (romIdField) romIdField.style.display = 'block';
         if (yearField) yearField.style.display = 'block';
       } else {
-        console.log('✅ Affichage section générique');
-        gameImagesSection.style.display = 'none';
-        genericImagesSection.style.display = 'block';
+        console.log('✅ Autre catégorie - champs ROM ID et Year masqués');
         if (romIdField) romIdField.style.display = 'none';
         if (yearField) yearField.style.display = 'none';
       }
