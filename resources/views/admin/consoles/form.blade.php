@@ -646,10 +646,17 @@
      JS CLASSIFICATION
 ===================== --}}
 <script>
-// ✅ Configuration globale
+// ✅ Configuration globale - Défini EN PREMIER pour être disponible partout
 window.gameboyImageBaseUrl = '{{ asset('images/taxonomy/gameboy') }}';
 window.laravelAssetBase = '{{ asset('') }}';
-window.ajaxSearchGameUrl = '{{ url('admin/ajax/search-game') }}';
+window.ajaxSearchGameUrl = '{{ url("admin/ajax/search-game") }}';
+
+console.log('🔧 Configuration globale chargée:', {  
+  ajaxSearchGameUrl: window.ajaxSearchGameUrl,
+  gameboyImageBaseUrl: window.gameboyImageBaseUrl,
+  laravelAssetBase: window.laravelAssetBase
+});
+
 
 // ✅ Lightbox avec zoom et pan
 let currentZoom = 1;
