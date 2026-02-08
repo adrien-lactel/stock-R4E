@@ -2578,46 +2578,11 @@ async function displayGameResult(game, platform) {
   const imagesSection = document.createElement('div');
   imagesSection.className = 'mt-6 border-t pt-4';
   
-  const imagesTitleRow = document.createElement('div');
-  imagesTitleRow.className = 'flex items-center justify-between mb-3';
-  
   const imagesTitle = document.createElement('h5');
-  imagesTitle.className = 'font-semibold text-sm text-gray-700';
+  imagesTitle.className = 'font-semibold text-sm text-gray-700 mb-3';
   imagesTitle.textContent = 'Images disponibles';
   
-  // Conteneur pour les boutons
-  const buttonsContainer = document.createElement('div');
-  buttonsContainer.className = 'flex items-center gap-2';
-  
-  // Bouton "Appliquer au formulaire"
-  const applyToFormButton = document.createElement('button');
-  applyToFormButton.type = 'button'; // Empêcher la soumission du formulaire
-  applyToFormButton.className = 'bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1';
-  applyToFormButton.innerHTML = '✓ Appliquer au formulaire';
-  applyToFormButton.title = 'Remplir automatiquement la taxonomie de l\'article';
-  applyToFormButton.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    applyGameTaxonomy(game, platform);
-  };
-  
-  // Bouton d'édition global pour toutes les images
-  const globalEditButton = document.createElement('button');
-  globalEditButton.type = 'button'; // Empêcher la soumission du formulaire
-  globalEditButton.className = 'bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1';
-  globalEditButton.innerHTML = '✏️ Gérer les images';
-  globalEditButton.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openImageEditorModal(game, platform, identifier, folder, 'cover');
-  };
-  
-  buttonsContainer.appendChild(applyToFormButton);
-  buttonsContainer.appendChild(globalEditButton);
-  
-  imagesTitleRow.appendChild(imagesTitle);
-  imagesTitleRow.appendChild(buttonsContainer);
-  imagesSection.appendChild(imagesTitleRow);
+  imagesSection.appendChild(imagesTitle);
   
   const imagesGrid = document.createElement('div');
   imagesGrid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3';
@@ -2675,6 +2640,38 @@ async function displayGameResult(game, platform) {
   });
   
   imagesSection.appendChild(imagesGrid);
+  
+  // Boutons en dessous de la grille d'images
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.className = 'flex items-center justify-center gap-3 mt-4';
+  
+  // Bouton "Appliquer au formulaire"
+  const applyToFormButton = document.createElement('button');
+  applyToFormButton.type = 'button';
+  applyToFormButton.className = 'bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg hover:shadow-xl transition-all';
+  applyToFormButton.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Appliquer ces modifications au formulaire';
+  applyToFormButton.title = 'Remplir automatiquement la taxonomie de l\'article';
+  applyToFormButton.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    applyGameTaxonomy(game, platform);
+  };
+  
+  // Bouton d'édition global pour toutes les images
+  const globalEditButton = document.createElement('button');
+  globalEditButton.type = 'button';
+  globalEditButton.className = 'bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg hover:shadow-xl transition-all';
+  globalEditButton.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Gérer les images';
+  globalEditButton.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openImageEditorModal(game, platform, identifier, folder, 'cover');
+  };
+  
+  buttonsContainer.appendChild(applyToFormButton);
+  buttonsContainer.appendChild(globalEditButton);
+  
+  imagesSection.appendChild(buttonsContainer);
   
   // Assembler tout
   resultContainer.appendChild(leftColumn);
