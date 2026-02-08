@@ -163,6 +163,8 @@
                        id="game-search" 
                        placeholder="Ex: DMG-A1J-0 ou Pokémon Red"
                        class="w-full rounded border-gray-300"
+                       oninput="window.onGameInput()"
+                       onkeydown="window.onGameKeydown(event)"
                        ondblclick="this.select()"
                        autocomplete="off">
                 <div id="game-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-b shadow-lg mt-1 max-h-60 overflow-y-auto hidden"></div>
@@ -3205,18 +3207,10 @@ function escapeHtml(text) {
 let gameDebounceTimer = null;
 let currentGameSuggestionIndex = -1;
 
-console.log('🎮 Script autocomplete chargé');
-console.log('Element game-search:', document.getElementById('game-search'));
-console.log('Element game-platform:', document.getElementById('game-platform'));
-console.log('Element game-suggestions:', document.getElementById('game-suggestions'));
-
 window.onGameInput = function() {
-  console.log('onGameInput appelé');
   clearTimeout(gameDebounceTimer);
   const input = document.getElementById('game-search');
   const value = input.value.trim();
-  
-  console.log('Valeur:', value);
   
   if (value.length < 2) {
     clearGameSuggestions();
@@ -3229,28 +3223,17 @@ window.onGameInput = function() {
 };
 
 async function fetchGameSuggestions(query) {
-  console.log('fetchGameSuggestions appelé avec:', query);
   const platform = document.getElementById('game-platform').value;
   
   try {
     const url = `{{ url('admin/ajax/search-game') }}?platform=${platform}&query=${encodeURIComponent(query)}`;
-    console.log('URL:', url);
     const response = await fetch(url);
-    console.log('Response status:', response.status);
     const data = await response.json();
-    console.log('Data:', data);
-    console.log('data.success:', data.success);
-    console.log('data.games:', data.games);
-    console.log('Type de data.games:', typeof data.games, Array.isArray(data.games));
     
     if (data.success && data.games && data.games.length > 0) {
-      console.log('✅ Appel de displayGameSuggestions avec', data.games.length, 'jeux');
       displayGameSuggestions(data.games);
     } else {
-      console.log('❌ Pas de jeux à afficher ou data.success=false');
       if (!data.success && data.message) {
-        console.warn('⚠️ Message du serveur:', data.message);
-        // Afficher un message à l'utilisateur
         const suggestionsDiv = document.getElementById('game-suggestions');
         suggestionsDiv.innerHTML = `
           <div class="px-4 py-3 text-sm text-gray-600">
@@ -3270,12 +3253,9 @@ async function fetchGameSuggestions(query) {
 }
 
 function displayGameSuggestions(games) {
-  console.log('displayGameSuggestions appelé avec', games.length, 'jeux');
   const suggestionsDiv = document.getElementById('game-suggestions');
   const platform = document.getElementById('game-platform').value;
   currentGameSuggestionIndex = -1;
-  
-  console.log('suggestionsDiv:', suggestionsDiv);
   
   suggestionsDiv.innerHTML = '';
   
@@ -3346,16 +3326,10 @@ function displayGameSuggestions(games) {
     suggestionsDiv.appendChild(div);
   });
   
-  console.log('HTML généré:', suggestionsDiv.innerHTML.substring(0, 200));
-  console.log('Classes avant remove:', suggestionsDiv.className);
-  console.log('Nombre de children:', suggestionsDiv.children.length);
   suggestionsDiv.classList.remove('hidden');
-  suggestionsDiv.style.display = 'block'; // Force affichage
-  suggestionsDiv.style.backgroundColor = '#ffffff'; // Force fond blanc
-  suggestionsDiv.style.border = '2px solid #3b82f6'; // Force bordure bleue visible
-  console.log('Classes après remove:', suggestionsDiv.className);
-  console.log('suggestionsDiv visible?', !suggestionsDiv.classList.contains('hidden'));
-  console.log('Display:', suggestionsDiv.style.display);
+  suggestionsDiv.style.display = 'block';
+  suggestionsDiv.style.backgroundColor = '#ffffff';
+  suggestionsDiv.style.border = '2px solid #3b82f6';
 }
 
 window.selectGameSuggestionFromData = function(element) {
@@ -3615,40 +3589,6 @@ if (platformSelect) {
   platformSelect.addEventListener('change', function() {
     clearGameSuggestions();
   });
-}
-
-// Event listeners pour le champ de recherche (après chargement du DOM)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', attachGameSearchListeners);
-} else {
-  attachGameSearchListeners();
-}
-
-function attachGameSearchListeners() {
-  const gameSearchInput = document.getElementById('game-search');
-
-  console.log('🔍 Tentative d\'ajout des event listeners');
-  console.log('gameSearchInput trouvé:', gameSearchInput);
-  console.log('Fonction onGameInput existe:', typeof window.onGameInput);
-  console.log('Fonction onGameKeydown existe:', typeof window.onGameKeydown);
-
-  if (gameSearchInput) {
-    console.log('✅ Ajout des event listeners sur le champ de recherche');
-    
-    gameSearchInput.addEventListener('input', function() {
-      console.log('📝 Event input déclenché');
-      window.onGameInput();
-    });
-    
-    gameSearchInput.addEventListener('keydown', function(event) {
-      console.log('⌨️ Event keydown déclenché');
-      window.onGameKeydown(event);
-    });
-    
-    console.log('✅ Event listeners ajoutés avec succès');
-  } else {
-    console.error('❌ Element game-search introuvable!');
-  }
 }
 
 // ========================================
