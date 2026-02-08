@@ -4445,66 +4445,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Supprimer une image d'article
-  window.deleteArticleImage = async function(imageUrl, buttonElement) {
-    // Vérifier si c'est une image générique partagée
-    const isGeneric = genericArticleImages.includes(imageUrl);
-    
-    let confirmMessage = 'Êtes-vous sûr de vouloir supprimer cette photo ?';
-    if (isGeneric) {
-      confirmMessage = '⚠️ ATTENTION: Cette photo est partagée avec d\'autres articles du même type.\n\nElle sera supprimée pour TOUS les articles utilisant cette image.\n\nVoulez-vous vraiment la supprimer définitivement ?';
-    }
-    
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    try {
-      // Retirer de la liste en mémoire
-      const index = uploadedGameImages.indexOf(imageUrl);
-      if (index > -1) {
-        uploadedGameImages.splice(index, 1);
-      }
-      
-      // Si c'est une image générique, la retirer aussi de la liste générique
-      if (isGeneric) {
-        const genericIndex = genericArticleImages.indexOf(imageUrl);
-        if (genericIndex > -1) {
-          genericArticleImages.splice(genericIndex, 1);
-        }
-      }
-
-      // Si c'était l'image principale, réinitialiser
-      if (primaryImageUrl === imageUrl) {
-        primaryImageUrl = uploadedGameImages.length > 0 ? uploadedGameImages[0] : null;
-      }
-
-      // Retirer la carte visuellement
-      const card = buttonElement.closest('[data-file-name]');
-      if (card) {
-        card.remove();
-      }
-
-      updateArticleImagesCount();
-      refreshArticleImagesPreview();
-
-      // S'il ne reste plus aucune image, afficher le message
-      const gridContainer = document.getElementById('article-images-grid');
-      if (gridContainer && gridContainer.children.length === 0) {
-        gridContainer.innerHTML = `
-          <div class="col-span-full text-center text-gray-500 py-8">
-            📭 Aucune photo pour le moment
-          </div>
-        `;
-      }
-
-      console.log('✅ Image supprimée:', imageUrl);
-    } catch (error) {
-      console.error('❌ Erreur suppression:', error);
-      alert('Erreur lors de la suppression');
-    }
-  };
-
   // Définir une image comme principale
   window.setPrimaryImage = function(imageUrl, buttonElement) {
     primaryImageUrl = imageUrl;
@@ -4660,8 +4600,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('➕ Ajout photo générique:', imageUrl);
     
-    // Ajouter à la liste
+    // Ajouter à la liste des images uploadées
     uploadedGameImages.push(imageUrl);
+    
+    // Marquer comme image générique
+    if (!genericArticleImages.includes(imageUrl)) {
+      genericArticleImages.push(imageUrl);
+    }
     
     // Si c'est la première image, la définir comme principale
     if (!primaryImageUrl) {
@@ -4669,9 +4614,9 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('⭐ Photo générique définie comme principale automatiquement');
     }
     
-    // Ajouter la carte dans la section "Photos de cet article"
+    // Ajouter la carte dans la section "Photos de cet article" avec le flag isGeneric
     const fileName = imageUrl.split('/').pop();
-    addArticleImageCard(imageUrl, fileName, 'uploaded');
+    addArticleImageCard(imageUrl, fileName, 'uploaded', true);
     
     // Rafraîchir l'aperçu
     refreshArticleImagesPreview();
@@ -4681,6 +4626,46 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ Photo générique ajoutée');
   }
+
+  // Désélectionner une image générique
+  window.deselectGenericImage = async function(imageUrl, buttonElement) {
+    console.log('🔙 Désélection photo générique:', imageUrl);
+    
+    // Retirer de la liste des images uploadées
+    const index = uploadedGameImages.indexOf(imageUrl);
+    if (index > -1) {
+      uploadedGameImages.splice(index, 1);
+    }
+    
+    // Si c'était l'image principale, réinitialiser
+    if (primaryImageUrl === imageUrl) {
+      primaryImageUrl = uploadedGameImages.length > 0 ? uploadedGameImages[0] : null;
+    }
+    
+    // Retirer la carte visuellement
+    const card = buttonElement.closest('[data-file-name]');
+    if (card) {
+      card.remove();
+    }
+    
+    updateArticleImagesCount();
+    refreshArticleImagesPreview();
+    
+    // Recharger les photos génériques pour la remettre dans la liste
+    loadGenericArticleImages();
+    
+    // S'il ne reste plus aucune image, afficher le message
+    const gridContainer = document.getElementById('article-images-grid');
+    if (gridContainer && gridContainer.children.length === 0) {
+      gridContainer.innerHTML = `
+        <div class="col-span-full text-center text-gray-500 py-8">
+          📭 Aucune photo pour le moment
+        </div>
+      `;
+    }
+    
+    console.log('✅ Photo générique désélectionnée');
+  };
 
   // Supprimer une image
   window.deleteArticleImage = async function(imageUrl, buttonElement) {
