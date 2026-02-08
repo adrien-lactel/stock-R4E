@@ -534,11 +534,16 @@ public function destroyType(ArticleType $type)
                         $baseType = $typeMatches[1];
                         $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                         
-                        // Utiliser le proxy pour toutes les images
-                        $imageUrl = route('proxy.taxonomy-image', [
-                            'folder' => $folder,
-                            'filename' => $filename
-                        ]);
+                        // En production: URL R2 directe, sinon proxy
+                        if (app()->environment('production')) {
+                            $r2PublicUrl = config('filesystems.disks.r2.url');
+                            $imageUrl = $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
+                        } else {
+                            $imageUrl = route('proxy.taxonomy-image', [
+                                'folder' => $folder,
+                                'filename' => $filename
+                            ]);
+                        }
                         
                         $images[] = [
                             'filename' => $filename,
@@ -579,11 +584,16 @@ public function destroyType(ArticleType $type)
                             $baseType = $typeMatches[1];
                             $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                             
-                            // Utiliser le proxy
-                            $imageUrl = route('proxy.taxonomy-image', [
-                                'folder' => $folder,
-                                'filename' => $filename
-                            ]);
+                            // En production: URL R2 directe, sinon proxy
+                            if (app()->environment('production')) {
+                                $r2PublicUrl = config('filesystems.disks.r2.url');
+                                $imageUrl = $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
+                            } else {
+                                $imageUrl = route('proxy.taxonomy-image', [
+                                    'folder' => $folder,
+                                    'filename' => $filename
+                                ]);
+                            }
                             
                             // Essayer de récupérer la taille
                             $fileSize = 0;
