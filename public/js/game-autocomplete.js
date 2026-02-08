@@ -59,6 +59,24 @@ function displayGameSuggestions(games) {
     div.setAttribute('data-game-json', btoa(encodeURIComponent(JSON.stringify(game))));
     div.onclick = function() { selectGameSuggestionFromData(this); };
     
+    // Miniature d'image
+    if (game.image_url) {
+      const imgWrapper = document.createElement('div');
+      imgWrapper.className = 'flex-shrink-0 w-12 h-12 bg-gray-100 rounded overflow-hidden';
+      
+      const img = document.createElement('img');
+      img.src = game.image_url;
+      img.alt = game.name;
+      img.className = 'w-full h-full object-cover';
+      img.onerror = function() {
+        // Si l'image ne charge pas, afficher un placeholder
+        this.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">🎮</div>';
+      };
+      
+      imgWrapper.appendChild(img);
+      div.appendChild(imgWrapper);
+    }
+    
     const contentDiv = document.createElement('div');
     contentDiv.className = 'flex-1 min-w-0';
     

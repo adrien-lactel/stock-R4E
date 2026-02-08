@@ -101,6 +101,60 @@ class ConsoleAdminController extends Controller
         
         return $region;
     }
+
+    /**
+     * Construire l'URL de l'image cover d'un jeu
+     */
+    private function getGameImageUrl($game, $platform)
+    {
+        if (!$game) return null;
+
+        $isProduction = config('app.env') === 'production';
+        $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+        $baseUrl = $isProduction ? $r2Url . '/taxonomy' : '/proxy/images/taxonomy';
+
+        // Plateformes utilisant le nom du fichier
+        $nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
+        
+        if (in_array($platform, $nameBasedPlatforms)) {
+            $identifier = preg_replace('/\.(ws|md|gg|bin)$/i', '', $game->name);
+            $identifier = trim($identifier);
+        } else {
+            $identifier = $game->rom_id ?? $game->slug ?? null;
+        }
+
+        if (!$identifier) return null;
+
+        // Déterminer le dossier selon la plateforme
+        $folder = null;
+        if ($platform === 'gameboy') {
+            if (str_starts_with($identifier, 'CGB-')) {
+                $folder = 'game boy color';
+            } elseif (str_starts_with($identifier, 'AGB-')) {
+                $folder = 'game boy advance';
+            } else {
+                $folder = 'gameboy';
+            }
+        } else {
+            $platformFolders = [
+                'n64' => 'n64',
+                'nes' => 'nes',
+                'snes' => 'snes',
+                'gamegear' => 'gamegear',
+                'wonderswan' => 'wonderswan color',
+                'segasaturn' => 'segasaturn',
+                'megadrive' => 'megadrive'
+            ];
+            $folder = $platformFolders[$platform] ?? $platform;
+        }
+
+        if (!$folder) return null;
+
+        // Construire l'URL de la cover
+        $fullPath = "{$baseUrl}/{$folder}/{$identifier}-cover.png";
+        
+        return $fullPath;
+    }
     
     /* =====================================================
      | INDEX — liste des consoles
@@ -1259,10 +1313,11 @@ class ConsoleAdminController extends Controller
             ->get();
 
         if ($games->count() > 0) {
-            // Ajouter la région détectée depuis le ROM ID
-            $gamesWithRegion = $games->map(function($game) {
+            // Ajouter la région détectée depuis le ROM ID et l'URL de l'image
+            $gamesWithRegion = $games->map(function($game) use ($platform) {
                 $romId = $game->rom_id ?? $game->slug ?? '';
                 $game->region = $this->detectRegionFromRomId($romId);
+                $game->image_url = $this->getGameImageUrl($game, $platform);
                 return $game;
             });
             
