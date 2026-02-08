@@ -752,31 +752,73 @@ public function destroyType(ArticleType $type)
         $oldType = $request->old_type;
         $newType = $request->new_type;
 
+        // Chemins R2
+        $r2OldPath = "taxonomy/{$folder}/{$identifier}-{$oldType}.png";
+        $r2NewPath = "taxonomy/{$folder}/{$identifier}-{$newType}.png";
+
+        // Chemins locaux
         $basePath = public_path("images/taxonomy/{$folder}");
         $oldPath = "{$basePath}/{$identifier}-{$oldType}.png";
         $newPath = "{$basePath}/{$identifier}-{$newType}.png";
 
-        if (!file_exists($oldPath)) {
+        // Vérifier l'existence sur R2 en priorité, sinon local
+        $existsOnR2 = \Storage::disk('r2')->exists($r2OldPath);
+        $existsLocally = file_exists($oldPath);
+
+        if (!$existsOnR2 && !$existsLocally) {
             return response()->json([
                 'success' => false,
                 'message' => "L'image source n'existe pas"
             ], 404);
         }
 
-        // Si la cible existe déjà, créer un backup avec index
-        if (file_exists($newPath)) {
+        // Si la cible existe déjà sur R2, créer un backup avec index
+        $finalNewType = $newType;
+        if ($existsOnR2 && \Storage::disk('r2')->exists($r2NewPath)) {
             $counter = 2;
-            while (file_exists("{$basePath}/{$identifier}-{$newType}-{$counter}.png")) {
+            while (\Storage::disk('r2')->exists("taxonomy/{$folder}/{$identifier}-{$newType}-{$counter}.png")) {
                 $counter++;
             }
-            $newPath = "{$basePath}/{$identifier}-{$newType}-{$counter}.png";
+            $finalNewType = "{$newType}-{$counter}";
+            $r2NewPath = "taxonomy/{$folder}/{$identifier}-{$finalNewType}.png";
         }
 
-        rename($oldPath, $newPath);
+        // Renommer sur R2 (copier puis supprimer l'ancien)
+        if ($existsOnR2) {
+            try {
+                \Storage::disk('r2')->copy($r2OldPath, $r2NewPath);
+                \Storage::disk('r2')->delete($r2OldPath);
+            } catch (\Exception $e) {
+                \Log::error("Erreur renommage R2: " . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => "Erreur lors du renommage sur R2: " . $e->getMessage()
+                ], 500);
+            }
+        }
+
+        // Renommer localement si le fichier existe
+        if ($existsLocally) {
+            $localNewPath = "{$basePath}/{$identifier}-{$finalNewType}.png";
+            
+            if (!file_exists($basePath)) {
+                mkdir($basePath, 0755, true);
+            }
+            
+            if (file_exists($localNewPath)) {
+                $counter = 2;
+                while (file_exists("{$basePath}/{$identifier}-{$finalNewType}-{$counter}.png")) {
+                    $counter++;
+                }
+                $localNewPath = "{$basePath}/{$identifier}-{$finalNewType}-{$counter}.png";
+            }
+            
+            rename($oldPath, $localNewPath);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => "Image renommée de '{$oldType}' vers '{$newType}'"
+            'message' => "Image renommée de '{$oldType}' vers '{$finalNewType}'"
         ]);
     }
 
@@ -797,30 +839,71 @@ public function destroyType(ArticleType $type)
         $currentType = $request->current_type; // Ex: "cover-2"
         $baseType = $request->base_type;       // Ex: "cover"
 
+        // Chemins R2
+        $r2CurrentPath = "taxonomy/{$folder}/{$identifier}-{$currentType}.png";
+        $r2PrimaryPath = "taxonomy/{$folder}/{$identifier}-{$baseType}.png";
+
+        // Chemins locaux
         $basePath = public_path("images/taxonomy/{$folder}");
         $currentPath = "{$basePath}/{$identifier}-{$currentType}.png";
         $primaryPath = "{$basePath}/{$identifier}-{$baseType}.png";
 
         // Vérifier que l'image source existe
-        if (!file_exists($currentPath)) {
+        $existsOnR2 = \Storage::disk('r2')->exists($r2CurrentPath);
+        $existsLocally = file_exists($currentPath);
+
+        if (!$existsOnR2 && !$existsLocally) {
             return response()->json([
                 'success' => false,
                 'message' => "L'image '{$currentType}' n'existe pas"
             ], 404);
         }
 
-        // Si l'image principale existe déjà, la renommer en -2, -3, etc.
-        if (file_exists($primaryPath)) {
-            $counter = 2;
-            while (file_exists("{$basePath}/{$identifier}-{$baseType}-{$counter}.png")) {
-                $counter++;
+        // Opérations sur R2
+        if ($existsOnR2) {
+            try {
+                // Si l'image principale existe déjà sur R2, la renommer en -2, -3, etc.
+                if (\Storage::disk('r2')->exists($r2PrimaryPath)) {
+                    $counter = 2;
+                    while (\Storage::disk('r2')->exists("taxonomy/{$folder}/{$identifier}-{$baseType}-{$counter}.png")) {
+                        $counter++;
+                    }
+                    $r2OldPrimaryNewPath = "taxonomy/{$folder}/{$identifier}-{$baseType}-{$counter}.png";
+                    \Storage::disk('r2')->copy($r2PrimaryPath, $r2OldPrimaryNewPath);
+                    \Storage::disk('r2')->delete($r2PrimaryPath);
+                }
+
+                // Renommer l'image sélectionnée comme principale
+                \Storage::disk('r2')->copy($r2CurrentPath, $r2PrimaryPath);
+                \Storage::disk('r2')->delete($r2CurrentPath);
+            } catch (\Exception $e) {
+                \Log::error("Erreur setPrimaryImage R2: " . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => "Erreur lors du changement d'image principale sur R2: " . $e->getMessage()
+                ], 500);
             }
-            $oldPrimaryNewPath = "{$basePath}/{$identifier}-{$baseType}-{$counter}.png";
-            rename($primaryPath, $oldPrimaryNewPath);
         }
 
-        // Renommer l'image sélectionnée comme principale
-        rename($currentPath, $primaryPath);
+        // Opérations locales
+        if ($existsLocally) {
+            if (!file_exists($basePath)) {
+                mkdir($basePath, 0755, true);
+            }
+
+            // Si l'image principale existe déjà, la renommer en -2, -3, etc.
+            if (file_exists($primaryPath)) {
+                $counter = 2;
+                while (file_exists("{$basePath}/{$identifier}-{$baseType}-{$counter}.png")) {
+                    $counter++;
+                }
+                $oldPrimaryNewPath = "{$basePath}/{$identifier}-{$baseType}-{$counter}.png";
+                rename($primaryPath, $oldPrimaryNewPath);
+            }
+
+            // Renommer l'image sélectionnée comme principale
+            rename($currentPath, $primaryPath);
+        }
 
         return response()->json([
             'success' => true,
