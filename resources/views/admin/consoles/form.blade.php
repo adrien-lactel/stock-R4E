@@ -4052,6 +4052,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // ✅ Charger les images existantes en mode édition
   let uploadedGameImages = @json($console->article_images ?? []);
   let primaryImageUrl = @json($console->primary_image_url ?? null);
+  let genericArticleImages = []; // Images provenant d'autres articles du même type
 
   // Ouvrir la modal de gestion des images d'article
   window.openArticleImagesModal = function() {
@@ -4373,7 +4374,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Ajouter une carte d'image dans la modal
-  function addArticleImageCard(imageSrc, fileName, status = 'uploaded') {
+  function addArticleImageCard(imageSrc, fileName, status = 'uploaded', isGeneric = false) {
     const gridContainer = document.getElementById('article-images-grid');
     
     // Retirer le message "Aucune photo"
@@ -4384,6 +4385,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const card = document.createElement('div');
     card.className = 'border-2 border-gray-200 rounded-lg p-3 bg-white hover:border-indigo-400 transition-colors';
     card.dataset.fileName = fileName;
+    card.dataset.imageUrl = imageSrc;
+    if (isGeneric) {
+      card.dataset.isGeneric = 'true';
+    }
     
     const isPrimary = (primaryImageUrl === imageSrc);
     
@@ -4392,14 +4397,21 @@ document.addEventListener('DOMContentLoaded', function() {
         <img src="${imageSrc}" class="w-full aspect-square object-cover rounded cursor-pointer hover:opacity-90" 
              onclick="event.stopPropagation(); window.openImageLightbox('${imageSrc}', {isArticleImage: true, isPrimary: ${isPrimary}})">
         
-        ${isPrimary ? `
-          <div class="absolute top-2 left-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center gap-1">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-            </svg>
-            Photo principale
-          </div>
-        ` : ''}
+        <div class="absolute top-2 left-2 flex flex-col gap-1">
+          ${isPrimary ? `
+            <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center gap-1">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+              </svg>
+              Photo principale
+            </div>
+          ` : ''}
+          ${isGeneric ? `
+            <div class="bg-purple-600 bg-opacity-90 text-white text-xs px-2 py-1 rounded font-medium shadow">
+              🔗 Partagée
+            </div>
+          ` : ''}
+        </div>
         
         <div class="absolute top-2 right-2 flex gap-1">
           ${status === 'uploading' ? `
@@ -4410,12 +4422,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     title="Définir comme photo principale">
               ${isPrimary ? '✓ Principale' : 'Définir principale'}
             </button>
-            <button type="button" onclick="deleteArticleImage('${imageSrc}', this)" 
-                    class="bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
+            ${isGeneric ? `
+              <button type="button" onclick="deselectGenericImage('${imageSrc}', this)" 
+                      class="bg-orange-500 hover:bg-orange-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      title="Désélectionner (remettre dans les photos partagées)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path>
+                </svg>
+              </button>
+            ` : `
+              <button type="button" onclick="deleteArticleImage('${imageSrc}', this)" 
+                      class="bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
+                      title="Supprimer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            `}
           `}
         </div>
       </div>
@@ -4484,7 +4507,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Supprimer une image d'article
   window.deleteArticleImage = async function(imageUrl, buttonElement) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
+    // Vérifier si c'est une image générique partagée
+    const isGeneric = genericArticleImages.includes(imageUrl);
+    
+    let confirmMessage = 'Êtes-vous sûr de vouloir supprimer cette photo ?';
+    if (isGeneric) {
+      confirmMessage = '⚠️ ATTENTION: Cette photo est partagée avec d\'autres articles du même type.\n\nElle sera supprimée pour TOUS les articles utilisant cette image.\n\nVoulez-vous vraiment la supprimer définitivement ?';
+    }
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -4493,6 +4524,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const index = uploadedGameImages.indexOf(imageUrl);
       if (index > -1) {
         uploadedGameImages.splice(index, 1);
+      }
+      
+      // Si c'est une image générique, la retirer aussi de la liste générique
+      if (isGeneric) {
+        const genericIndex = genericArticleImages.indexOf(imageUrl);
+        if (genericIndex > -1) {
+          genericArticleImages.splice(genericIndex, 1);
+        }
       }
 
       // Si c'était l'image principale, réinitialiser
@@ -4705,7 +4744,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Supprimer une image
   window.deleteArticleImage = async function(imageUrl, buttonElement) {
-    if (!confirm('Supprimer cette photo ?')) return;
+    // Vérifier si c'est une image générique partagée
+    const isGeneric = genericArticleImages.includes(imageUrl);
+    
+    let confirmMessage = 'Supprimer cette photo ?';
+    if (isGeneric) {
+      confirmMessage = '⚠️ ATTENTION: Cette photo est partagée avec d\'autres articles du même type.\n\nElle sera supprimée pour TOUS les articles utilisant cette image.\n\nVoulez-vous vraiment la supprimer définitivement ?';
+    }
+    
+    if (!confirm(confirmMessage)) return;
     
     try {
       const response = await fetch('{{ route('admin.articles.delete-image') }}', {
