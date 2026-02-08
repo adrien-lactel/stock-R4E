@@ -2308,6 +2308,12 @@ async function displayGameResult(game, platform) {
   nameInput.dataset.gameId = game.id;
   nameInput.dataset.platform = platform;
   nameInput.onchange = () => updateGameField(game.id, platform, 'name', nameInput.value);
+  nameInput.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      nameInput.blur(); // Déclenche onchange
+    }
+  };
   nameContainer.appendChild(nameLabel);
   nameContainer.appendChild(nameInput);
   
@@ -2325,6 +2331,12 @@ async function displayGameResult(game, platform) {
   yearInput.dataset.gameId = game.id;
   yearInput.dataset.platform = platform;
   yearInput.onchange = () => updateGameField(game.id, platform, 'year', yearInput.value);
+  yearInput.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      yearInput.blur(); // Déclenche onchange
+    }
+  };
   yearContainer.appendChild(yearLabel);
   yearContainer.appendChild(yearInput);
   
@@ -2370,7 +2382,22 @@ async function displayGameResult(game, platform) {
     // Délai pour permettre le clic sur une suggestion
     setTimeout(() => {
       publisherSuggestions.classList.add('hidden');
+      // Sauvegarder si la valeur a changé
+      if (publisherInput.value !== (game.publisher || '')) {
+        updateGameField(game.id, platform, 'publisher', publisherInput.value);
+      }
     }, 300);
+  };
+  
+  publisherInput.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Si des suggestions sont ouvertes, ne rien faire (elles seront gérées par leur propre onclick)
+      const suggestionsVisible = !publisherSuggestions.classList.contains('hidden');
+      if (!suggestionsVisible) {
+        publisherInput.blur(); // Déclenche onblur qui sauvegarde
+      }
+    }
   };
   
   publisherContainer.appendChild(publisherLabel);
@@ -2756,6 +2783,15 @@ window.clearGameSuggestions = function() {
 
 window.onGameKeydown = function(e) {
   const suggestions = document.querySelectorAll('#game-suggestions .suggestion-item');
+  
+  if (e.key === 'Enter') {
+    e.preventDefault(); // Toujours empêcher la soumission du formulaire
+    if (currentGameSuggestionIndex >= 0 && suggestions.length > 0) {
+      suggestions[currentGameSuggestionIndex].click();
+    }
+    return;
+  }
+  
   if (suggestions.length === 0) return;
   
   if (e.key === 'ArrowDown') {
@@ -2766,9 +2802,6 @@ window.onGameKeydown = function(e) {
     e.preventDefault();
     currentGameSuggestionIndex = Math.max(currentGameSuggestionIndex - 1, 0);
     highlightGameSuggestion();
-  } else if (e.key === 'Enter' && currentGameSuggestionIndex >= 0) {
-    e.preventDefault();
-    suggestions[currentGameSuggestionIndex].click();
   } else if (e.key === 'Escape') {
     clearGameSuggestions();
   }
