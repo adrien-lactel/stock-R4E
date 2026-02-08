@@ -672,6 +672,8 @@ let touchStartDistance = 0;
 let cropScale = 1;
 let cropOffsetX = 0;
 let cropOffsetY = 0;
+let lightboxContext = {};
+let currentArticleTypeId = null;
 
 window.openImageLightbox = function(imageUrl, context = {}) {
   const lightbox = document.getElementById('image-lightbox');
@@ -683,6 +685,9 @@ window.openImageLightbox = function(imageUrl, context = {}) {
     document.body.style.overflow = 'hidden';
     resetZoom();
     initZoomControls();
+    
+    // Stocker le contexte pour utilisation ultérieure (recadrage, etc.)
+    lightboxContext = context;
     
     // Mettre à jour le nom du fichier
     const filenameEl = document.getElementById('lightbox-filename');
@@ -1040,7 +1045,14 @@ window.applyCrop = async function() {
       // Upload l'image recadrée
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('article_type_id', currentArticleTypeId);
+      
+      // Récupérer article_type_id depuis le contexte ou la variable globale
+      const articleTypeId = lightboxContext.article_type_id || currentArticleTypeId;
+      if (!articleTypeId) {
+        alert('❌ Type d\'article non défini. Veuillez sélectionner un type d\'article.');
+        return;
+      }
+      formData.append('article_type_id', articleTypeId);
       
       try {
         const response = await fetch('{{ route('admin.articles.upload-image') }}', {
@@ -3581,8 +3593,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (!dropzone || !fileInput || !previewContainer) return;
 
-  let currentArticleTypeId = null;
-
   // Détecter le type d'article sélectionné pour associer les images
   if (typeSelect) {
     typeSelect.addEventListener('change', function() {
@@ -4105,7 +4115,7 @@ document.addEventListener('DOMContentLoaded', function() {
     card.innerHTML = `
       <div class="relative group">
         <img src="${imageSrc}" class="w-full aspect-square object-cover rounded cursor-pointer hover:opacity-90" 
-             onclick="event.stopPropagation(); window.openImageLightbox('${imageSrc}', {isArticleImage: true, isPrimary: ${isPrimary}})">
+             onclick="event.stopPropagation(); window.openImageLightbox('${imageSrc}', {isArticleImage: true, isPrimary: ${isPrimary}, article_type_id: currentArticleTypeId})">
         
         <div class="absolute top-2 left-2 flex flex-col gap-1">
           ${isPrimary ? `
