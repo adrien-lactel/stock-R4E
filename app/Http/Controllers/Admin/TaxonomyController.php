@@ -19,8 +19,8 @@ class TaxonomyController extends Controller
      ===================================================== */
     public function index()
     {
-        // Optimisation mémoire : uniquement les compteurs, pas les collections complètes
-        return view('admin.taxonomy.index', [
+        // Version avec édition complète et chargement progressif
+        return view('admin.taxonomy.index-v3', [
             'categories' => ArticleCategory::withCount('subCategories')
                 ->with(['brands' => function($query) {
                     $query->withCount('subCategories');
@@ -96,12 +96,24 @@ class TaxonomyController extends Controller
             'publisher' => 'nullable|string|max:255',
         ]);
 
-        ArticleType::firstOrCreate([
+        $type = ArticleType::firstOrCreate([
             'article_sub_category_id' => $request->article_sub_category_id,
             'name' => $request->name,
         ], [
             'publisher' => $request->publisher,
         ]);
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Type ajouté',
+                'type' => [
+                    'id' => $type->id,
+                    'name' => $type->name,
+                    'consoles_count' => 0
+                ]
+            ]);
+        }
 
         return back()->with('success', 'Type ajouté');
     }
@@ -279,13 +291,23 @@ class TaxonomyController extends Controller
     public function ajaxBrands($categoryId)
     {
         $brands = ArticleBrand::where('article_category_id', $categoryId)
+            ->withCount('subCategories')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         if (request()->wantsJson() || request()->header('Accept') === 'application/json') {
-            return response()->json($brands);
+            return response()->json([
+                'brands' => $brands->map(function($brand) {
+                    return [
+                        'id' => $brand->id,
+                        'name' => $brand->name,
+                        'sub_categories_count' => $brand->sub_categories_count ?? 0
+                    ];
+                })
+            ]);
         }
 
+        // Support ancien format HTML (autocomplete)
         $html = '<option value="">-- Sélectionner --</option>';
         foreach ($brands as $brand) {
             $html .= '<option value="' . $brand->id . '">' . e($brand->name) . '</option>';
@@ -300,13 +322,23 @@ class TaxonomyController extends Controller
     public function ajaxSubCategories($brandId)
     {
         $subCategories = ArticleSubCategory::where('article_brand_id', $brandId)
+            ->withCount('types')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
         if (request()->wantsJson() || request()->header('Accept') === 'application/json') {
-            return response()->json($subCategories);
+            return response()->json([
+                'subcategories' => $subCategories->map(function($sub) {
+                    return [
+                        'id' => $sub->id,
+                        'name' => $sub->name,
+                        'types_count' => $sub->types_count ?? 0
+                    ];
+                })
+            ]);
         }
 
+        // Support ancien format HTML (autocomplete)
         $html = '<option value="">-- Sélectionner --</option>';
         foreach ($subCategories as $sub) {
             $html .= '<option value="' . $sub->id . '">' . e($sub->name) . '</option>';
@@ -321,13 +353,19 @@ class TaxonomyController extends Controller
     public function ajaxTypes($subCategoryId)
     {
         $types = ArticleType::where('article_sub_category_id', $subCategoryId)
-            ->select('id', 'name')
+            ->withCount('consoles')
             ->orderBy('name')
             ->get();
 
         // Si la requête demande du JSON, retourner du JSON
         if (request()->wantsJson() || request()->header('Accept') === 'application/json') {
-            return response()->json($types);
+            return response()->json($types->map(function($type) {
+                return [
+                    'id' => $type->id,
+                    'name' => $type->name,
+                    'consoles_count' => $type->consoles_count ?? 0
+                ];
+            }));
         }
 
         // Sinon, retourner du HTML (pour compatibilité)
@@ -364,6 +402,10 @@ public function updateSubCategory(Request $request, ArticleSubCategory $subCateg
 
     $subCategory->update($data);
 
+    if (request()->wantsJson() || request()->ajax()) {
+        return response()->json(['success' => true, 'message' => 'Sous-catégorie mise à jour.']);
+    }
+
     return back()->with('success', 'Sous-catégorie mise à jour.');
 }
 
@@ -388,6 +430,10 @@ public function updateType(Request $request, ArticleType $type)
     ]);
 
     $type->update($data);
+
+    if (request()->wantsJson() || request()->ajax()) {
+        return response()->json(['success' => true, 'message' => 'Type mis à jour.']);
+    }
 
     return back()->with('success', 'Type mis à jour.');
 }
@@ -431,7 +477,21 @@ public function destroySubCategory(ArticleSubCategory $subCategory)
 
 public function destroyType(ArticleType $type)
 {
+    // Vérifier si des consoles utilisent ce type
+    if ($type->consoles()->count() > 0) {
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'error' => 'Impossible de supprimer ce type car il est utilisé par ' . $type->consoles()->count() . ' article(s).'
+            ], 422);
+        }
+        return back()->with('error', 'Impossible de supprimer ce type car il est utilisé par ' . $type->consoles()->count() . ' article(s).');
+    }
+
     $type->delete();
+
+    if (request()->wantsJson() || request()->ajax()) {
+        return response()->json(['success' => true, 'message' => 'Type supprimé.']);
+    }
 
     return back()->with('success', 'Type supprimé.');
 }
@@ -993,6 +1053,38 @@ public function destroyType(ArticleType $type)
         return response()->json([
             'success' => true,
             'message' => "Image '{$type}' supprimée avec succès"
+        ]);
+    }
+
+    /* =====================================================
+     | AJAX — Chargement paginé de TOUS les types (nouvelle interface)
+     ===================================================== */
+    public function ajaxAllTypes(Request $request)
+    {
+        $perPage = $request->input('per_page', 50);
+        $search = $request->input('search', '');
+
+        $query = ArticleType::with('subCategory:id,name');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $types = $query->orderBy('name')->paginate($perPage);
+
+        return response()->json([
+            'types' => $types->map(function($type) {
+                return [
+                    'id' => $type->id,
+                    'name' => $type->name,
+                    'sub_category_name' => $type->subCategory->name ?? ''
+                ];
+            }),
+            'current_page' => $types->currentPage(),
+            'last_page' => $types->lastPage(),
+            'from' => $types->firstItem(),
+            'to' => $types->lastItem(),
+            'total' => $types->total()
         ]);
     }
     

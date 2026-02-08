@@ -30,4 +30,9 @@ class ArticleType extends Model
     {
         return $this->belongsTo(ArticleSubCategory::class, 'article_sub_category_id');
     }
+
+    public function consoles()
+    {
+        return $this->hasMany(Console::class, 'article_type_id');
+    }
 }
