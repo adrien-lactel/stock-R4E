@@ -3601,22 +3601,35 @@ document.addEventListener('DOMContentLoaded', function() {
         <input type="file" id="article-image-camera" accept="image/*" capture="environment" multiple class="hidden">
         <input type="file" id="article-image-file" accept="image/*" multiple class="hidden">
         
-        <div class="flex gap-3 justify-center">
-          <button onclick="document.getElementById('article-image-camera').click()" 
-                  class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            📱 Appareil photo
-          </button>
-          <button onclick="document.getElementById('article-image-file').click()" 
-                  class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            🖼️ Galerie
-          </button>
+        <div id="upload-buttons-container" class="space-y-3">
+          <div class="flex gap-3 justify-center">
+            <button type="button" onclick="document.getElementById('article-image-camera').click()" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              📱 Appareil photo
+            </button>
+            <button type="button" onclick="document.getElementById('article-image-file').click()" 
+                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              🖼️ Galerie
+            </button>
+          </div>
+          
+          <!-- Bouton "Prendre une autre photo" (caché initialement) -->
+          <div id="continue-photo-button" class="hidden">
+            <button type="button" onclick="document.getElementById('article-image-camera').click()" 
+                    class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 shadow-lg animate-pulse">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              📸 Prendre une autre photo
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -3625,7 +3638,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const existingSection = document.createElement('div');
     existingSection.className = 'space-y-4';
     existingSection.innerHTML = `
-      <h4 class="font-semibold text-gray-700">Photos de cet article (<span id="article-images-count">0</span>)</h4>
+      <div class="flex items-center justify-between">
+        <h4 class="font-semibold text-gray-700">Photos de cet article (<span id="article-images-count">0</span>)</h4>
+        <button type="button" onclick="document.getElementById('article-image-camera').click()" 
+                class="text-sm bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Ajouter
+        </button>
+      </div>
       <div id="article-images-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div class="col-span-full text-center text-gray-500 py-8">
           📭 Aucune photo pour le moment
@@ -3671,8 +3693,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const cameraInput = uploadSection.querySelector('#article-image-camera');
     const fileInput = uploadSection.querySelector('#article-image-file');
     
-    cameraInput.onchange = (e) => handleArticleImagesUpload(e.target.files);
-    fileInput.onchange = (e) => handleArticleImagesUpload(e.target.files);
+    cameraInput.onchange = async (e) => {
+      await handleArticleImagesUpload(e.target.files);
+      e.target.value = ''; // Réinitialiser pour permettre de reprendre une photo
+      showContinuePhotoButton(); // Afficher le bouton pour continuer
+    };
+    
+    fileInput.onchange = async (e) => {
+      await handleArticleImagesUpload(e.target.files);
+      e.target.value = ''; // Réinitialiser
+      showContinuePhotoButton();
+    };
     
     // Assembler la modal
     body.appendChild(uploadSection);
@@ -3708,6 +3739,19 @@ document.addEventListener('DOMContentLoaded', function() {
       refreshArticleImagesPreview();
     }
   };
+
+  // Afficher le bouton pour continuer à prendre des photos
+  function showContinuePhotoButton() {
+    const continueButton = document.getElementById('continue-photo-button');
+    if (continueButton) {
+      continueButton.classList.remove('hidden');
+      // Retirer l'animation après 3 secondes
+      setTimeout(() => {
+        const btn = continueButton.querySelector('button');
+        if (btn) btn.classList.remove('animate-pulse');
+      }, 3000);
+    }
+  }
 
   // Compresser une image avant l'upload
   async function compressImage(file, maxWidth = 1920, quality = 0.85) {
@@ -3978,6 +4022,119 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Supprimer une image d'article
+  window.deleteArticleImage = async function(imageUrl, buttonElement) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
+      return;
+    }
+
+    try {
+      // Retirer de la liste en mémoire
+      const index = uploadedGameImages.indexOf(imageUrl);
+      if (index > -1) {
+        uploadedGameImages.splice(index, 1);
+      }
+
+      // Si c'était l'image principale, réinitialiser
+      if (primaryImageUrl === imageUrl) {
+        primaryImageUrl = uploadedGameImages.length > 0 ? uploadedGameImages[0] : null;
+      }
+
+      // Retirer la carte visuellement
+      const card = buttonElement.closest('[data-file-name]');
+      if (card) {
+        card.remove();
+      }
+
+      updateArticleImagesCount();
+      refreshArticleImagesPreview();
+
+      // S'il ne reste plus aucune image, afficher le message
+      const gridContainer = document.getElementById('article-images-grid');
+      if (gridContainer && gridContainer.children.length === 0) {
+        gridContainer.innerHTML = `
+          <div class="col-span-full text-center text-gray-500 py-8">
+            📭 Aucune photo pour le moment
+          </div>
+        `;
+      }
+
+      console.log('✅ Image supprimée:', imageUrl);
+    } catch (error) {
+      console.error('❌ Erreur suppression:', error);
+      alert('Erreur lors de la suppression');
+    }
+  };
+
+  // Définir une image comme principale
+  window.setPrimaryImage = function(imageUrl, buttonElement) {
+    primaryImageUrl = imageUrl;
+    console.log('⭐ Image principale définie:', imageUrl);
+
+    // Rafraîchir toutes les cartes pour mettre à jour les badges
+    const gridContainer = document.getElementById('article-images-grid');
+    if (gridContainer) {
+      const cards = gridContainer.querySelectorAll('[data-file-name]');
+      cards.forEach(card => {
+        const img = card.querySelector('img');
+        if (img) {
+          const cardImageUrl = img.src.split('?')[0]; // Retirer le cache-busting
+          const isPrimary = (cardImageUrl === imageUrl || img.src === imageUrl);
+          
+          // Mettre à jour le badge principal
+          const existingBadge = card.querySelector('.absolute.top-2.left-2');
+          if (existingBadge) {
+            existingBadge.remove();
+          }
+          
+          if (isPrimary) {
+            const badge = document.createElement('div');
+            badge.className = 'absolute top-2 left-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center gap-1';
+            badge.innerHTML = `
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+              </svg>
+              Photo principale
+            `;
+            const imgContainer = card.querySelector('.relative.group');
+            if (imgContainer) {
+              imgContainer.insertBefore(badge, imgContainer.firstChild.nextSibling);
+            }
+          }
+          
+          // Mettre à jour le bouton
+          const setPrimaryBtn = card.querySelector('[onclick*="setPrimaryImage"]');
+          if (setPrimaryBtn) {
+            if (isPrimary) {
+              setPrimaryBtn.className = 'bg-indigo-600 ring-2 ring-white text-white px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-all shadow-md';
+              setPrimaryBtn.textContent = '✓ Principale';
+            } else {
+              setPrimaryBtn.className = 'bg-white/80 hover:bg-white text-gray-700 px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-all shadow-md';
+              setPrimaryBtn.textContent = 'Définir principale';
+            }
+          }
+        }
+      });
+    }
+
+    refreshArticleImagesPreview();
+  };
+
+  // Mettre à jour le compteur d'images
+  function updateArticleImagesCount() {
+    const countEl = document.getElementById('article-images-count');
+    if (countEl) {
+      countEl.textContent = uploadedGameImages.length;
+    }
+  }
+
+  // Mettre à jour la légende d'une image
+  window.updateArticleImageCaption = function(imageUrl, caption) {
+    console.log('📝 Légende mise à jour:', imageUrl, caption);
+    // TODO: Sauvegarder la légende en base de données si nécessaire
+    // Pour l'instant, juste l'enregistrer en mémoire
+  };
+
   // Charger les images existantes
   async function loadArticleImages() {
     // TODO: Charger depuis la base les images déjà uploadées pour cet article
@@ -4139,61 +4296,6 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Erreur lors de la suppression');
     }
   };
-
-  // Mettre à jour la légende d'une image
-  window.updateArticleImageCaption = async function(imageUrl, caption) {
-    console.log('Mise à jour légende:', imageUrl, caption);
-    // TODO: Enregistrer la légende dans la base
-  };
-
-  // Définir l'image principale
-  window.setPrimaryImage = function(imageUrl, buttonElement) {
-    console.log('🌟 Définir comme principale:', imageUrl);
-    primaryImageUrl = imageUrl;
-    
-    // Rafraîchir toutes les cartes pour mettre à jour les badges
-    const grid = document.getElementById('article-images-grid');
-    if (grid) {
-      // Récupérer toutes les images avec leurs légendes
-      const images = Array.from(grid.querySelectorAll('.border-2')).map(card => {
-        const img = card.querySelector('img');
-        const captionInput = card.querySelector('input[type="text"]');
-        const fileName = card.dataset.fileName;
-        return {
-          url: img.src,
-          caption: captionInput?.value || '',
-          fileName: fileName
-        };
-      });
-      
-      // Recréer toutes les cartes
-      grid.innerHTML = '';
-      images.forEach(img => {
-        addArticleImageCard(img.url, img.fileName, 'uploaded');
-        // Restaurer la légende
-        const card = Array.from(grid.children).find(c => c.dataset.fileName === img.fileName);
-        if (card && img.caption) {
-          const input = card.querySelector('input[type="text"]');
-          if (input) input.value = img.caption;
-        }
-      });
-    }
-    
-    // Rafraîchir l'aperçu (l'image principale sera en premier)
-    refreshArticleImagesPreview();
-    
-    console.log('✅ Image principale définie');
-  };
-
-  // Mettre à jour le compteur
-  function updateArticleImagesCount() {
-    const countEl = document.getElementById('article-images-count');
-    const grid = document.getElementById('article-images-grid');
-    if (countEl && grid) {
-      const count = grid.querySelectorAll('.border-2.rounded-lg').length;
-      countEl.textContent = count;
-    }
-  }
 
   // Rafraîchir la prévisualisation dans le formulaire
   function refreshArticleImagesPreview() {
