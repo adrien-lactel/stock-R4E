@@ -10,6 +10,7 @@ use App\Models\ArticleType;
 use App\Models\GameBoyGame;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class TaxonomyController extends Controller
 {
@@ -927,68 +928,44 @@ public function destroyType(ArticleType $type)
         $folder = $request->folder;
         $type = $request->type;
 
-        // Vérifier si on utilise Cloudinary
-        $mappingFile = storage_path('app/taxonomy-cloudinary-mapping.json');
-        $useCloudinary = file_exists($mappingFile);
-        
-        if ($useCloudinary) {
-            // Mode CLOUDINARY
-            $mapping = json_decode(file_get_contents($mappingFile), true);
-            $filename = "{$identifier}-{$type}.png";
-            
-            if (isset($mapping[$folder][$filename])) {
-                $cloudinaryUrl = $mapping[$folder][$filename];
-                
-                try {
-                    // Extraire le public_id de l'URL Cloudinary
-                    // Format: https://res.cloudinary.com/.../taxonomy/gameboy/DMG-A1J-cover
-                    if (preg_match('/\/taxonomy\/' . preg_quote($folder, '/') . '\/(.+)$/', $cloudinaryUrl, $matches)) {
-                        $publicId = "taxonomy/{$folder}/" . $matches[1];
-                        
-                        // Supprimer de Cloudinary
-                        \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::destroy($publicId);
-                    }
-                    
-                    // Retirer du mapping
-                    unset($mapping[$folder][$filename]);
-                    file_put_contents($mappingFile, json_encode($mapping, JSON_PRETTY_PRINT));
-                    
-                    return response()->json([
-                        'success' => true,
-                        'message' => "Image '{$type}' supprimée de Cloudinary avec succès"
-                    ]);
-                } catch (\Exception $e) {
-                    \Log::error("Erreur suppression Cloudinary: " . $e->getMessage());
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Erreur lors de la suppression: " . $e->getMessage()
-                    ], 500);
-                }
-            }
-            
+        // Chemins R2 et local
+        $r2Path = "taxonomy/{$folder}/{$identifier}-{$type}.png";
+        $basePath = public_path("images/taxonomy/{$folder}");
+        $localPath = "{$basePath}/{$identifier}-{$type}.png";
+
+        // Vérifier l'existence sur R2 et en local
+        $existsOnR2 = Storage::disk('r2')->exists($r2Path);
+        $existsLocally = file_exists($localPath);
+
+        if (!$existsOnR2 && !$existsLocally) {
             return response()->json([
                 'success' => false,
-                'message' => "L'image n'existe pas dans Cloudinary"
+                'message' => "L'image n'existe pas"
             ], 404);
-        } else {
-            // Mode LOCAL
-            $basePath = public_path("images/taxonomy/{$folder}");
-            $imagePath = "{$basePath}/{$identifier}-{$type}.png";
+        }
 
-            if (!file_exists($imagePath)) {
+        // Supprimer de R2 si présent
+        if ($existsOnR2) {
+            try {
+                Storage::disk('r2')->delete($r2Path);
+            } catch (\Exception $e) {
+                \Log::error("Erreur suppression R2: " . $e->getMessage());
                 return response()->json([
                     'success' => false,
-                    'message' => "L'image n'existe pas"
-                ], 404);
+                    'message' => "Erreur lors de la suppression sur R2: " . $e->getMessage()
+                ], 500);
             }
-
-            unlink($imagePath);
-
-            return response()->json([
-                'success' => true,
-                'message' => "Image '{$type}' supprimée avec succès"
-            ]);
         }
+
+        // Supprimer en local si présent
+        if ($existsLocally) {
+            unlink($localPath);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Image '{$type}' supprimée avec succès"
+        ]);
     }
     
 }
