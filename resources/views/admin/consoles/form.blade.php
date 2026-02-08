@@ -1821,6 +1821,7 @@ async function loadTaxonomyImages(identifier, folder) {
         
         // Bouton suppression
         const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
         deleteBtn.className = 'text-red-600 hover:text-red-800 text-xl leading-none ml-2';
         deleteBtn.innerHTML = '🗑️';
         deleteBtn.title = 'Supprimer cette image';
@@ -1841,6 +1842,7 @@ async function loadTaxonomyImages(identifier, folder) {
         // Bouton "Définir comme principale" pour les images indexées (index > 1)
         if (image.index > 1) {
           const setPrimaryBtn = document.createElement('button');
+          setPrimaryBtn.type = 'button';
           setPrimaryBtn.className = 'w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
           setPrimaryBtn.innerHTML = '⭐ Définir comme principale';
           setPrimaryBtn.title = 'Remplacer l\'image principale par celle-ci';
@@ -2526,19 +2528,23 @@ async function displayGameResult(game, platform) {
   
   // Bouton "Appliquer au formulaire"
   const applyToFormButton = document.createElement('button');
+  applyToFormButton.type = 'button'; // Empêcher la soumission du formulaire
   applyToFormButton.className = 'bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1';
   applyToFormButton.innerHTML = '✓ Appliquer au formulaire';
   applyToFormButton.title = 'Remplir automatiquement la taxonomie de l\'article';
   applyToFormButton.onclick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     applyGameTaxonomy(game, platform);
   };
   
   // Bouton d'édition global pour toutes les images
   const globalEditButton = document.createElement('button');
+  globalEditButton.type = 'button'; // Empêcher la soumission du formulaire
   globalEditButton.className = 'bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1';
   globalEditButton.innerHTML = '✏️ Gérer les images';
   globalEditButton.onclick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     openImageEditorModal(game, platform, identifier, folder, 'cover');
   };
