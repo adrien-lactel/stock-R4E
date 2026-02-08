@@ -1246,6 +1246,7 @@ window.applyGameTaxonomy = function(game, platform) {
       'megadrive': { brand: 'SEGA', subCategory: 'Mega Drive' },
       'gamegear': { brand: 'SEGA', subCategory: 'Game Gear' },
       'wonderswan': { brand: 'Bandai', subCategory: 'WonderSwan' },
+      'wonderswancolor': { brand: 'Bandai', subCategory: 'WonderSwan Color' },
       'segasaturn': { brand: 'SEGA', subCategory: 'Sega Saturn' }
     };
     
