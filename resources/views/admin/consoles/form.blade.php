@@ -1912,9 +1912,24 @@ window.closeImageEditorModal = function() {
 
 // Fonction pour rafraîchir uniquement les images sans reconstruire toute la page
 window.refreshGameImages = function(game, platform, identifier, folder) {
+  console.log('🔄 refreshGameImages appelé:', { game, platform, identifier, folder });
+  
   // Trouver la grille d'images existante
   const contentDiv = document.getElementById('game-results-content');
   if (!contentDiv) return;
+  
+  // Rafraîchir la cover principale
+  const coverImg = document.getElementById('game-cover-' + game.id);
+  if (coverImg) {
+    const timestamp = Date.now();
+    const currentSrc = coverImg.src.split('?')[0]; // Retirer l'ancien timestamp
+    coverImg.src = `${currentSrc}?t=${timestamp}`;
+    console.log('✅ Cover rafraîchie');
+  }
+  
+  // Rafraîchir le logo du jeu
+  loadGameLogo(game, platform);
+  console.log('✅ Logo du jeu rafraîchi');
   
   // Trouver la grille d'images par ID
   const imagesGrid = document.getElementById('game-images-preview-grid');
@@ -1977,7 +1992,7 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
     imagesGrid.appendChild(imageCard);
   });
   
-  console.log('✅ Images rechargées');
+  console.log('✅ Grille d\'images 4x rechargée');
 };
 
 // Fonction upload des images de taxonomie
@@ -2208,6 +2223,7 @@ async function displayGameResult(game, platform) {
   const imageUrl = await getGameImageWithFallback(game, platform);
   const imageContainer = document.createElement('div');
   imageContainer.className = 'w-32';
+  imageContainer.id = 'game-cover-container-' + game.id;
   
   if (imageUrl) {
     const img = document.createElement('img');
@@ -2215,6 +2231,7 @@ async function displayGameResult(game, platform) {
     const timestamp = Date.now();
     img.src = imageUrl.includes('?') ? `${imageUrl}&t=${timestamp}` : `${imageUrl}?t=${timestamp}`;
     img.alt = game.name;
+    img.id = 'game-cover-' + game.id;
     img.className = 'w-32 h-32 object-cover rounded border border-gray-200';
     img.onerror = function() {
       const placeholder = document.createElement('div');
