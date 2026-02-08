@@ -49,28 +49,59 @@
         </div>
         
         {{-- Contrôles d'édition (gauche) --}}
-        <div class="absolute top-1/2 left-4 transform -translate-y-1/2 flex flex-col gap-3 z-10">
+        <div class="absolute top-1/2 left-2 md:left-4 transform -translate-y-1/2 flex flex-col gap-2 z-10">
+            <button type="button" onclick="toggleCropMode(); event.stopPropagation();" 
+                    id="crop-toggle-btn"
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 md:p-3 rounded-lg transition-colors group"
+                    title="Recadrer">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </button>
             <button type="button" onclick="rotateLeft(); event.stopPropagation();" 
-                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-lg transition-colors group"
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 md:p-3 rounded-lg transition-colors group"
                     title="Rotation 90° gauche">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
                 </svg>
             </button>
             <button type="button" onclick="rotateRight(); event.stopPropagation();" 
-                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-lg transition-colors group"
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 md:p-3 rounded-lg transition-colors group"
                     title="Rotation 90° droite">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"></path>
                 </svg>
             </button>
             <button type="button" onclick="downloadLightboxImage(); event.stopPropagation();" 
-                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-lg transition-colors group"
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 md:p-3 rounded-lg transition-colors group"
                     title="Télécharger">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                 </svg>
             </button>
+        </div>
+        
+        {{-- Zone de recadrage (cachée par défaut) --}}
+        <div id="crop-overlay" class="hidden absolute inset-0 z-20">
+            <div class="absolute inset-0 bg-black bg-opacity-80" onclick="event.stopPropagation()">
+                <canvas id="crop-canvas" class="absolute inset-0 m-auto" style="touch-action: none;"></canvas>
+                
+                {{-- Contrôles de recadrage --}}
+                <div class="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-3">
+                    <button type="button" onclick="cancelCrop(); event.stopPropagation();" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium">
+                        Annuler
+                    </button>
+                    <button type="button" onclick="applyCrop(); event.stopPropagation();" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium">
+                        ✓ Valider le recadrage
+                    </button>
+                </div>
+                
+                <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg text-sm">
+                    📐 Glissez pour recadrer • Pincez pour zoomer
+                </div>
+            </div>
         </div>
         
         {{-- Contrôles de zoom --}}
@@ -625,6 +656,12 @@ let currentRotation = 0;
 let isDragging = false;
 let startX = 0;
 let startY = 0;
+let isCropMode = false;
+let cropData = { x: 0, y: 0, width: 0, height: 0 };
+let touchStartDistance = 0;
+let cropScale = 1;
+let cropOffsetX = 0;
+let cropOffsetY = 0;
 
 window.openImageLightbox = function(imageUrl, context = {}) {
   const lightbox = document.getElementById('image-lightbox');
@@ -739,6 +776,301 @@ window.downloadLightboxImage = function() {
   console.log('💾 Téléchargement:', filename);
 };
 
+// Mode recadrage
+window.toggleCropMode = function() {
+  isCropMode = !isCropMode;
+  const overlay = document.getElementById('crop-overlay');
+  const toggleBtn = document.getElementById('crop-toggle-btn');
+  
+  if (isCropMode) {
+    overlay.classList.remove('hidden');
+    toggleBtn.classList.add('bg-green-600');
+    initCropCanvas();
+  } else {
+    overlay.classList.add('hidden');
+    toggleBtn.classList.remove('bg-green-600');
+  }
+};
+
+function initCropCanvas() {
+  const img = document.getElementById('lightbox-image');
+  const canvas = document.getElementById('crop-canvas');
+  if (!img || !canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  
+  // Charger l'image dans le canvas
+  const tempImg = new Image();
+  tempImg.crossOrigin = 'anonymous';
+  tempImg.onload = function() {
+    // Adapter au viewport
+    const maxWidth = window.innerWidth - 100;
+    const maxHeight = window.innerHeight - 200;
+    let width = tempImg.width;
+    let height = tempImg.height;
+    
+    if (width > maxWidth || height > maxHeight) {
+      const ratio = Math.min(maxWidth / width, maxHeight / height);
+      width *= ratio;
+      height *= ratio;
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Dessiner l'image
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(currentRotation * Math.PI / 180);
+    ctx.scale(cropScale, cropScale);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    ctx.drawImage(tempImg, cropOffsetX, cropOffsetY, canvas.width, canvas.height);
+    ctx.restore();
+    
+    // Zone de recadrage initiale (80% au centre)
+    cropData.width = width * 0.8;
+    cropData.height = height * 0.8;
+    cropData.x = (width - cropData.width) / 2;
+    cropData.y = (height - cropData.height) / 2;
+    
+    drawCropOverlay();
+    initCropControls();
+  };
+  tempImg.src = img.dataset.originalUrl;
+}
+
+function drawCropOverlay() {
+  const canvas = document.getElementById('crop-canvas');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  
+  // Redessiner l'image
+  const img = document.getElementById('lightbox-image');
+  const tempImg = new Image();
+  tempImg.crossOrigin = 'anonymous';
+  tempImg.onload = function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(currentRotation * Math.PI / 180);
+    ctx.scale(cropScale, cropScale);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    ctx.drawImage(tempImg, cropOffsetX, cropOffsetY, canvas.width, canvas.height);
+    ctx.restore();
+    
+    // Assombrir les zones hors recadrage
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, cropData.y);
+    ctx.fillRect(0, cropData.y, cropData.x, cropData.height);
+    ctx.fillRect(cropData.x + cropData.width, cropData.y, canvas.width - cropData.x - cropData.width, cropData.height);
+    ctx.fillRect(0, cropData.y + cropData.height, canvas.width, canvas.height - cropData.y - cropData.height);
+    
+    // Bordure de sélection
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cropData.x, cropData.y, cropData.width, cropData.height);
+    
+    // Poignées de redimensionnement
+    const handleSize = 20;
+    ctx.fillStyle = '#fff';
+    // Coins
+    ctx.fillRect(cropData.x - handleSize/2, cropData.y - handleSize/2, handleSize, handleSize);
+    ctx.fillRect(cropData.x + cropData.width - handleSize/2, cropData.y - handleSize/2, handleSize, handleSize);
+    ctx.fillRect(cropData.x - handleSize/2, cropData.y + cropData.height - handleSize/2, handleSize, handleSize);
+    ctx.fillRect(cropData.x + cropData.width - handleSize/2, cropData.y + cropData.height - handleSize/2, handleSize, handleSize);
+  };
+  tempImg.src = img.dataset.originalUrl;
+}
+
+function initCropControls() {
+  const canvas = document.getElementById('crop-canvas');
+  if (!canvas) return;
+  
+  let dragging = false;
+  let resizing = null;
+  let startMouseX = 0;
+  let startMouseY = 0;
+  let startCropX = 0;
+  let startCropY = 0;
+  let startCropWidth = 0;
+  let startCropHeight = 0;
+  
+  const getMousePos = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+  };
+  
+  const onStart = (e) => {
+    e.preventDefault();
+    const pos = getMousePos(e);
+    startMouseX = pos.x;
+    startMouseY = pos.y;
+    startCropX = cropData.x;
+    startCropY = cropData.y;
+    startCropWidth = cropData.width;
+    startCropHeight = cropData.height;
+    
+    const handleSize = 20;
+    // Vérifier si on clique sur une poignée
+    if (Math.abs(pos.x - cropData.x) < handleSize && Math.abs(pos.y - cropData.y) < handleSize) {
+      resizing = 'tl';
+    } else if (Math.abs(pos.x - (cropData.x + cropData.width)) < handleSize && Math.abs(pos.y - cropData.y) < handleSize) {
+      resizing = 'tr';
+    } else if (Math.abs(pos.x - cropData.x) < handleSize && Math.abs(pos.y - (cropData.y + cropData.height)) < handleSize) {
+      resizing = 'bl';
+    } else if (Math.abs(pos.x - (cropData.x + cropData.width)) < handleSize && Math.abs(pos.y - (cropData.y + cropData.height)) < handleSize) {
+      resizing = 'br';
+    } else if (pos.x > cropData.x && pos.x < cropData.x + cropData.width &&
+               pos.y > cropData.y && pos.y < cropData.y + cropData.height) {
+      dragging = true;
+    }
+  };
+  
+  const onMove = (e) => {
+    if (!dragging && !resizing) return;
+    e.preventDefault();
+    
+    const pos = getMousePos(e);
+    const dx = pos.x - startMouseX;
+    const dy = pos.y - startMouseY;
+    
+    if (dragging) {
+      cropData.x = Math.max(0, Math.min(canvas.width - cropData.width, startCropX + dx));
+      cropData.y = Math.max(0, Math.min(canvas.height - cropData.height, startCropY + dy));
+    } else if (resizing) {
+      if (resizing === 'br') {
+        cropData.width = Math.max(50, Math.min(canvas.width - cropData.x, startCropWidth + dx));
+        cropData.height = Math.max(50, Math.min(canvas.height - cropData.y, startCropHeight + dy));
+      } else if (resizing === 'tl') {
+        const newX = Math.max(0, startCropX + dx);
+        const newY = Math.max(0, startCropY + dy);
+        cropData.width = startCropWidth + (cropData.x - newX);
+        cropData.height = startCropHeight + (cropData.y - newY);
+        cropData.x = newX;
+        cropData.y = newY;
+      } else if (resizing === 'tr') {
+        cropData.width = Math.max(50, Math.min(canvas.width - cropData.x, startCropWidth + dx));
+        const newY = Math.max(0, startCropY + dy);
+        cropData.height = startCropHeight + (cropData.y - newY);
+        cropData.y = newY;
+      } else if (resizing === 'bl') {
+        const newX = Math.max(0, startCropX + dx);
+        cropData.width = startCropWidth + (cropData.x - newX);
+        cropData.x = newX;
+        cropData.height = Math.max(50, Math.min(canvas.height - cropData.y, startCropHeight + dy));
+      }
+    }
+    
+    drawCropOverlay();
+  };
+  
+  const onEnd = () => {
+    dragging = false;
+    resizing = null;
+  };
+  
+  canvas.onmousedown = onStart;
+  canvas.onmousemove = onMove;
+  canvas.onmouseup = onEnd;
+  canvas.ontouchstart = onStart;
+  canvas.ontouchmove = onMove;
+  canvas.ontouchend = onEnd;
+}
+
+window.cancelCrop = function() {
+  isCropMode = false;
+  const overlay = document.getElementById('crop-overlay');
+  const toggleBtn = document.getElementById('crop-toggle-btn');
+  overlay.classList.add('hidden');
+  toggleBtn.classList.remove('bg-green-600');
+};
+
+window.applyCrop = async function() {
+  const canvas = document.getElementById('crop-canvas');
+  const img = document.getElementById('lightbox-image');
+  if (!canvas || !img) return;
+  
+  // Créer un canvas pour l'image recadrée
+  const cropCanvas = document.createElement('canvas');
+  cropCanvas.width = cropData.width;
+  cropCanvas.height = cropData.height;
+  const ctx = cropCanvas.getContext('2d');
+  
+  // Récupérer l'image source
+  const tempImg = new Image();
+  tempImg.crossOrigin = 'anonymous';
+  tempImg.onload = async function() {
+    // Calculer le ratio entre l'image originale et le canvas d'affichage
+    const scaleX = tempImg.width / canvas.width;
+    const scaleY = tempImg.height / canvas.height;
+    
+    // Extraire la zone recadrée à partir de l'image originale
+    ctx.drawImage(
+      tempImg,
+      cropData.x * scaleX,
+      cropData.y * scaleY,
+      cropData.width * scaleX,
+      cropData.height * scaleY,
+      0,
+      0,
+      cropData.width,
+      cropData.height
+    );
+    
+    // Convertir en blob
+    cropCanvas.toBlob(async (blob) => {
+      const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+      
+      // Upload l'image recadrée
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('article_type_id', currentArticleTypeId);
+      
+      try {
+        const response = await fetch('{{ route('admin.articles.upload-image') }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: formData
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          console.log('✅ Image recadrée uploadée:', data.url);
+          
+          // Ajouter à la liste
+          uploadedGameImages.push(data.url);
+          if (!primaryImageUrl) {
+            primaryImageUrl = data.url;
+          }
+          
+          // Ajouter la carte
+          const fileName = 'recadrage-' + Date.now() + '.jpg';
+          addArticleImageCard(data.url, fileName, 'uploaded');
+          refreshArticleImagesPreview();
+          
+          // Fermer le mode recadrage et le lightbox
+          cancelCrop();
+          closeImageLightbox();
+          
+          alert('✓ Image recadrée et ajoutée!');
+        }
+      } catch (e) {
+        console.error('❌ Erreur upload recadrage:', e);
+        alert('Erreur lors de l\'upload de l\'image recadrée');
+      }
+    }, 'image/jpeg', 0.9);
+  };
+  tempImg.src = img.dataset.originalUrl;
+};
+
 function updateTransform() {
   const img = document.getElementById('lightbox-image');
   if (img) {
@@ -783,6 +1115,59 @@ function initZoomControls() {
     isDragging = false;
     const img = document.getElementById('lightbox-image');
     if (img && currentZoom > 1) {
+      img.style.cursor = 'grab';
+    }
+  };
+
+  // Support tactile (mobile)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let lastTouchDistance = 0;
+
+  container.ontouchstart = function(e) {
+    if (e.touches.length === 1) {
+      // Pan avec un doigt
+      touchStartX = e.touches[0].clientX - currentX;
+      touchStartY = e.touches[0].clientY - currentY;
+    } else if (e.touches.length === 2) {
+      // Zoom avec deux doigts (pinch)
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
+    }
+  };
+
+  container.ontouchmove = function(e) {
+    e.preventDefault();
+    
+    if (e.touches.length === 1 && currentZoom > 1) {
+      // Pan
+      currentX = e.touches[0].clientX - touchStartX;
+      currentY = e.touches[0].clientY - touchStartY;
+      updateTransform();
+    } else if (e.touches.length === 2) {
+      // Pinch zoom
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (lastTouchDistance > 0) {
+        const delta = distance - lastTouchDistance;
+        if (delta > 5) {
+          zoomIn();
+          lastTouchDistance = distance;
+        } else if (delta < -5) {
+          zoomOut();
+          lastTouchDistance = distance;
+        }
+      }
+    }
+  };
+
+  container.ontouchend = function() {
+    lastTouchDistance = 0;
+  };
+}
       img.style.cursor = 'grab';
     }
   };
