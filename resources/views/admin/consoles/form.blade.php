@@ -1269,14 +1269,6 @@ window.applyGameTaxonomy = function(game, platform) {
     
     const yearField = document.getElementById('year_field');
     const yearInput = document.getElementById('year');
-    console.log('🔍 DEBUG ANNÉE:', {
-      yearField: !!yearField,
-      yearInput: !!yearInput, 
-      'game.year': game.year,
-      'typeof game.year': typeof game.year,
-      'game contient year?': 'year' in game,
-      'toutes les clés de game': Object.keys(game)
-    });
     
     if (yearField && yearInput) {
       yearField.style.display = 'block';
@@ -1286,10 +1278,8 @@ window.applyGameTaxonomy = function(game, platform) {
         yearInput.value = year;
         console.log('✓ Année remplie:', year);
       } else {
-        console.warn('⚠️ Aucune année trouvée dans:', game);
+        console.log('📅 Pas d\'année dans la BDD pour ce jeu (normal pour certaines plateformes)');
       }
-    } else {
-      console.error('❌ Champs année introuvables!');
     }
     
     // Remplir région
@@ -1357,138 +1347,183 @@ window.applyGameTaxonomy = function(game, platform) {
       const brandSelect = document.getElementById('article_brand_id');
       if (!brandSelect) return;
       
+      // DÉFINIR TOUTES LES FONCTIONS IMBRIQUÉES D'ABORD
+      const waitForSubCategories = (attempts = 0) => {
+        const subCategorySelect = document.getElementById('article_sub_category_id');
+        if (!subCategorySelect) return;
+        
+        if (subCategorySelect.options.length > 1) {
+          const subCatOption = Array.from(subCategorySelect.options).find(opt => 
+            opt.text.toLowerCase().includes(mapping.subCategory.toLowerCase())
+          );
+          if (subCatOption) {
+            subCategorySelect.value = subCatOption.value;
+            subCategorySelect.dispatchEvent(new Event('change'));
+            console.log('✓ Sous-catégorie sélectionnée:', subCatOption.text);
+          } else {
+            console.warn('⚠️ Sous-catégorie non trouvée dans les options:', mapping.subCategory, Array.from(subCategorySelect.options).map(o => o.text));
+          }
+          
+          // Attendre que les types se chargent (polling)
+          waitForTypes();
+        } else if (attempts < 10) {
+          setTimeout(() => waitForSubCategories(attempts + 1), 200);
+        }
+      };
+      
+      const waitForTypes = (attempts = 0) => {
+        const typeSelect = document.getElementById('article_type_id');
+        if (!typeSelect) {
+          console.error('❌ Select des types introuvable');
+          return;
+        }
+        
+        // Vérifier si les types sont chargés (plus qu'une option "Sélectionner")
+        if (typeSelect.options.length > 1 || attempts >= 10) {
+          console.log('✓ Select des types chargé, options:', typeSelect.options.length);
+          
+          // 4. Créer automatiquement le type (ROM-ID + nom)
+          const romId = game.rom_id || game.slug || '';
+          const typeName = romId ? `${romId} - ${game.name}` : game.name;
+          
+          // Récupérer le sub_category_id sélectionné
+          const subCategorySelect = document.getElementById('article_sub_category_id');
+          const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
+          
+          if (subCategoryId && typeName) {
+            console.log('🔨 Création du type:', { subCategoryId, typeName });
+            
+            // Créer le type via l'API
+            fetch('{{ route("admin.taxonomy.type.auto-create") }}', {
+              method: 'POST',
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                article_sub_category_id: subCategoryId,
+                name: typeName,
+                publisher: game.publisher || null
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                console.log('✓ Type créé ou trouvé:', data.type);
+                
+                // Polling pour attendre que le select soit prêt à recevoir la nouvelle option
+                const selectTypeOption = (retryCount = 0) => {
+                  const typeSelect = document.getElementById('article_type_id');
+                  if (!typeSelect) {
+                    console.error('❌ Select des types introuvable lors de la sélection');
+                    return;
+                  }
+                  
+                  // Vérifier si l'option existe déjà
+                  let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
+                  
+                  if (!typeOption && retryCount < 5) {
+                    // L'option n'existe pas encore et on n'a pas dépassé le nombre de tentatives
+                    console.log(`⏳ Tentative ${retryCount + 1}/5 : ajout de l'option type`);
+                    const newOption = new Option(data.type.name, data.type.id, true, true);
+                    typeSelect.add(newOption);
+                    
+                    // Vérifier si l'option a bien été ajoutée
+                    setTimeout(() => {
+                      const verifyOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
+                      if (verifyOption) {
+                        typeSelect.value = data.type.id;
+                        typeSelect.dispatchEvent(new Event('change'));
+                        console.log('✓ Type sélectionné:', data.type.name);
+                      } else {
+                        selectTypeOption(retryCount + 1);
+                      }
+                    }, 200);
+                  } else if (typeOption) {
+                    // L'option existe déjà, la sélectionner
+                    typeSelect.value = data.type.id;
+                    typeSelect.dispatchEvent(new Event('change'));
+                    console.log('✓ Type sélectionné (existant):', data.type.name);
+                  } else {
+                    console.error('❌ Impossible d\'ajouter/sélectionner le type après 5 tentatives');
+                  }
+                };
+                
+                selectTypeOption();
+              } else {
+                console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
+              }
+            })
+            .catch(error => {
+              console.error('Erreur création type:', error);
+            });
+          } else {
+            console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
+          }
+        } else {
+          // Les types ne sont pas encore chargés, réessayer
+          console.log(`⏳ Attente chargement types (tentative ${attempts + 1}/10)`);
+          setTimeout(() => waitForTypes(attempts + 1), 200);
+        }
+      };
+      
+      // MAINTENANT UTILISER LES FONCTIONS
       // Vérifier si les marques sont chargées (plus qu'une option "Sélectionner")
       if (brandSelect.options.length > 1) {
         const brandOption = Array.from(brandSelect.options).find(opt => 
           opt.text.toLowerCase().includes(mapping.brand.toLowerCase())
         );
+        
         if (brandOption) {
+          // La marque existe, la sélectionner
           brandSelect.value = brandOption.value;
           brandSelect.dispatchEvent(new Event('change'));
           console.log('✓ Marque sélectionnée:', brandOption.text);
-        } else {
-          console.warn('⚠️ Marque non trouvée dans les options:', mapping.brand, Array.from(brandSelect.options).map(o => o.text));
-        }
-        
-        // Attendre que les sous-catégories se chargent (polling avec retry)
-        const waitForSubCategories = (attempts = 0) => {
-          const subCategorySelect = document.getElementById('article_sub_category_id');
-          if (!subCategorySelect) return;
           
-          if (subCategorySelect.options.length > 1) {
-            const subCatOption = Array.from(subCategorySelect.options).find(opt => 
-              opt.text.toLowerCase().includes(mapping.subCategory.toLowerCase())
-            );
-            if (subCatOption) {
-              subCategorySelect.value = subCatOption.value;
-              subCategorySelect.dispatchEvent(new Event('change'));
-              console.log('✓ Sous-catégorie sélectionnée:', subCatOption.text);
-            } else {
-              console.warn('⚠️ Sous-catégorie non trouvée dans les options:', mapping.subCategory, Array.from(subCategorySelect.options).map(o => o.text));
-            }
-            
-            // Attendre que les types se chargent (polling)
-            const waitForTypes = (attempts = 0) => {
-              const typeSelect = document.getElementById('article_type_id');
-              if (!typeSelect) {
-                console.error('❌ Select des types introuvable');
-                return;
-              }
-              
-              // Vérifier si les types sont chargés (plus qu'une option "Sélectionner")
-              if (typeSelect.options.length > 1 || attempts >= 10) {
-                console.log('✓ Select des types chargé, options:', typeSelect.options.length);
+          // Continuer avec les sous-catégories
+          waitForSubCategories();
+        } else {
+          // La marque n'existe pas, la créer automatiquement
+          console.log('🔨 Création de la marque:', mapping.brand);
+          
+          const categorySelect = document.getElementById('article_category_id');
+          const categoryId = categorySelect ? categorySelect.value : null;
+          
+          if (categoryId) {
+            fetch('{{ route("admin.taxonomy.brand.auto-create") }}', {
+              method: 'POST',
+              headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                article_category_id: categoryId,
+                name: mapping.brand
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                console.log('✓ Marque créée:', data.brand);
                 
-                // 4. Créer automatiquement le type (ROM-ID + nom)
-                const romId = game.rom_id || game.slug || '';
-                const typeName = romId ? `${romId} - ${game.name}` : game.name;
+                // Ajouter l'option au select
+                const newOption = new Option(data.brand.name, data.brand.id, true, true);
+                brandSelect.add(newOption);
+                brandSelect.dispatchEvent(new Event('change'));
                 
-                // Récupérer le sub_category_id sélectionné
-                const subCategorySelect = document.getElementById('article_sub_category_id');
-                const subCategoryId = subCategorySelect ? subCategorySelect.value : null;
-                
-                if (subCategoryId && typeName) {
-                  console.log('🔨 Création du type:', { subCategoryId, typeName });
-                  
-                  // Créer le type via l'API
-                  fetch('{{ route("admin.taxonomy.type.auto-create") }}', {
-                    method: 'POST',
-                    headers: {
-                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                      article_sub_category_id: subCategoryId,
-                      name: typeName,
-                      publisher: game.publisher || null
-                    })
-                  })
-                  .then(response => response.json())
-                  .then(data => {
-                    if (data.success) {
-                      console.log('✓ Type créé ou trouvé:', data.type);
-                      
-                      // Polling pour attendre que le select soit prêt à recevoir la nouvelle option
-                      const selectTypeOption = (retryCount = 0) => {
-                        const typeSelect = document.getElementById('article_type_id');
-                        if (!typeSelect) {
-                          console.error('❌ Select des types introuvable lors de la sélection');
-                          return;
-                        }
-                        
-                        // Vérifier si l'option existe déjà
-                        let typeOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
-                        
-                        if (!typeOption && retryCount < 5) {
-                          // L'option n'existe pas encore et on n'a pas dépassé le nombre de tentatives
-                          console.log(`⏳ Tentative ${retryCount + 1}/5 : ajout de l'option type`);
-                          const newOption = new Option(data.type.name, data.type.id, true, true);
-                          typeSelect.add(newOption);
-                          
-                          // Vérifier si l'option a bien été ajoutée
-                          setTimeout(() => {
-                            const verifyOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
-                            if (verifyOption) {
-                              typeSelect.value = data.type.id;
-                              typeSelect.dispatchEvent(new Event('change'));
-                              console.log('✓ Type sélectionné:', data.type.name);
-                            } else {
-                              selectTypeOption(retryCount + 1);
-                            }
-                          }, 200);
-                        } else if (typeOption) {
-                          // L'option existe déjà, la sélectionner
-                          typeSelect.value = data.type.id;
-                          typeSelect.dispatchEvent(new Event('change'));
-                          console.log('✓ Type sélectionné (existant):', data.type.name);
-                        } else {
-                          console.error('❌ Impossible d\'ajouter/sélectionner le type après 5 tentatives');
-                        }
-                      };
-                      
-                      selectTypeOption();
-                    } else {
-                      console.error('⚠️ Type non créé:', data.message || 'Erreur inconnue');
-                    }
-                  })
-                  .catch(error => {
-                    console.error('Erreur création type:', error);
-                  });
-                } else {
-                  console.warn('⚠️ Sub-catégorie ou nom de type manquant:', { subCategoryId, typeName });
-                }
+                // Continuer avec les sous-catégories
+                waitForSubCategories();
               } else {
-                // Les types ne sont pas encore chargés, réessayer
-                console.log(`⏳ Attente chargement types (tentative ${attempts + 1}/10)`);
-                setTimeout(() => waitForTypes(attempts + 1), 200);
+                console.error('⚠️ Marque non créée:', data.message || 'Erreur inconnue');
               }
-            };
-            waitForTypes();
-          } else if (attempts < 10) {
-            setTimeout(() => waitForSubCategories(attempts + 1), 200);
+            })
+            .catch(error => {
+              console.error('Erreur création marque:', error);
+            });
+          } else {
+            console.error('❌ Impossible de créer la marque: catégorie non sélectionnée');
           }
-        };
-        waitForSubCategories();
+        }
       } else if (attempts < 10) {
         setTimeout(() => waitForBrands(attempts + 1), 200);
       }

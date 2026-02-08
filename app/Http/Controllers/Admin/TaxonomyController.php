@@ -133,6 +133,30 @@ class TaxonomyController extends Controller
     }
 
     /**
+     * Créer automatiquement une marque (AJAX pour taxonomie automatique)
+     */
+    public function autoCreateBrand(Request $request)
+    {
+        $request->validate([
+            'article_category_id' => 'required|exists:article_categories,id',
+            'name' => 'required|string|max:255',
+        ]);
+
+        $brand = ArticleBrand::firstOrCreate([
+            'article_category_id' => $request->article_category_id,
+            'name' => $request->name,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'brand' => [
+                'id' => $brand->id,
+                'name' => $brand->name,
+            ]
+        ]);
+    }
+
+    /**
      * Rechercher un jeu Game Boy par ROM ID (AJAX pour l'IA)
      */
     public function lookupRomId($romId)

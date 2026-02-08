@@ -268,6 +268,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::post('/taxonomy/type/auto-create', [TaxonomyController::class, 'autoCreateType'])
             ->name('taxonomy.type.auto-create');
         
+        Route::post('/taxonomy/brand/auto-create', [TaxonomyController::class, 'autoCreateBrand'])
+            ->name('taxonomy.brand.auto-create');
+        
         // Gestion des images de taxonomie
         Route::get('/taxonomy/get-images', [TaxonomyController::class, 'getTaxonomyImages'])
             ->name('taxonomy.get-images');
