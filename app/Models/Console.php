@@ -12,6 +12,7 @@ class Console extends Model
     protected $fillable = [
         // EXISTANT
         'article_category_id',
+        'article_brand_id',
         'article_sub_category_id',
         'article_type_id',
         'rom_id',

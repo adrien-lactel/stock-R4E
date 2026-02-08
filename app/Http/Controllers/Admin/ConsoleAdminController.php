@@ -389,6 +389,7 @@ class ConsoleAdminController extends Controller
     {
         $data = $request->validate([
             'article_category_id'      => 'required|exists:article_categories,id',
+            'article_brand_id'         => 'nullable|exists:article_brands,id',
             'article_sub_category_id'  => 'required|exists:article_sub_categories,id',
             'article_type_id'          => 'required|exists:article_types,id',
 
@@ -553,6 +554,7 @@ class ConsoleAdminController extends Controller
     {
         $data = $request->validate([
             'article_category_id'      => 'required|exists:article_categories,id',
+            'article_brand_id'         => 'nullable|exists:article_brands,id',
             'article_sub_category_id'  => 'required|exists:article_sub_categories,id',
             'article_type_id'          => 'required|exists:article_types,id',
 
