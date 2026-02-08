@@ -675,6 +675,11 @@ let cropOffsetY = 0;
 let lightboxContext = {};
 let currentArticleTypeId = null;
 
+// Variables globales pour la gestion des images d'articles
+let uploadedGameImages = [];
+let primaryImageUrl = null;
+let genericArticleImages = [];
+
 window.openImageLightbox = function(imageUrl, context = {}) {
   const lightbox = document.getElementById('image-lightbox');
   const lightboxImage = document.getElementById('lightbox-image');
@@ -3795,10 +3800,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const gameImagesInput = document.getElementById('game-images-input');
   const gameImagesPreview = document.getElementById('game-images-preview');
 
-  // ✅ Charger les images existantes en mode édition
-  let uploadedGameImages = @json($console->article_images ?? []);
-  let primaryImageUrl = @json($console->primary_image_url ?? null);
-  let genericArticleImages = []; // Images provenant d'autres articles du même type
+  // ✅ Charger les images existantes en mode édition (initialiser les variables globales)
+  uploadedGameImages = @json($console->article_images ?? []);
+  primaryImageUrl = @json($console->primary_image_url ?? null);
+  genericArticleImages = []; // Images provenant d'autres articles du même type
 
   // Ouvrir la modal de gestion des images d'article
   window.openArticleImagesModal = function() {
