@@ -3068,48 +3068,6 @@ function attachGameSearchListeners() {
 }
 
 // ========================================
-// ANALYSE IA D'IMAGES
-// ========================================
-
-window.analyzeImageWithAI = async function(imageUrl, type) {
-  alert('⚠️ Analyse IA désactivée - fonctionnalité en cours de développement');
-};
-
-window.fillFormFromGame = function(game, platform) {
-  // Remplir le ROM ID
-  const romIdField = document.querySelector('input[name="rom_id"]');
-  if (romIdField && game.rom_id) {
-    romIdField.value = game.rom_id;
-  }
-  
-  // Remplir le prix moyen si disponible
-  const priceField = document.querySelector('input[name="average_market_price"]');
-  if (priceField && game.price) {
-    priceField.value = game.price;
-  }
-  
-  // Ajouter l'image si disponible
-  if (game.cloudinary_url) {
-    const imageInput = document.querySelector('input[name="image_urls[]"]');
-    if (imageInput) {
-      imageInput.value = game.cloudinary_url;
-      // Déclencher l'affichage de l'aperçu si la fonction existe
-      if (typeof addImagePreview === 'function') {
-        addImagePreview(game.cloudinary_url);
-      }
-    }
-  }
-  
-  alert('✓ Informations du jeu importées ! Complétez les autres champs.');
-  closeGameResults();
-};
-
-window.closeGameResults = function() {
-  const resultsDiv = document.getElementById('game-search-results');
-  resultsDiv.classList.add('hidden');
-};
-
-// ========================================
 // TAXONOMIE CASCADE
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
