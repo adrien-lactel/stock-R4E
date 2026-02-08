@@ -1606,8 +1606,8 @@ window.openImageEditorModal = function(game, platform, identifier, folder, initi
   existingSection.className = 'space-y-4';
   existingSection.innerHTML = `
     <h4 class="font-semibold text-gray-700">Images existantes</h4>
-    <div id="taxonomy-images-grid" class="grid grid-cols-4 gap-4">
-      <div class="col-span-4 text-center text-gray-500">
+    <div id="taxonomy-images-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="col-span-2 sm:col-span-4 text-center text-gray-500">
         <div class="animate-pulse">Chargement des images...</div>
       </div>
     </div>
@@ -1721,13 +1721,13 @@ async function loadTaxonomyImages(identifier, folder) {
       
       // Ajouter un compteur
       const countInfo = document.createElement('div');
-      countInfo.className = 'col-span-4 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
+      countInfo.className = 'col-span-2 sm:col-span-4 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
       countInfo.textContent = `Total : ${data.total} image${data.total > 1 ? 's' : ''}`;
       gridContainer.appendChild(countInfo);
       
     } else {
       gridContainer.innerHTML = `
-        <div class="col-span-4 text-center text-gray-400 py-8">
+        <div class="col-span-2 sm:col-span-4 text-center text-gray-400 py-8">
           <div class="text-4xl mb-2">📭</div>
           <div>Aucune image trouvée pour ce jeu</div>
         </div>
@@ -1736,7 +1736,7 @@ async function loadTaxonomyImages(identifier, folder) {
   } catch (e) {
     console.error('Erreur chargement images:', e);
     gridContainer.innerHTML = `
-      <div class="col-span-4 text-center text-red-500 py-8">
+      <div class="col-span-2 sm:col-span-4 text-center text-red-500 py-8">
         <div class="text-4xl mb-2">⚠️</div>
         <div>Erreur lors du chargement des images</div>
       </div>
@@ -1776,8 +1776,8 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
   const contentDiv = document.getElementById('game-results-content');
   if (!contentDiv) return;
   
-  // Trouver la grille d'images (class 'grid grid-cols-4 gap-3')
-  const imagesGrid = contentDiv.querySelector('.grid.grid-cols-4');
+  // Trouver la grille d'images par ID
+  const imagesGrid = document.getElementById('game-images-preview-grid');
   if (!imagesGrid) {
     console.warn('⚠️ Grille d\'images non trouvée');
     return;
@@ -2390,7 +2390,8 @@ async function displayGameResult(game, platform) {
   imagesSection.appendChild(imagesTitleRow);
   
   const imagesGrid = document.createElement('div');
-  imagesGrid.className = 'grid grid-cols-4 gap-3';
+  imagesGrid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3';
+  imagesGrid.id = 'game-images-preview-grid';
   
   // Types d'images à afficher
   const imageTypes = [
