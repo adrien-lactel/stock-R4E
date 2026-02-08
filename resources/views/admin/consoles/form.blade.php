@@ -2052,9 +2052,13 @@ async function displayGameResult(game, platform) {
   const resultContainer = document.createElement('div');
   resultContainer.className = 'flex flex-col sm:flex-row gap-4';
   
-  // Colonne gauche: Image + Logo éditeur
+  // Colonne gauche: Image cover + Logo du jeu côte-à-côte
   const leftColumn = document.createElement('div');
   leftColumn.className = 'flex-shrink-0 flex flex-col gap-2';
+  
+  // Container pour cover et logo du jeu (côte-à-côte)
+  const coverAndLogoRow = document.createElement('div');
+  coverAndLogoRow.className = 'flex gap-2';
   
   // Image cover (avec fallback logo/artwork)
   const imageUrl = await getGameImageWithFallback(game, platform);
@@ -2082,20 +2086,29 @@ async function displayGameResult(game, platform) {
     imageContainer.appendChild(placeholder);
   }
   
+  // Logo du jeu à droite de la cover
+  const gameLogo = document.createElement('div');
+  gameLogo.className = 'w-32 h-32 flex items-center justify-center';
+  gameLogo.id = 'game-logo-' + game.id;
+  gameLogo.innerHTML = '<span class="text-gray-300 text-4xl">✕</span>';
+  
+  coverAndLogoRow.appendChild(imageContainer);
+  coverAndLogoRow.appendChild(gameLogo);
+  
   // Logo éditeur sous la cover
   const publisherLogoContainer = document.createElement('div');
   publisherLogoContainer.id = 'publisher-logo-display-' + game.id;
   publisherLogoContainer.className = 'w-32 h-16 flex items-center justify-center';
   publisherLogoContainer.innerHTML = '<span class="text-xl text-gray-300">📚</span>';
   
-  leftColumn.appendChild(imageContainer);
+  leftColumn.appendChild(coverAndLogoRow);
   leftColumn.appendChild(publisherLogoContainer);
   
-  // Container principal pour infos + logo (2 colonnes)
+  // Container principal pour infos uniquement
   const mainInfoContainer = document.createElement('div');
-  mainInfoContainer.className = 'flex-1 flex flex-col sm:flex-row gap-4';
+  mainInfoContainer.className = 'flex-1';
   
-  // Première colonne: Informations de base uniquement
+  // Informations de base uniquement
   const basicInfoColumn = document.createElement('div');
   basicInfoColumn.className = 'flex-1';
   
@@ -2157,20 +2170,8 @@ async function displayGameResult(game, platform) {
   
   basicInfoColumn.appendChild(details);
   
-  // Deuxième colonne: Logo du jeu
-  const logoColumn = document.createElement('div');
-  logoColumn.className = 'w-full sm:w-auto flex-shrink-0 flex items-start justify-center';
-  
-  const gameLogo = document.createElement('div');
-  gameLogo.className = 'w-full max-w-xs sm:w-48 h-auto sm:h-36 flex items-center justify-center';
-  gameLogo.id = 'game-logo-' + game.id;
-  gameLogo.innerHTML = '<span class="text-gray-300 text-5xl">✕</span>';
-  
-  logoColumn.appendChild(gameLogo);
-  
-  // Assembler les deux colonnes
+  // Assembler le container d'infos
   mainInfoContainer.appendChild(basicInfoColumn);
-  mainInfoContainer.appendChild(logoColumn);
   
   // Section de modification
   const editSection = document.createElement('div');
