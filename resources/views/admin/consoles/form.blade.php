@@ -1092,6 +1092,28 @@ window.closePublisherEditModal = function() {
   }
 };
 
+// Écouter les messages de l'iframe (upload de logo éditeur)
+window.addEventListener('message', function(event) {
+  if (event.data.type === 'publisher-logo-updated') {
+    console.log('📨 Message reçu: logo éditeur mis à jour', event.data);
+    const { publisherName } = event.data;
+    
+    // Rafraîchir tous les logos d'éditeur affichés avec ce nom
+    document.querySelectorAll('[id^="publisher-logo-display-"]').forEach(container => {
+      const gameId = container.id.replace('publisher-logo-display-', '');
+      // Vérifier si ce container affiche cet éditeur (on cherche dans le texte du jeu)
+      const gameCard = container.closest('.border');
+      if (gameCard) {
+        const publisherText = gameCard.querySelector('.text-gray-600');
+        if (publisherText && publisherText.textContent.includes(publisherName)) {
+          console.log('🔄 Rafraîchissement logo pour game ID:', gameId);
+          loadPublisherLogoDisplay(publisherName, gameId);
+        }
+      }
+    });
+  }
+});
+
 // Fonction pour charger le logo d'un éditeur (formulaire d'édition)
 window.loadPublisherLogo = async function(publisherName, gameId) {
   const logoContainer = document.getElementById('publisher-logo-' + gameId);

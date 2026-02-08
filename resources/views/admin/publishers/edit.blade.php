@@ -169,6 +169,16 @@
                     uploadProgress.classList.add('hidden');
                     progressBar.style.width = '0%';
                 }, 500);
+                
+                // Notifier le parent (formulaire principal) que le logo a été mis à jour
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'publisher-logo-updated',
+                        publisherId: '{{ $publisher->id }}',
+                        publisherName: '{{ $publisher->name }}',
+                        logoPath: data.logo_path
+                    }, '*');
+                }
             } else {
                 alert('❌ Erreur: ' + (data.error || 'Upload échoué'));
                 uploadProgress.classList.add('hidden');
