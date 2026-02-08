@@ -1048,6 +1048,10 @@ window.applyCrop = async function() {
       
       // Récupérer article_type_id depuis le contexte ou la variable globale
       const articleTypeId = lightboxContext.article_type_id || currentArticleTypeId;
+      console.log('🔧 applyCrop - articleTypeId:', articleTypeId);
+      console.log('🔧 applyCrop - lightboxContext:', lightboxContext);
+      console.log('🔧 applyCrop - currentArticleTypeId (global):', currentArticleTypeId);
+      
       if (!articleTypeId) {
         alert('❌ Type d\'article non défini. Veuillez sélectionner un type d\'article.');
         return;
@@ -1055,6 +1059,11 @@ window.applyCrop = async function() {
       formData.append('article_type_id', articleTypeId);
       
       try {
+        console.log('📤 Envoi du recadrage vers serveur...', {
+          articleTypeId: articleTypeId,
+          fileSize: (file.size / 1024).toFixed(2) + ' KB'
+        });
+        
         const response = await fetch('{{ route('admin.articles.upload-image') }}', {
           method: 'POST',
           headers: {
@@ -1063,7 +1072,21 @@ window.applyCrop = async function() {
           body: formData
         });
         
+        console.log('📡 Réponse serveur recadrage:', {
+          status: response.status,
+          ok: response.ok
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Erreur serveur:', errorText);
+          alert(`❌ Erreur serveur (${response.status}):\n${errorText.substring(0, 200)}`);
+          return;
+        }
+        
         const data = await response.json();
+        console.log('📦 Data serveur:', data);
+        
         if (data.success) {
           console.log('✅ Image recadrée uploadée:', data.url);
           
@@ -1083,10 +1106,13 @@ window.applyCrop = async function() {
           closeImageLightbox();
           
           alert('✓ Image recadrée et ajoutée!');
+        } else {
+          console.error('❌ Upload échoué:', data.message);
+          alert(`❌ Erreur:\n${data.message || 'Upload échoué'}`);
         }
       } catch (e) {
         console.error('❌ Erreur upload recadrage:', e);
-        alert('Erreur lors de l\'upload de l\'image recadrée');
+        alert(`Erreur lors de l\'upload de l\'image recadrée:\n${e.message}`);
       }
     }, 'image/jpeg', 0.9);
   };
