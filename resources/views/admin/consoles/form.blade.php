@@ -4347,10 +4347,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Charger les images existantes
   async function loadArticleImages() {
-    // TODO: Charger depuis la base les images déjà uploadées pour cet article
-    // Pour l'instant, afficher celles en mémoire
+    // Charger les images de l'article avec détection des images génériques
     uploadedGameImages.forEach((url, index) => {
-      addArticleImageCard(url, `Image ${index + 1}`, 'uploaded');
+      const isGeneric = genericArticleImages.includes(url);
+      addArticleImageCard(url, `Image ${index + 1}`, 'uploaded', isGeneric);
     });
   }
 
@@ -4376,6 +4376,25 @@ document.addEventListener('DOMContentLoaded', function() {
       grid.innerHTML = '';
       
       if (data.success && data.images && data.images.length > 0) {
+        // D'abord, identifier les images génériques déjà utilisées dans cet article
+        data.images.forEach(url => {
+          if (uploadedGameImages.includes(url) && !genericArticleImages.includes(url)) {
+            genericArticleImages.push(url);
+            console.log('🔗 Image générique identifiée:', url);
+          }
+        });
+        
+        // Recharger les cartes avec le flag isGeneric mis à jour
+        const gridContainer = document.getElementById('article-images-grid');
+        if (gridContainer && gridContainer.children.length > 0) {
+          // Supprimer toutes les cartes et les recréer avec le bon flag
+          gridContainer.innerHTML = '';
+          uploadedGameImages.forEach((url, index) => {
+            const isGeneric = genericArticleImages.includes(url);
+            addArticleImageCard(url, `Image ${index + 1}`, 'uploaded', isGeneric);
+          });
+        }
+        
         // Filtrer les images déjà utilisées dans cet article
         const availableImages = data.images.filter(url => !uploadedGameImages.includes(url));
         
