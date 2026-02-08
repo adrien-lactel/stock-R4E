@@ -242,7 +242,7 @@
     ===================== --}}
     <div>
         <div class="flex items-center justify-between mb-1">
-            <label id="brand_label" class="block text-sm font-medium">Marque *</label>
+            <label id="brand_label" class="block text-sm font-medium">Marque</label>
 
             <a href="{{ route('admin.taxonomy.index') }}#brands"
                target="_blank"
@@ -254,8 +254,7 @@
 
         <select id="article_brand_id"
                 name="article_brand_id"
-                class="w-full rounded border-gray-300"
-                required>
+                class="w-full rounded border-gray-300">
             <option value="">— Choisir —</option>
         </select>
     </div>
@@ -3474,7 +3473,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (completenessGame) completenessGame.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
-      if (brandLabel) brandLabel.textContent = 'Marque *';
+      if (brandLabel) brandLabel.textContent = 'Marque';
     } else if (selectedCategory.includes('Accessoires')) {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
@@ -3492,7 +3491,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (completenessGame) completenessGame.style.display = 'block';
       if (completenessHintConsole) completenessHintConsole.style.display = 'none';
       if (completenessHintGame) completenessHintGame.style.display = 'block';
-      if (brandLabel) brandLabel.textContent = 'Marque *';
+      if (brandLabel) brandLabel.textContent = 'Marque';
     } else {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
@@ -3501,7 +3500,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (completenessGame) completenessGame.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
-      if (brandLabel) brandLabel.textContent = 'Marque *';
+      if (brandLabel) brandLabel.textContent = 'Marque';
     }
     
     try {
@@ -3596,7 +3595,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (completenessGame) completenessGame.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
-      if (brandLabel) brandLabel.textContent = 'Marque *';
+      if (brandLabel) brandLabel.textContent = 'Marque';
     } else if (selectedCategory.includes('Accessoires')) {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
@@ -3613,7 +3612,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (completenessGame) completenessGame.style.display = 'block';
       if (completenessHintConsole) completenessHintConsole.style.display = 'none';
       if (completenessHintGame) completenessHintGame.style.display = 'block';
-      if (brandLabel) brandLabel.textContent = 'Marque *';
+      if (brandLabel) brandLabel.textContent = 'Marque';
     } else {
       if (languageField) languageField.style.display = 'none';
       if (regionField) regionField.style.display = 'block';
@@ -3621,7 +3620,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (completenessGame) completenessGame.style.display = 'none';
       if (completenessHintConsole) completenessHintConsole.style.display = 'block';
       if (completenessHintGame) completenessHintGame.style.display = 'none';
-      if (brandLabel) brandLabel.textContent = 'Marque *';
+      if (brandLabel) brandLabel.textContent = 'Marque';
     }
   });
 });
