@@ -1,40 +1,41 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
-    {{-- HEADER --}}
+    
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-800">
-            {{ $console->exists ? "✏️ Modifier l'article #{$console->id}" : "➕ Créer un article" }}
+            <?php echo e($console->exists ? "✏️ Modifier l'article #{$console->id}" : "➕ Créer un article"); ?>
+
         </h1>
 
         <div class="flex items-center gap-2">
-            @if($console->exists)
-                <a href="{{ route('admin.articles.edit_full', $console) }}" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
+            <?php if($console->exists): ?>
+                <a href="<?php echo e(route('admin.articles.edit_full', $console)); ?>" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
                     ✍️ Édition complète
                 </a>
-            @endif
+            <?php endif; ?>
 
-            <a href="{{ route('admin.consoles.index') }}" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour stock</a>
+            <a href="<?php echo e(route('admin.consoles.index')); ?>" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour stock</a>
         </div>
     </div>
 
 
-    {{-- MESSAGES --}}
-    @if ($errors->any())
+    
+    <?php if($errors->any()): ?>
         <div class="mb-6 p-4 bg-red-50 text-red-800 rounded border border-red-200">
             <ul class="list-disc pl-5 space-y-1 text-sm">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $err): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($err); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
 
 
-    {{-- MODAL LIGHTBOX POUR AFFICHER LES IMAGES EN GRAND --}}
+    
     <div id="image-lightbox" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50" onclick="closeImageLightbox()">
         <button type="button" onclick="closeImageLightbox()" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10">
             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,13 +43,13 @@
             </svg>
         </button>
         
-        {{-- Titre et actions contextuelles --}}
+        
         <div id="lightbox-header" class="absolute top-4 left-4 flex items-center gap-3 z-10">
             <div id="lightbox-filename" class="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium"></div>
             <div id="lightbox-actions" class="flex gap-2"></div>
         </div>
         
-        {{-- Contrôles d'édition (gauche) --}}
+        
         <div class="absolute top-1/2 left-2 md:left-4 transform -translate-y-1/2 flex flex-col gap-2 z-10">
             <button type="button" onclick="toggleCropMode(); event.stopPropagation();" 
                     id="crop-toggle-btn"
@@ -81,12 +82,12 @@
             </button>
         </div>
         
-        {{-- Zone de recadrage (cachée par défaut) --}}
+        
         <div id="crop-overlay" class="hidden absolute inset-0 z-20">
             <div class="absolute inset-0 bg-black bg-opacity-80" onclick="event.stopPropagation()">
                 <canvas id="crop-canvas" class="absolute inset-0 m-auto" style="touch-action: none;"></canvas>
                 
-                {{-- Contrôles de recadrage --}}
+                
                 <div class="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-3">
                     <button type="button" onclick="cancelCrop(); event.stopPropagation();" 
                             class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium">
@@ -104,7 +105,7 @@
             </div>
         </div>
         
-        {{-- Contrôles de zoom --}}
+        
         <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
             <button type="button" onclick="zoomOut(); event.stopPropagation();" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,25 +127,23 @@
         </div>
     </div>
 
-    {{-- TOAST NOTIFICATIONS --}}
+    
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    {{-- FORMULAIRE --}}
+    
     <div class="bg-white shadow rounded-lg p-6">
         <form method="POST"
-              action="{{ $console->exists ? route('admin.articles.update', $console) : route('admin.articles.store') }}">
-            @csrf
-            @if($console->exists)
-                @method('PUT')
-            @endif
+              action="<?php echo e($console->exists ? route('admin.articles.update', $console) : route('admin.articles.store')); ?>">
+            <?php echo csrf_field(); ?>
+            <?php if($console->exists): ?>
+                <?php echo method_field('PUT'); ?>
+            <?php endif; ?>
 
-            {{-- =====================
-     RECHERCHE DE JEUX
-===================== --}}
+            
 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
     <h2 class="text-lg font-semibold text-gray-800 mb-4">🎮 Recherche de jeux</h2>
     
-    {{-- Recherche unifiée --}}
+    
     <div class="relative">
         <label class="block text-sm font-medium text-gray-700 mb-2">Recherche par ROM ID ou nom de jeu</label>
         <div class="flex gap-2">
@@ -172,7 +171,7 @@
         </div>
     </div>
 
-    {{-- Résultats de recherche --}}
+    
     <div id="game-search-results" class="mt-4 hidden">
         <div class="bg-white rounded border border-gray-200 p-4">
             <div class="flex items-start justify-between mb-2">
@@ -184,14 +183,12 @@
     </div>
 </div>
 
-            {{-- =====================
-     CLASSIFICATION
-===================== --}}
+            
 <div class="flex items-center justify-between mb-4">
     <h2 class="text-lg font-semibold text-gray-800">Classification</h2>
 
-    {{-- Bouton global gestion taxonomie --}}
-    <a href="{{ route('admin.taxonomy.index') }}"
+    
+    <a href="<?php echo e(route('admin.taxonomy.index')); ?>"
        target="_blank"
        class="inline-flex items-center gap-2 px-3 py-2 rounded bg-gray-900 text-white text-sm hover:bg-black"
        title="Gérer catégories, sous-catégories et types">
@@ -208,14 +205,12 @@
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-    {{-- =====================
-         CATÉGORIE
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Catégorie *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#categories"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#categories"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer une catégorie">
@@ -228,23 +223,22 @@
                 class="w-full rounded border-gray-300"
                 required>
             <option value="">— Choisir —</option>
-            @foreach($articleCategories as $cat)
-                <option value="{{ $cat->id }}"
-                    @selected(old('article_category_id', $console->article_category_id) == $cat->id)>
-                    {{ $cat->name }}
+            <?php $__currentLoopData = $articleCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($cat->id); ?>"
+                    <?php if(old('article_category_id', $console->article_category_id) == $cat->id): echo 'selected'; endif; ?>>
+                    <?php echo e($cat->name); ?>
+
                 </option>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </select>
     </div>
 
-    {{-- =====================
-         MARQUE / COMPATIBILITÉ
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label id="brand_label" class="block text-sm font-medium">Marque</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#brands"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#brands"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer une marque">
@@ -259,14 +253,12 @@
         </select>
     </div>
 
-    {{-- =====================
-         SOUS-CATÉGORIE
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Sous-catégorie *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#subcategories"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#subcategories"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer une sous-catégorie">
@@ -282,14 +274,12 @@
         </select>
     </div>
 
-    {{-- =====================
-         TYPE
-    ===================== --}}
+    
     <div>
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Type *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#types"
+            <a href="<?php echo e(route('admin.taxonomy.index')); ?>#types"
                target="_blank"
                class="text-indigo-600 hover:underline text-sm"
                title="Ajouter / éditer un type">
@@ -305,47 +295,39 @@
         </select>
     </div>
 
-    {{-- =====================
-         ROM ID (jeux vidéo)
-    ===================== --}}
+    
     <div id="rom_id_field" style="display: none;">
         <label class="block text-sm font-medium">ROM ID</label>
         <input type="text" id="rom_id" name="rom_id"
-               value="{{ old('rom_id', $console->rom_id ?? '') }}"
+               value="<?php echo e(old('rom_id', $console->rom_id ?? '')); ?>"
                class="w-full rounded border-gray-300"
                placeholder="Ex: DMG-APBJ-JPN" readonly>
         <p class="text-xs text-gray-500 mt-1">📀 Identifiant du jeu (rempli automatiquement)</p>
     </div>
 
-    {{-- =====================
-         ANNÉE (jeux vidéo)
-    ===================== --}}
+    
     <div id="year_field" style="display: none;">
         <label class="block text-sm font-medium">Année de sortie</label>
         <input type="text" id="year" name="year"
-               value="{{ old('year', $console->year ?? '') }}"
+               value="<?php echo e(old('year', $console->year ?? '')); ?>"
                class="w-full rounded border-gray-300"
                placeholder="Ex: 1989">
         <p class="text-xs text-gray-500 mt-1">📅 Année de sortie du jeu</p>
     </div>
 
-    {{-- =====================
-         RÉGION (jeux vidéo)
-    ===================== --}}
+    
     <div id="region_field" style="display: none;">
         <label class="block text-sm font-medium mb-1">Région</label>
         <select id="region" name="region" class="w-full rounded border-gray-300">
             <option value="">— Non spécifiée —</option>
-            <option value="PAL" @selected(old('region', $console->region) === 'PAL')>🇪🇺 PAL (Europe)</option>
-            <option value="NTSC-U" @selected(old('region', $console->region) === 'NTSC-U')>🇺🇸 NTSC-U (USA)</option>
-            <option value="NTSC-J" @selected(old('region', $console->region) === 'NTSC-J')>🇯🇵 NTSC-J (Japon)</option>
+            <option value="PAL" <?php if(old('region', $console->region) === 'PAL'): echo 'selected'; endif; ?>>🇪🇺 PAL (Europe)</option>
+            <option value="NTSC-U" <?php if(old('region', $console->region) === 'NTSC-U'): echo 'selected'; endif; ?>>🇺🇸 NTSC-U (USA)</option>
+            <option value="NTSC-J" <?php if(old('region', $console->region) === 'NTSC-J'): echo 'selected'; endif; ?>>🇯🇵 NTSC-J (Japon)</option>
         </select>
         <p class="text-xs text-gray-500 mt-1">Important pour N64, SNES, GameCube, etc.</p>
     </div>
 
-    {{-- =====================
-         DESCRIPTION DU TYPE
-    ===================== --}}
+    
     <div class="md:col-span-3" id="description_field" style="display: none;">
         <label class="block text-sm font-medium mb-1">Description du produit</label>
         <textarea id="article_type_description"
@@ -361,9 +343,7 @@
 
 </div>
 
-            {{-- =====================
-                 COMPLÉTUDE & LANGUE
-            ===================== --}}
+            
             <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">État de complétude</label>
@@ -371,26 +351,26 @@
                         <!-- Pour les consoles et accessoires -->
                         <select name="completeness" id="completeness_console" class="w-full rounded border-gray-300">
                             <option value="">— Non spécifié —</option>
-                            <option value="Console seule" @selected(old('completeness', $console->completeness) === 'Console seule')>📦 Console seule</option>
-                            <option value="Avec boîte" @selected(old('completeness', $console->completeness) === 'Avec boîte')>📦📄 Avec boîte</option>
-                            <option value="Complète en boîte" @selected(old('completeness', $console->completeness) === 'Complète en boîte')>📦📄🎮 Complète en boîte</option>
+                            <option value="Console seule" <?php if(old('completeness', $console->completeness) === 'Console seule'): echo 'selected'; endif; ?>>📦 Console seule</option>
+                            <option value="Avec boîte" <?php if(old('completeness', $console->completeness) === 'Avec boîte'): echo 'selected'; endif; ?>>📦📄 Avec boîte</option>
+                            <option value="Complète en boîte" <?php if(old('completeness', $console->completeness) === 'Complète en boîte'): echo 'selected'; endif; ?>>📦📄🎮 Complète en boîte</option>
                         </select>
                         
                         <!-- Pour les jeux vidéo -->
                         <select name="completeness" id="completeness_game" class="w-full rounded border-gray-300" style="display: none;">
                             <option value="">— Non spécifié —</option>
-                            <option value="Loose" @selected(old('completeness', $console->completeness) === 'Loose')>🎮 Loose (jeu seul)</option>
-                            <option value="Avec boîte" @selected(old('completeness', $console->completeness) === 'Avec boîte')>📦 Avec boîte</option>
-                            <option value="Avec boîte et notice" @selected(old('completeness', $console->completeness) === 'Avec boîte et notice')>📦📄 Avec boîte et notice</option>
+                            <option value="Loose" <?php if(old('completeness', $console->completeness) === 'Loose'): echo 'selected'; endif; ?>>🎮 Loose (jeu seul)</option>
+                            <option value="Avec boîte" <?php if(old('completeness', $console->completeness) === 'Avec boîte'): echo 'selected'; endif; ?>>📦 Avec boîte</option>
+                            <option value="Avec boîte et notice" <?php if(old('completeness', $console->completeness) === 'Avec boîte et notice'): echo 'selected'; endif; ?>>📦📄 Avec boîte et notice</option>
                         </select>
                         
                         <!-- Pour les cartes à collectionner -->
                         <select name="completeness" id="completeness_cards" class="w-full rounded border-gray-300" style="display: none;">
                             <option value="">— Non spécifié —</option>
-                            <option value="Neuf scellé" @selected(old('completeness', $console->completeness) === 'Neuf scellé')>🎁 Neuf scellé</option>
-                            <option value="Carte à l'unité" @selected(old('completeness', $console->completeness) === 'Carte à l\'unité')>🃏 Carte à l'unité</option>
-                            <option value="Carte gradée" @selected(old('completeness', $console->completeness) === 'Carte gradée')>⭐ Carte gradée</option>
-                            <option value="Case scellée" @selected(old('completeness', $console->completeness) === 'Case scellée')>📦 Case scellée</option>
+                            <option value="Neuf scellé" <?php if(old('completeness', $console->completeness) === 'Neuf scellé'): echo 'selected'; endif; ?>>🎁 Neuf scellé</option>
+                            <option value="Carte à l'unité" <?php if(old('completeness', $console->completeness) === 'Carte à l\'unité'): echo 'selected'; endif; ?>>🃏 Carte à l'unité</option>
+                            <option value="Carte gradée" <?php if(old('completeness', $console->completeness) === 'Carte gradée'): echo 'selected'; endif; ?>>⭐ Carte gradée</option>
+                            <option value="Case scellée" <?php if(old('completeness', $console->completeness) === 'Case scellée'): echo 'selected'; endif; ?>>📦 Case scellée</option>
                         </select>
                         
                         <p class="text-xs text-gray-500 mt-1" id="completeness_hint_console">Console seule, avec sa boîte, ou complète avec accessoires</p>
@@ -402,22 +382,20 @@
                     <label class="block text-sm font-medium mb-1">Langue</label>
                     <select name="language" class="w-full rounded border-gray-300">
                         <option value="">— Non spécifiée —</option>
-                        <option value="Français" @selected(old('language', $console->language) === 'Français')>🇫🇷 Français</option>
-                        <option value="Anglais" @selected(old('language', $console->language) === 'Anglais')>🇬🇧 Anglais</option>
-                        <option value="Japonais" @selected(old('language', $console->language) === 'Japonais')>🇯🇵 Japonais</option>
-                        <option value="Allemand" @selected(old('language', $console->language) === 'Allemand')>🇩🇪 Allemand</option>
-                        <option value="Italien" @selected(old('language', $console->language) === 'Italien')>🇮🇹 Italien</option>
-                        <option value="Espagnol" @selected(old('language', $console->language) === 'Espagnol')>🇪🇸 Espagnol</option>
-                        <option value="Coréen" @selected(old('language', $console->language) === 'Coréen')>🇰🇷 Coréen</option>
-                        <option value="Chinois" @selected(old('language', $console->language) === 'Chinois')>🇨🇳 Chinois</option>
+                        <option value="Français" <?php if(old('language', $console->language) === 'Français'): echo 'selected'; endif; ?>>🇫🇷 Français</option>
+                        <option value="Anglais" <?php if(old('language', $console->language) === 'Anglais'): echo 'selected'; endif; ?>>🇬🇧 Anglais</option>
+                        <option value="Japonais" <?php if(old('language', $console->language) === 'Japonais'): echo 'selected'; endif; ?>>🇯🇵 Japonais</option>
+                        <option value="Allemand" <?php if(old('language', $console->language) === 'Allemand'): echo 'selected'; endif; ?>>🇩🇪 Allemand</option>
+                        <option value="Italien" <?php if(old('language', $console->language) === 'Italien'): echo 'selected'; endif; ?>>🇮🇹 Italien</option>
+                        <option value="Espagnol" <?php if(old('language', $console->language) === 'Espagnol'): echo 'selected'; endif; ?>>🇪🇸 Espagnol</option>
+                        <option value="Coréen" <?php if(old('language', $console->language) === 'Coréen'): echo 'selected'; endif; ?>>🇰🇷 Coréen</option>
+                        <option value="Chinois" <?php if(old('language', $console->language) === 'Chinois'): echo 'selected'; endif; ?>>🇨🇳 Chinois</option>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">Pour les cartes à collectionner uniquement</p>
                 </div>
             </div>
 
-            {{-- =====================
-                 IMAGES DE L'ARTICLE (DRAG & DROP)
-            ===================== --}}
+            
             <div class="mt-6">
                 <div id="article_images_field" style="display: block !important;">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">📷 Images de l'article</h3>
@@ -425,7 +403,7 @@
                     <!-- Pour les jeux vidéo : bouton pour ouvrir la modal -->
                     <div id="game_images_section" style="display: block;">
                         <!-- Bouton pour voir les photos génériques de la taxonomie (si article existant avec type) -->
-                        @if(isset($console->id) && ($console->rom_id || $console->article_type_id))
+                        <?php if(isset($console->id) && ($console->rom_id || $console->article_type_id)): ?>
                         <button type="button" 
                                 onclick="openTaxonomyImagesForArticle()"
                                 class="w-full border-2 border-blue-500 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 transition-colors bg-white mb-4">
@@ -435,7 +413,7 @@
                                 </svg>
                                 <div class="text-left">
                                     <p class="text-sm font-semibold text-blue-600">
-                                        🖼️ Voir les photos génériques ({{ $console->rom_id ?? $console->articleType->name ?? 'Type' }})
+                                        🖼️ Voir les photos génériques (<?php echo e($console->rom_id ?? $console->articleType->name ?? 'Type'); ?>)
                                     </p>
                                     <p class="text-xs text-gray-500">
                                         Photos de la taxonomie partagées avec tous les exemplaires de ce type
@@ -443,7 +421,7 @@
                                 </div>
                             </div>
                         </button>
-                        @endif
+                        <?php endif; ?>
                         
                         <button type="button" 
                                 onclick="openArticleImagesModal()"
@@ -501,104 +479,99 @@
                 </div>
             </div>
 
-            {{-- =====================
-                 STOCK / RÉPARATION
-            ===================== --}}
+            
             <h2 class="text-lg font-semibold text-gray-800 mt-8 mb-4">Stock & Réparation</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {{-- Quantité (uniquement en création) --}}
-                @if(!$console->exists)
+                
+                <?php if(!$console->exists): ?>
                 <div>
                     <label class="block text-sm font-medium mb-1">Quantité</label>
                     <input type="number" min="1" max="100" name="quantity"
-                           value="{{ old('quantity', 1) }}"
+                           value="<?php echo e(old('quantity', 1)); ?>"
                            class="w-full rounded border-gray-300">
                     <p class="text-xs text-gray-500 mt-1">Créer plusieurs articles identiques (max 100)</p>
                 </div>
-                @endif
+                <?php endif; ?>
 
-                {{-- Statut --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Statut *</label>
                     <select name="status" class="w-full rounded border-gray-300" required>
-                        @php $st = old('status', $console->status); @endphp
-                        <option value="stock" @selected($st==='stock')>Stock</option>
-                        <option value="defective" @selected($st==='defective')>Défectueuse</option>
-                        <option value="repair" @selected($st==='repair')>En réparation</option>
-                        <option value="disabled" @selected($st==='disabled')>Désactivée</option>
+                        <?php $st = old('status', $console->status); ?>
+                        <option value="stock" <?php if($st==='stock'): echo 'selected'; endif; ?>>Stock</option>
+                        <option value="defective" <?php if($st==='defective'): echo 'selected'; endif; ?>>Défectueuse</option>
+                        <option value="repair" <?php if($st==='repair'): echo 'selected'; endif; ?>>En réparation</option>
+                        <option value="disabled" <?php if($st==='disabled'): echo 'selected'; endif; ?>>Désactivée</option>
                     </select>
                 </div>
 
-                {{-- Réparateur --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Réparateur</label>
                     <select name="repairer_id" class="w-full rounded border-gray-300">
                         <option value="">— Aucun —</option>
-                        @foreach($repairers as $rep)
-                            <option value="{{ $rep->id }}"
-                                @selected(old('repairer_id', $console->repairer_id) == $rep->id)>
-                                {{ $rep->name }}
+                        <?php $__currentLoopData = $repairers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rep): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($rep->id); ?>"
+                                <?php if(old('repairer_id', $console->repairer_id) == $rep->id): echo 'selected'; endif; ?>>
+                                <?php echo e($rep->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">
                         Obligatoire si statut = <strong>repair</strong>
                     </p>
                 </div>
 
-                {{-- Prix achat --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Prix d’achat (€)</label>
                     <input type="number" step="0.01" min="0" name="prix_achat"
-                           value="{{ old('prix_achat', $console->prix_achat) }}"
+                           value="<?php echo e(old('prix_achat', $console->prix_achat)); ?>"
                            class="w-full rounded border-gray-300">
                 </div>
 
-                {{-- Valorisation --}}
+                
                 <div>
                     <label class="block text-sm font-medium mb-1">Valorisation (€)</label>
                     <input type="number" step="0.01" min="0" name="valorisation"
-                           value="{{ old('valorisation', $console->valorisation) }}"
+                           value="<?php echo e(old('valorisation', $console->valorisation)); ?>"
                            class="w-full rounded border-gray-300">
                 </div>
             </div>
 
-            {{-- =====================
-                 COMMENTAIRES
-            ===================== --}}
+            
             <h2 class="text-lg font-semibold text-gray-800 mt-8 mb-4">Commentaires</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Commentaire produit</label>
                     <textarea name="product_comment" rows="3"
-                              class="w-full rounded border-gray-300">{{ old('product_comment', $console->product_comment) }}</textarea>
+                              class="w-full rounded border-gray-300"><?php echo e(old('product_comment', $console->product_comment)); ?></textarea>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium mb-1">Commentaire réparateur</label>
                     <textarea name="commentaire_reparateur" rows="3"
-                              class="w-full rounded border-gray-300">{{ old('commentaire_reparateur', $console->commentaire_reparateur) }}</textarea>
+                              class="w-full rounded border-gray-300"><?php echo e(old('commentaire_reparateur', $console->commentaire_reparateur)); ?></textarea>
                 </div>
             </div>
 
             
 
-            {{-- =====================
-                 CHAMPS CACHÉS IMAGES
-            ===================== --}}
+            
             <input type="hidden" id="article_images_input" name="article_images" value="">
             <input type="hidden" id="primary_image_url_input" name="primary_image_url" value="">
             <input type="hidden" id="image_captions_input" name="image_captions" value="">
 
-            {{-- ACTIONS --}}
+            
             <div class="mt-6 flex gap-3">
                 <button type="submit" class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
                     💾 Enregistrer
                 </button>
 
-                <a href="{{ route('admin.consoles.index') }}"
+                <a href="<?php echo e(route('admin.consoles.index')); ?>"
                    class="px-6 py-2 rounded border hover:bg-gray-50">
                     Annuler
                 </a>
@@ -606,9 +579,7 @@
         </form>
     </div>
 
-    {{-- =====================
-         15 DERNIÈRES ENTRÉES
-    ===================== --}}
+    
     <div class="mt-10 bg-white shadow rounded-lg p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-4">
             🕒 15 dernières entrées en stock
@@ -626,23 +597,24 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse($lastConsoles as $c)
+                    <?php $__empty_1 = true; $__currentLoopData = $lastConsoles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td class="px-3 py-2">#{{ $c->id }}</td>
-                            <td class="px-3 py-2">{{ $c->articleCategory?->name ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ $c->articleType?->name ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ ucfirst($c->status) }}</td>
+                            <td class="px-3 py-2">#<?php echo e($c->id); ?></td>
+                            <td class="px-3 py-2"><?php echo e($c->articleCategory?->name ?? '—'); ?></td>
+                            <td class="px-3 py-2"><?php echo e($c->articleType?->name ?? '—'); ?></td>
+                            <td class="px-3 py-2"><?php echo e(ucfirst($c->status)); ?></td>
                             <td class="px-3 py-2">
-                                {{ $c->repairer?->name ?? '—' }}
+                                <?php echo e($c->repairer?->name ?? '—'); ?>
+
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="5" class="px-3 py-6 text-center text-gray-500">
                                 Aucune entrée récente
                             </td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -650,14 +622,12 @@
 
 </div>
 
-{{-- =====================
-     JS CLASSIFICATION
-===================== --}}
+
 <script>
 // ✅ Configuration globale - Défini EN PREMIER pour être disponible partout
-window.gameboyImageBaseUrl = '{{ asset('images/taxonomy/gameboy') }}';
-window.laravelAssetBase = '{{ asset('') }}';
-window.ajaxSearchGameUrl = '{{ url("admin/ajax/search-game") }}';
+window.gameboyImageBaseUrl = '<?php echo e(asset('images/taxonomy/gameboy')); ?>';
+window.laravelAssetBase = '<?php echo e(asset('')); ?>';
+window.ajaxSearchGameUrl = '<?php echo e(url("admin/ajax/search-game")); ?>';
 
 console.log('🔧 Configuration globale chargée:', {  
   ajaxSearchGameUrl: window.ajaxSearchGameUrl,
@@ -1077,7 +1047,7 @@ window.applyCrop = async function() {
           fileSize: (file.size / 1024).toFixed(2) + ' KB'
         });
         
-        const response = await fetch('{{ route('admin.articles.upload-image') }}', {
+        const response = await fetch('<?php echo e(route('admin.articles.upload-image')); ?>', {
           method: 'POST',
           headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -1320,7 +1290,7 @@ function getLocalGameImage(game, platform) {
   
   // En production: servir directement depuis R2 (plus rapide)
   // En local: utiliser le proxy (sert depuis public/)
-  const isProduction = '{{ config("app.env") }}' === 'production';
+  const isProduction = '<?php echo e(config("app.env")); ?>' === 'production';
   const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
   const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   
@@ -1381,7 +1351,7 @@ function getLocalGameImage(game, platform) {
 async function getGameImageWithFallback(game, platform) {
   // En production: servir directement depuis R2 (plus rapide)
   // En local: utiliser le proxy (sert depuis public/)
-  const isProduction = '{{ config("app.env") }}' === 'production';
+  const isProduction = '<?php echo e(config("app.env")); ?>' === 'production';
   const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
   const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   const nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
@@ -1469,7 +1439,7 @@ window.loadPublisherLogoDisplay = async function(publisherName, gameId) {
   }
   
   try {
-    const url = `{{ url('admin/ajax/search-publishers') }}?q=${encodeURIComponent(publisherName)}`;
+    const url = `<?php echo e(url('admin/ajax/search-publishers')); ?>?q=${encodeURIComponent(publisherName)}`;
     console.log('🔍 Fetch URL:', url);
     const response = await fetch(url);
     const data = await response.json();
@@ -1489,7 +1459,7 @@ window.loadPublisherLogoDisplay = async function(publisherName, gameId) {
           if (!logoUrl.includes('images/')) {
             logoUrl = 'images/taxonomy/editeurs/' + logoUrl;
           }
-          logoUrl = `{{ asset('') }}${logoUrl}`;
+          logoUrl = `<?php echo e(asset('')); ?>${logoUrl}`;
         }
         
         console.log('🎨 Logo URL:', logoUrl);
@@ -1558,7 +1528,7 @@ window.openPublisherEditModal = function(publisherId, publisherName) {
   iframeContainer.style.cssText = 'flex: 1;';
   
   const iframe = document.createElement('iframe');
-  const iframeUrl = `{{ url('admin/publishers') }}/${publisherId}/edit`;
+  const iframeUrl = `<?php echo e(url('admin/publishers')); ?>/${publisherId}/edit`;
   console.log('📄 URL iframe:', iframeUrl);
   iframe.src = iframeUrl;
   iframe.className = 'border-0';
@@ -1647,14 +1617,14 @@ window.loadPublisherLogo = async function(publisherName, gameId) {
   if (!logoContainer || !publisherName) return;
   
   try {
-    const response = await fetch(`{{ url('admin/ajax/search-publishers') }}?q=${encodeURIComponent(publisherName)}`);
+    const response = await fetch(`<?php echo e(url('admin/ajax/search-publishers')); ?>?q=${encodeURIComponent(publisherName)}`);
     const data = await response.json();
     
     if (data.publishers && data.publishers.length > 0) {
       const publisher = data.publishers.find(p => p.name.toLowerCase() === publisherName.toLowerCase());
       
       if (publisher && publisher.logo) {
-        logoContainer.innerHTML = `<img src="{{ asset('') }}${publisher.logo}" alt="${publisher.name}" class="max-w-full max-h-full object-contain">`;
+        logoContainer.innerHTML = `<img src="<?php echo e(asset('')); ?>${publisher.logo}" alt="${publisher.name}" class="max-w-full max-h-full object-contain">`;
       } else {
         logoContainer.innerHTML = '<span class="text-2xl text-gray-300">📚</span>';
       }
@@ -1738,7 +1708,7 @@ async function loadGameLogo(game, platform) {
   
   // En production: servir directement depuis R2 (plus rapide)
   // En local: utiliser le proxy
-  const isProduction = '{{ config("app.env") }}' === 'production';
+  const isProduction = '<?php echo e(config("app.env")); ?>' === 'production';
   const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
   const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   const logoFilename = `${identifier}-logo.png`;
@@ -1966,7 +1936,7 @@ window.applyGameTaxonomy = function(game, platform) {
             console.log('🔨 Création du type:', { subCategoryId, typeName });
             
             // Créer le type via l'API
-            fetch('{{ route("admin.taxonomy.type.auto-create") }}', {
+            fetch('<?php echo e(route("admin.taxonomy.type.auto-create")); ?>', {
               method: 'POST',
               headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -2062,7 +2032,7 @@ window.applyGameTaxonomy = function(game, platform) {
           const categoryId = categorySelect ? categorySelect.value : null;
           
           if (categoryId) {
-            fetch('{{ route("admin.taxonomy.brand.auto-create") }}', {
+            fetch('<?php echo e(route("admin.taxonomy.brand.auto-create")); ?>', {
               method: 'POST',
               headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -2110,11 +2080,11 @@ window.applyGameTaxonomy = function(game, platform) {
 // OUVRIR LE MODAL DE TAXONOMIE POUR L'ARTICLE EN COURS
 // =====================================================
 window.openTaxonomyImagesForArticle = function() {
-  const romId = @json($console->rom_id ?? null);
-  const articleTypeId = @json($console->article_type_id ?? null);
-  const articleTypeName = @json($console->articleType->name ?? null);
-  const subCategoryName = @json($console->articleSubCategory->name ?? null);
-  const categoryName = @json($console->articleCategory->name ?? null);
+  const romId = <?php echo json_encode($console->rom_id ?? null, 15, 512) ?>;
+  const articleTypeId = <?php echo json_encode($console->article_type_id ?? null, 15, 512) ?>;
+  const articleTypeName = <?php echo json_encode($console->articleType->name ?? null, 15, 512) ?>;
+  const subCategoryName = <?php echo json_encode($console->articleSubCategory->name ?? null, 15, 512) ?>;
+  const categoryName = <?php echo json_encode($console->articleCategory->name ?? null, 15, 512) ?>;
   
   // Utiliser ROM ID pour les jeux vidéo, sinon utiliser le type d'article
   const identifier = romId || articleTypeName;
@@ -2321,7 +2291,7 @@ async function loadTaxonomyImages(identifier, folder) {
   if (!gridContainer) return;
   
   try {
-    const response = await fetch(`{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`);
+    const response = await fetch(`<?php echo e(route("admin.taxonomy.get-images")); ?>?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`);
     const data = await response.json();
     
     if (data.success && data.images.length > 0) {
@@ -2491,7 +2461,7 @@ window.refreshGameImages = function(game, platform, identifier, folder) {
   
   // Recréer les images avec cache-busting
   const timestamp = Date.now();
-  const isProduction = '{{ config("app.env") }}' === 'production';
+  const isProduction = '<?php echo e(config("app.env")); ?>' === 'production';
   const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
   const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   imageTypes.forEach(imgType => {
@@ -2552,7 +2522,7 @@ async function handleTaxonomyImageUpload(files, identifier, folder, platform, se
   formData.append('type', selectedType); // Envoyer le type sélectionné
   
   try {
-    const response = await fetch('{{ route("admin.taxonomy.upload-image") }}', {
+    const response = await fetch('<?php echo e(route("admin.taxonomy.upload-image")); ?>', {
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2614,7 +2584,7 @@ async function renameTaxonomyImage(identifier, folder, oldType, newType) {
   console.log('🔄 Renommage:', { identifier, folder, oldType, newType });
   
   try {
-    const response = await fetch('{{ route("admin.taxonomy.rename-image") }}', {
+    const response = await fetch('<?php echo e(route("admin.taxonomy.rename-image")); ?>', {
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -2667,7 +2637,7 @@ async function setAsPrimaryImage(identifier, folder, currentFullType, baseType) 
   console.log('⭐ Définir comme principale:', { identifier, folder, currentFullType, baseType });
   
   try {
-    const response = await fetch('{{ route("admin.taxonomy.set-primary-image") }}', {
+    const response = await fetch('<?php echo e(route("admin.taxonomy.set-primary-image")); ?>', {
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -2702,7 +2672,7 @@ async function deleteTaxonomyImage(identifier, folder, type) {
   console.log('🗑️ Suppression:', { identifier, folder, type });
   
   try {
-    const response = await fetch('{{ route("admin.taxonomy.delete-image") }}', {
+    const response = await fetch('<?php echo e(route("admin.taxonomy.delete-image")); ?>', {
       method: 'DELETE',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -3113,7 +3083,7 @@ async function displayGameResult(game, platform) {
     { type: 'gameplay', label: 'Gameplay' }
   ];
   
-  const isProduction = '{{ config("app.env") }}' === 'production';
+  const isProduction = '<?php echo e(config("app.env")); ?>' === 'production';
   const r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
   const baseUrl = isProduction ? r2Url + '/taxonomy' : '/proxy/images/taxonomy';
   imageTypes.forEach(imgType => {
@@ -3272,7 +3242,7 @@ window.showToast = function(message, type = 'success') {
 // Fonction pour mettre à jour un champ de jeu
 window.updateGameField = async function(gameId, platform, field, value) {
   try {
-    const response = await fetch('{{ url('admin/ajax/update-game-field') }}', {
+    const response = await fetch('<?php echo e(url('admin/ajax/update-game-field')); ?>', {
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -3318,7 +3288,7 @@ window.searchPublishers = async function(query, gameId, platform) {
   }
   
   try {
-    const response = await fetch('{{ url('admin/ajax/search-publishers') }}?q=' + encodeURIComponent(query));
+    const response = await fetch('<?php echo e(url('admin/ajax/search-publishers')); ?>?q=' + encodeURIComponent(query));
     const data = await response.json();
     const publishers = data.publishers || [];
     
@@ -3387,7 +3357,7 @@ window.addNewPublisher = async function(gameId, platform, publisherName) {
   const suggestionsDiv = document.getElementById('publisher-suggestions-' + gameId);
   
   try {
-    const response = await fetch('{{ url('admin/ajax/create-publisher') }}', {
+    const response = await fetch('<?php echo e(url('admin/ajax/create-publisher')); ?>', {
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -3440,19 +3410,19 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  const oldBrand = @json(old('article_brand_id', $console->article_brand_id ?? null));
-  const oldSub = @json(old('article_sub_category_id', $console->article_sub_category_id ?? null));
-  const oldType = @json(old('article_type_id', $console->article_type_id ?? null));
+  const oldBrand = <?php echo json_encode(old('article_brand_id', $console->article_brand_id ?? null), 512) ?>;
+  const oldSub = <?php echo json_encode(old('article_sub_category_id', $console->article_sub_category_id ?? null), 512) ?>;
+  const oldType = <?php echo json_encode(old('article_type_id', $console->article_type_id ?? null), 512) ?>;
 
   console.log('🔍 Valeurs mode édition:', { 
     catValue: cat.value, 
     oldBrand, 
     oldSub, 
     oldType,
-    consoleBrandId: @json($console->article_brand_id),
-    consoleSubCatId: @json($console->article_sub_category_id),
-    consoleTypeId: @json($console->article_type_id),
-    brandViaRelation: @json($console->articleSubCategory->brand->id ?? null)
+    consoleBrandId: <?php echo json_encode($console->article_brand_id, 15, 512) ?>,
+    consoleSubCatId: <?php echo json_encode($console->article_sub_category_id, 15, 512) ?>,
+    consoleTypeId: <?php echo json_encode($console->article_type_id, 15, 512) ?>,
+    brandViaRelation: <?php echo json_encode($console->articleSubCategory->brand->id ?? null, 15, 512) ?>
   });
 
   function clear(sel, placeholder = '— Choisir —') {
@@ -3539,9 +3509,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
       console.log('✅ UI fields updated');
-      console.log('🌐 Fetching brands from URL:', `{{ url('admin/ajax/brands') }}/${catId}`);
+      console.log('🌐 Fetching brands from URL:', `<?php echo e(url('admin/ajax/brands')); ?>/${catId}`);
       
-      const url = `{{ url('admin/ajax/brands') }}/${catId}`;
+      const url = `<?php echo e(url('admin/ajax/brands')); ?>/${catId}`;
       const response = await fetch(url);
       
       console.log('📡 Response status:', response.status);
@@ -3577,7 +3547,7 @@ document.addEventListener('DOMContentLoaded', function() {
     clear(sub); clear(type);
     if (!brandId) return;
     try {
-      const url = `{{ url('admin/ajax/sub-categories') }}/${brandId}`;
+      const url = `<?php echo e(url('admin/ajax/sub-categories')); ?>/${brandId}`;
       const response = await fetch(url);
       const html = await response.text();
       sub.innerHTML = html;
@@ -3591,7 +3561,7 @@ document.addEventListener('DOMContentLoaded', function() {
     clear(type);
     if (!subId) return;
     try {
-      const url = `{{ url('admin/ajax/types') }}/${subId}`;
+      const url = `<?php echo e(url('admin/ajax/types')); ?>/${subId}`;
       const response = await fetch(url);
       const html = await response.text();
       type.innerHTML = html;
@@ -3613,7 +3583,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     try {
-      const response = await fetch(`{{ url('admin/ajax/type-description') }}/${typeId}`);
+      const response = await fetch(`<?php echo e(url('admin/ajax/type-description')); ?>/${typeId}`);
       const data = await response.json();
       descTextarea.value = data.description || '';
       descField.style.display = 'block';
@@ -3727,7 +3697,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Charger les images existantes de l'article_type
   async function loadExistingImages(typeId) {
     try {
-      const response = await fetch(`{{ url('admin/ajax/type-description') }}/${typeId}`);
+      const response = await fetch(`<?php echo e(url('admin/ajax/type-description')); ?>/${typeId}`);
       const data = await response.json();
       
       if (data.images && data.images.length > 0) {
@@ -3781,7 +3751,7 @@ document.addEventListener('DOMContentLoaded', function() {
       formData.append('article_type_id', currentArticleTypeId);
 
       try {
-        const response = await fetch('{{ route('admin.articles.upload-image') }}', {
+        const response = await fetch('<?php echo e(route('admin.articles.upload-image')); ?>', {
           method: 'POST',
           headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -3848,7 +3818,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!confirm('Supprimer cette image de la taxonomie ?')) return;
 
     try {
-      const response = await fetch('{{ route('admin.articles.delete-image') }}', {
+      const response = await fetch('<?php echo e(route('admin.articles.delete-image')); ?>', {
         method: 'POST',
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -3883,8 +3853,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const gameImagesPreview = document.getElementById('game-images-preview');
 
   // ✅ Charger les images existantes en mode édition (initialiser les variables globales)
-  uploadedGameImages = @json($console->article_images ?? []);
-  primaryImageUrl = @json($console->primary_image_url ?? null);
+  uploadedGameImages = <?php echo json_encode($console->article_images ?? [], 15, 512) ?>;
+  primaryImageUrl = <?php echo json_encode($console->primary_image_url ?? null, 15, 512) ?>;
   genericArticleImages = []; // Images provenant d'autres articles du même type
 
   // Ouvrir la modal de gestion des images d'article
@@ -4149,7 +4119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     formData.append('article_type_id', currentArticleTypeId);
 
     try {
-      const response = await fetch('{{ route('admin.articles.upload-image') }}', {
+      const response = await fetch('<?php echo e(route('admin.articles.upload-image')); ?>', {
         method: 'POST',
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -4433,7 +4403,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     try {
-      const response = await fetch(`{{ url('admin/ajax/article-type-images') }}/${currentArticleTypeId}`);
+      const response = await fetch(`<?php echo e(url('admin/ajax/article-type-images')); ?>/${currentArticleTypeId}`);
       const data = await response.json();
       
       const grid = document.getElementById('generic-images-grid');
@@ -4666,7 +4636,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!confirm(confirmMessage)) return;
     
     try {
-      const response = await fetch('{{ route('admin.articles.delete-image') }}', {
+      const response = await fetch('<?php echo e(route('admin.articles.delete-image')); ?>', {
         method: 'POST',
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -4862,7 +4832,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </script>
 
-{{-- Script externe pour l'autocomplétion des jeux --}}
-<script src="{{ asset('js/game-autocomplete.js') }}"></script>
 
-@endsection
+<script src="<?php echo e(asset('js/game-autocomplete.js')); ?>"></script>
+
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/consoles/form.blade.php ENDPATH**/ ?>

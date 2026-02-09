@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Taxonomy AJAX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-bold mb-4">Test AJAX Taxonomy - Cartes à collectionner</h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block font-medium mb-2">Catégorie</label>
+                <select id="category" class="w-full border	 rounded p-2">
+                    <option value="">-- Choisir --</option>
+                    <option value="12">Cartes à collectionner</option>
+                    <option value="14">Jeux vidéo</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block font-medium mb-2">Marque</label>
+                <select id="brand" class="w-full border rounded p-2">
+                    <option value="">-- Choisir --</option>
+                </select>
+            </div>
+            
+            <div id="debug" class="mt-6 p-4 bg-gray-50 rounded">
+                <h3 class="font-bold mb-2">🔍 Debug:</h3>
+                <pre id="log" class="text-xs"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const log = (msg) => {
+            const logEl = document.getElementById('log');
+            logEl.textContent += msg + '\n';
+            console.log(msg);
+        };
+
+        const categorySelect = document.getElementById('category');
+        const brandSelect = document.getElementById('brand');
+
+        async function loadBrands(catId) {
+            log(`\n🔄 loadBrands(${catId}) appelé`);
+            
+            brandSelect.innerHTML = '<option value="">-- Loading... --</option>';
+            
+            if (!catId) {
+                log('❌ Pas de category ID');
+                return;
+            }
+
+            try {
+                const url = `http://stock-r4e.test/admin/ajax/brands/${catId}`;
+                log(`📡 Fetch: ${url}`);
+                
+                const response = await fetch(url, {
+                    credentials: 'include', // Important pour les cookies de session
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                log(`✅ Response status: ${response.status}`);
+                log(`📋 Content-Type: ${response.headers.get('Content-Type')}`);
+
+                const html = await response.text();
+                
+                log(`📝 HTML length: ${html.length} chars`);
+                log(`📝 HTML preview: ${html.substring(0, 200)}...`);
+
+                // Vérifier si c'est une page de login
+                if (html.includes('<!DOCTYPE html>') || html.includes('<html')) {
+                    log('❌ ERROR: Reçu une page HTML complète au lieu des options!');
+                    log('⚠️  Probablement redirigé vers login - middleware auth non satisfait');
+                } else {
+                    brandSelect.innerHTML = html;
+                    log(`✅ Brand select mis à jour avec ${brandSelect.options.length} options`);
+                }
+
+            } catch (e) {
+                log(`❌ Erreur fetch: ${e.message}`);
+                console.error('Erreur complète:', e);
+            }
+        }
+
+        categorySelect.addEventListener('change', e => loadBrands(e.target.value));
+        
+        log('✅ Test page chargée');
+        log('📌 Sélectionnez "Cartes à collectionner" pour tester');
+    </script>
+</body>
+</html>
