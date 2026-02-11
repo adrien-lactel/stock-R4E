@@ -41,7 +41,10 @@
 
     {{-- FORMULAIRE --}}
     <div class="bg-white shadow rounded-lg p-6">
-        <form method="POST" action="{{ $sheet->exists ? route('admin.product-sheets.update', $sheet) : route('admin.product-sheets.store') }}">
+        <form method="POST" 
+              action="{{ $sheet->exists ? route('admin.product-sheets.update', $sheet) : route('admin.product-sheets.store') }}"
+              id="product-sheet-form"
+              onsubmit="console.log('📤 Form submit - images:', document.getElementById('images_input').value); console.log('📤 Form submit - main_image:', document.getElementById('main_image_input').value);">
             @csrf
             @if($sheet->exists)
                 @method('PUT')
