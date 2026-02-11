@@ -946,9 +946,9 @@ window.genericArticleImages = [];
 let featuredMods = {!! json_encode($sheet->featured_mods ?? []) !!};
 
 console.log('📦 Variables globales initialisées:', {
-    window.uploadedGameImages: window.uploadedGameImages.length,
-    window.primaryImageUrl,
-    window.currentArticleTypeId,
+    uploadedGameImages: window.uploadedGameImages.length,
+    primaryImageUrl: window.primaryImageUrl,
+    currentArticleTypeId: window.currentArticleTypeId,
     featuredMods: featuredMods.length
 });
 
