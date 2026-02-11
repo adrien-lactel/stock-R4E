@@ -26,7 +26,7 @@
     }
   ],
   "deploy": {
-    "startCommand": "mkdir -p storage/framework/{sessions,views,cache} && chmod -R 775 storage bootstrap/cache && php artisan config:cache && php artisan storage:link && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8080",
+    "startCommand": "bash railway-optimize.sh && vendor/bin/heroku-php-apache2 public/",
     "healthcheckPath": "/health.php",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",

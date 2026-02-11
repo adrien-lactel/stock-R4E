@@ -21,6 +21,14 @@ echo "✅ Caches cleared"
 php artisan config:cache 2>/dev/null || echo "⚠️ Config cache skipped"
 echo "✅ Config cached"
 
+# Storage link
+php artisan storage:link 2>/dev/null || echo "⚠️ Storage link skipped"
+echo "✅ Storage linked"
+
+# Migrations
+php artisan migrate --force 2>/dev/null || echo "⚠️ Migrate skipped"
+echo "✅ Migrations done"
+
 # NE PAS cacher les routes - cela empêche les nouvelles routes de fonctionner
 # php artisan route:cache
 
