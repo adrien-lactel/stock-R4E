@@ -492,15 +492,17 @@ class ConsoleAdminController extends Controller
                 ->update(['description' => $request->article_type_description]);
         }
 
-        // ✅ Traiter les images spécifiques à l'article
+        // ✅ Traiter les images spécifiques à l'article (déjà pré-traitées en tableau)
         if ($request->filled('article_images')) {
-            $data['article_images'] = json_decode($request->article_images, true) ?? [];
+            $articleImages = $request->input('article_images');
+            $data['article_images'] = is_array($articleImages) ? $articleImages : (json_decode($articleImages, true) ?? []);
         }
         if ($request->filled('primary_image_url')) {
             $data['primary_image_url'] = $request->primary_image_url;
         }
         if ($request->filled('image_captions')) {
-            $data['image_captions'] = json_decode($request->image_captions, true) ?? [];
+            $imageCaptions = $request->input('image_captions');
+            $data['image_captions'] = is_array($imageCaptions) ? $imageCaptions : (json_decode($imageCaptions, true) ?? []);
         }
 
         // ✅ Création en lot
@@ -662,15 +664,17 @@ class ConsoleAdminController extends Controller
         }
         unset($data['article_type_description']); // Ne pas insérer dans consoles
 
-        // ✅ Traiter les images spécifiques à l'article
+        // ✅ Traiter les images spécifiques à l'article (déjà pré-traitées en tableau)
         if ($request->filled('article_images')) {
-            $data['article_images'] = json_decode($request->article_images, true) ?? [];
+            $articleImages = $request->input('article_images');
+            $data['article_images'] = is_array($articleImages) ? $articleImages : (json_decode($articleImages, true) ?? []);
         }
         if ($request->filled('primary_image_url')) {
             $data['primary_image_url'] = $request->primary_image_url;
         }
         if ($request->filled('image_captions')) {
-            $data['image_captions'] = json_decode($request->image_captions, true) ?? [];
+            $imageCaptions = $request->input('image_captions');
+            $data['image_captions'] = is_array($imageCaptions) ? $imageCaptions : (json_decode($imageCaptions, true) ?? []);
         }
 
         $data = array_merge($data, $extra);
