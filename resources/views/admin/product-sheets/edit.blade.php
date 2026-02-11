@@ -859,8 +859,8 @@
                      IMAGES DE L'ARTICLE - COMPOSANT RÉUTILISABLE
                 ===================== --}}
                 <x-article-images-manager 
-                    :article-type-id="$selectedType->id ?? null"
-                    :article-type-name="$selectedType->name ?? null"
+                    :article-type-id="$selectedType?->id ?? null"
+                    :article-type-name="$selectedType?->name ?? null"
                     :rom-id="null"
                     :uploaded-images="$sheet->images ?? []"
                     :primary-image="$sheet->main_image ?? ''"
@@ -2117,7 +2117,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
     // Variables globales pour le modal éditeur
     let selectedPublisherId = null;
-    let selectedPublisherName = '{{ $selectedType->publisher ?? '' }}';
+    let selectedPublisherName = '{{ $selectedType?->publisher ?? '' }}';
     let selectedLogoFile = null;
     
     // Ouvrir le modal de gestion de l'éditeur
@@ -2212,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const previewSection = document.createElement('div');
         previewSection.id = 'publisher-logo-preview';
         previewSection.className = 'flex items-center justify-center p-8 bg-gray-50 rounded-lg border border-gray-200 min-h-[150px]';
-        @if($selectedType->publisher_logo_url)
+        @if(isset($selectedType) && $selectedType?->publisher_logo_url)
             previewSection.innerHTML = '<img src="{{ $selectedType->publisher_logo_url }}" class="max-h-32 object-contain rounded-lg">';
         @else
             previewSection.innerHTML = '<p class="text-gray-400">Aucun logo disponible</p>';
