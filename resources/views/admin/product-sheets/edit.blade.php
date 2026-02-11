@@ -77,6 +77,10 @@
                                     if (is_string($articleImages)) {
                                         $articleImages = json_decode($articleImages, true) ?? [];
                                     }
+                                    // Normaliser les images: extraire les URLs des objets {url, is_generic}
+                                    $articleImages = array_map(function($img) {
+                                        return is_array($img) && isset($img['url']) ? $img['url'] : $img;
+                                    }, $articleImages);
                                 @endphp
                                 
                                 @if(count($articleImages) > 0)
@@ -1890,6 +1894,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Upload d'images
     let existingImages = {!! json_encode($sheet->images ?? []) !!};
+    // Normaliser: extraire les URLs des objets {url, is_generic}
+    existingImages = existingImages.map(img => typeof img === 'object' && img.url ? img.url : img);
     let mainImage = '{{ $sheet->main_image }}';
     let newImages = [];
 
