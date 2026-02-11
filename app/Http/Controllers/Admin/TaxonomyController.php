@@ -610,8 +610,10 @@ public function destroyType(ArticleType $type)
                 
                 foreach ($consoles as $console) {
                     if (!empty($console->article_images) && is_array($console->article_images)) {
-                        foreach ($console->article_images as $imageUrl) {
-                            if (!in_array($imageUrl, $allImages)) {
+                        foreach ($console->article_images as $imageData) {
+                            // Gérer le format {url, is_generic} ou simple URL
+                            $imageUrl = is_array($imageData) && isset($imageData['url']) ? $imageData['url'] : $imageData;
+                            if (is_string($imageUrl) && !in_array($imageUrl, $allImages)) {
                                 $allImages[] = $imageUrl;
                             }
                         }
@@ -626,8 +628,10 @@ public function destroyType(ArticleType $type)
             
             foreach ($productSheets as $sheet) {
                 if (!empty($sheet->images) && is_array($sheet->images)) {
-                    foreach ($sheet->images as $imageUrl) {
-                        if (!in_array($imageUrl, $allImages)) {
+                    foreach ($sheet->images as $imageData) {
+                        // Gérer le format {url, is_generic} ou simple URL
+                        $imageUrl = is_array($imageData) && isset($imageData['url']) ? $imageData['url'] : $imageData;
+                        if (is_string($imageUrl) && !in_array($imageUrl, $allImages)) {
                             $allImages[] = $imageUrl;
                         }
                     }
@@ -640,8 +644,10 @@ public function destroyType(ArticleType $type)
                 if ($articleType) {
                     // Ajouter les images génériques du type
                     if (!empty($articleType->images) && is_array($articleType->images)) {
-                        foreach ($articleType->images as $imageUrl) {
-                            if (!in_array($imageUrl, $allImages)) {
+                        foreach ($articleType->images as $imageData) {
+                            // Gérer le format {url, is_generic} ou simple URL
+                            $imageUrl = is_array($imageData) && isset($imageData['url']) ? $imageData['url'] : $imageData;
+                            if (is_string($imageUrl) && !in_array($imageUrl, $allImages)) {
                                 $allImages[] = $imageUrl;
                             }
                         }
