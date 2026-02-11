@@ -63,18 +63,18 @@ class DashboardController extends Controller
                         'icon' => '📚',
                         'route' => 'admin.consoles.index',
                     ],                    [
-                        'title' => 'Consoles HS',
-                        'subtitle' => 'Pièces détachées',
-                        'description' => 'Consoles désactivées utilisées comme donneurs de pièces.',
-                        'icon' => '🔴',
-                        'route' => 'admin.consoles.disabled',                    ],
-                    [
                         'title' => 'Fiches produits',
                         'subtitle' => 'Présentation',
                         'description' => 'Gérer les fiches produits affichées aux clients.',
                         'icon' => '🖼️',
                         'route' => 'admin.product-sheets.index',
                     ],
+                    [
+                        'title' => 'Consoles HS',
+                        'subtitle' => 'Pièces détachées',
+                        'description' => 'Consoles désactivées utilisées comme donneurs de pièces.',
+                        'icon' => '🔴',
+                        'route' => 'admin.consoles.disabled',                    ],
                     [
                         'title' => 'Images par taxonomie',
                         'subtitle' => 'Médias',
