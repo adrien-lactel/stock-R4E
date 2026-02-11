@@ -248,7 +248,10 @@
                     </div>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 mt-2">💡 Le mod sera ajouté aux mods existants. Pour retirer un mod, cliquez dessus dans la liste ci-dessus.</p>
+            <div class="flex items-center gap-4 mt-2">
+                <p class="text-xs text-gray-500">💡 Le mod sera ajouté aux mods existants. Pour retirer un mod, cliquez dessus dans la liste ci-dessus.</p>
+                <a href="{{ route('admin.mods.create') }}" target="_blank" class="text-xs text-indigo-600 hover:underline whitespace-nowrap">➕ Créer un nouveau mod</a>
+            </div>
 
             <h2 class="text-lg font-semibold text-gray-800 mt-8">Logistique & magasin</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
