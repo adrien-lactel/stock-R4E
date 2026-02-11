@@ -17,7 +17,7 @@ class Publisher extends Model
     protected $appends = ['logo_url'];
 
     /**
-     * Get the full logo URL with proxy
+     * Get the full logo URL - direct R2 for speed
      */
     public function getLogoUrlAttribute()
     {
@@ -25,15 +25,18 @@ class Publisher extends Model
             return null;
         }
 
+        // URL R2 directe pour un chargement rapide
+        $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/editeurs';
+
         // Si le logo commence par "images/taxonomy/editeurs/"
         if (str_starts_with($this->logo, 'images/taxonomy/editeurs/')) {
             $filename = basename($this->logo);
-            return url("/proxy/images/taxonomy/editeurs/{$filename}");
+            return "{$r2Url}/{$filename}";
         }
 
         // Si c'est juste un nom de fichier
         if (!str_starts_with($this->logo, 'http')) {
-            return url("/proxy/images/taxonomy/editeurs/{$this->logo}");
+            return "{$r2Url}/{$this->logo}";
         }
 
         return $this->logo;

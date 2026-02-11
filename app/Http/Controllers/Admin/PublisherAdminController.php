@@ -97,10 +97,13 @@ class PublisherAdminController extends Controller
             // Sauvegarder aussi en local pour compatibilité
             $file->move(public_path('images/taxonomy/editeurs'), $filename);
             
+            // URL R2 directe pour un chargement rapide
+            $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/editeurs';
+            
             return response()->json([
                 'success' => true,
                 'logo_path' => $path,
-                'logo_url' => url("/proxy/images/taxonomy/editeurs/{$filename}")
+                'logo_url' => "{$r2Url}/{$filename}"
             ]);
             
         } catch (\Exception $e) {
