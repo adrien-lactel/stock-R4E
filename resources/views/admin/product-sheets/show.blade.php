@@ -42,6 +42,12 @@
                         if (is_string($articleImages)) {
                             $articleImages = json_decode($articleImages, true) ?? [];
                         }
+                        // Normaliser les images: extraire les URLs des objets {url, is_generic}
+                        $articleImages = array_filter(array_map(function($img) {
+                            if (is_string($img) && str_starts_with($img, 'http')) return $img;
+                            if (is_array($img) && isset($img['url']) && str_starts_with($img['url'], 'http')) return $img['url'];
+                            return null;
+                        }, $articleImages));
                     @endphp
                     
                     @if(count($articleImages) > 0)
