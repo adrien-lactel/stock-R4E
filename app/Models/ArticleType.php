@@ -30,16 +30,17 @@ class ArticleType extends Model
     /**
      * Déterminer le dossier de la plateforme pour R2
      * Priorité: ROM ID prefix > SubCategory name
+     * Note: Les dossiers R2 utilisent des noms avec espaces (ex: "game boy advance")
      */
     private function getPlatformFolder()
     {
-        // Mapping des préfixes ROM ID vers les dossiers (plus précis)
+        // Mapping des préfixes ROM ID vers les dossiers R2 (noms avec espaces)
         $romIdPrefixMapping = [
-            'DMG' => 'gameboy',  // Game Boy original
-            'CGB' => 'gbc',      // Game Boy Color
-            'AGB' => 'gba',      // Game Boy Advance
-            'SNS' => 'snes',     // Super Nintendo
-            'NES' => 'nes',      // NES
+            'DMG' => 'gameboy',           // Game Boy original
+            'CGB' => 'game boy color',    // Game Boy Color
+            'AGB' => 'game boy advance',  // Game Boy Advance
+            'SNS' => 'snes',              // Super Nintendo
+            'NES' => 'nes',               // NES
         ];
 
         // Priorité 1: détecter depuis le préfixe du ROM ID (plus précis)
@@ -53,10 +54,10 @@ class ArticleType extends Model
 
         // Priorité 2: mapping depuis la sous-catégorie
         $platformMapping = [
-            'game boy advance' => 'gba',  // Plus spécifique d'abord
-            'gba' => 'gba',
-            'game boy color' => 'gbc',
-            'gbc' => 'gbc',
+            'game boy advance' => 'game boy advance',
+            'gba' => 'game boy advance',
+            'game boy color' => 'game boy color',
+            'gbc' => 'game boy color',
             'game boy' => 'gameboy',
             'gameboy' => 'gameboy',
             'super nintendo' => 'snes',
@@ -67,6 +68,17 @@ class ArticleType extends Model
             'nes' => 'nes',
             'famicom' => 'nes',
             'nintendo entertainment system' => 'nes',
+            'wonder swan' => 'wonderswan',
+            'wonderswan' => 'wonderswan',
+            'wonder swan color' => 'wonderswan color',
+            'wonderswan color' => 'wonderswan color',
+            'mega drive' => 'megadrive',
+            'megadrive' => 'megadrive',
+            'genesis' => 'megadrive',
+            'game gear' => 'gamegear',
+            'gamegear' => 'gamegear',
+            'sega saturn' => 'segasaturn',
+            'saturn' => 'segasaturn',
         ];
 
         // Lazy-load subCategory if not loaded
@@ -125,10 +137,13 @@ class ArticleType extends Model
         // Si elle n'existe pas, elle retournera 404 mais c'est géré par le frontend
         $filename = "{$romId}-{$type}.png";
         
+        // URL-encoder le dossier s'il contient des espaces
+        $folderEncoded = rawurlencode($folder);
+        
         // En production : URL directe R2 (avec fallback hardcodé si config manquante)
         if (app()->environment('production')) {
             $r2PublicUrl = config('filesystems.disks.r2.url') ?: 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
-            return $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
+            return $r2PublicUrl . "/taxonomy/{$folderEncoded}/{$filename}";
         } else {
             return route('proxy.taxonomy-image', [
                 'folder' => $folder,
