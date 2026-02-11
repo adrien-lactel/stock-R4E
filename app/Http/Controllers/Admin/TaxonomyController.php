@@ -680,12 +680,16 @@ public function destroyType(ArticleType $type)
                 'count' => count($allImages)
             ]);
         } catch (\Exception $e) {
-            \Log::error('Erreur getArticlesImagesByType: ' . $e->getMessage());
+            \Log::error('Erreur getArticlesImagesByType: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'type_id' => $typeId
+            ]);
             return response()->json([
                 'success' => false,
                 'images' => [],
                 'count' => 0,
-                'message' => 'Erreur lors de la récupération des images d\'articles'
+                'message' => 'Erreur lors de la récupération des images d\'articles',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
