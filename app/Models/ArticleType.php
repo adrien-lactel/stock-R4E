@@ -80,9 +80,9 @@ class ArticleType extends Model
         // Si elle n'existe pas, elle retournera 404 mais c'est géré par le frontend
         $filename = "{$this->rom_id}-{$type}.png";
         
-        // En production : URL directe R2, sinon proxy local
+        // En production : URL directe R2 (avec fallback hardcodé si config manquante)
         if (app()->environment('production')) {
-            $r2PublicUrl = config('filesystems.disks.r2.url');
+            $r2PublicUrl = config('filesystems.disks.r2.url') ?: 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
             return $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
         } else {
             return route('proxy.taxonomy-image', [
