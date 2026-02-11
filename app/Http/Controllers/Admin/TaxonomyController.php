@@ -1259,9 +1259,10 @@ public function destroyType(ArticleType $type)
                 $file = $request->file('logo');
                 $extension = $file->getClientOriginalExtension();
                 $filename = \Str::slug($publisherName) . '.' . $extension;
-                $path = "taxonomy/editeurs/{$filename}";
                 
-                $r2Url = config('filesystems.disks.r2.url');
+                // R2 URL directe (hardcodée pour éviter les problèmes de config)
+                $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+                
                 if (config('filesystems.disks.r2.key')) {
                     \Storage::disk('r2')->putFileAs(
                         'taxonomy/editeurs',
@@ -1269,17 +1270,19 @@ public function destroyType(ArticleType $type)
                         $filename,
                         'public'
                     );
-                    $logoUrl = $r2Url . '/taxonomy/editeurs/' . $filename;
-                } else {
-                    if (!file_exists(public_path('images/taxonomy/editeurs'))) {
-                        mkdir(public_path('images/taxonomy/editeurs'), 0755, true);
-                    }
-                    $file->move(public_path('images/taxonomy/editeurs'), $filename);
-                    $logoUrl = url("/images/taxonomy/editeurs/{$filename}");
                 }
                 
-                $publisher->logo = $path;
+                // Sauvegarder aussi en local pour compatibilité
+                if (!file_exists(public_path('images/taxonomy/editeurs'))) {
+                    mkdir(public_path('images/taxonomy/editeurs'), 0755, true);
+                }
+                $file->move(public_path('images/taxonomy/editeurs'), $filename);
+                
+                // Stocker juste le nom du fichier (le model ajoute le préfixe R2)
+                $publisher->logo = $filename;
                 $publisher->save();
+                
+                $logoUrl = "{$r2Url}/taxonomy/editeurs/{$filename}";
             } else {
                 // Récupérer l'URL du logo existant
                 $logoUrl = $publisher->logo_url;

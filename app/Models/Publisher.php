@@ -28,18 +28,15 @@ class Publisher extends Model
         // URL R2 directe pour un chargement rapide
         $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/editeurs';
 
-        // Si le logo commence par "images/taxonomy/editeurs/"
-        if (str_starts_with($this->logo, 'images/taxonomy/editeurs/')) {
-            $filename = basename($this->logo);
-            return "{$r2Url}/{$filename}";
+        // Si c'est déjà une URL complète, la retourner telle quelle
+        if (str_starts_with($this->logo, 'http')) {
+            return $this->logo;
         }
 
-        // Si c'est juste un nom de fichier
-        if (!str_starts_with($this->logo, 'http')) {
-            return "{$r2Url}/{$this->logo}";
-        }
+        // Extraire juste le nom de fichier (gérer tous les formats de path)
+        $filename = basename($this->logo);
 
-        return $this->logo;
+        return "{$r2Url}/{$filename}";
     }
 
     /**

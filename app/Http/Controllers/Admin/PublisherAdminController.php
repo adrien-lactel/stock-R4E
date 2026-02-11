@@ -82,7 +82,6 @@ class PublisherAdminController extends Controller
             // Générer un nom de fichier
             $extension = $file->getClientOriginalExtension();
             $filename = Str::slug($publisher->name) . '.' . $extension;
-            $path = "images/taxonomy/editeurs/{$filename}";
             
             // Sauvegarder sur R2 si configuré
             if (config('filesystems.disks.r2.key')) {
@@ -97,15 +96,15 @@ class PublisherAdminController extends Controller
             // Sauvegarder aussi en local pour compatibilité
             $file->move(public_path('images/taxonomy/editeurs'), $filename);
             
-            // Mettre à jour le Publisher avec le nouveau logo
-            $publisher->update(['logo' => $path]);
+            // Mettre à jour le Publisher avec juste le nom du fichier
+            $publisher->update(['logo' => $filename]);
             
             // URL R2 directe pour un chargement rapide
             $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/editeurs';
             
             return response()->json([
                 'success' => true,
-                'logo_path' => $path,
+                'logo_path' => $filename,
                 'logo_url' => "{$r2Url}/{$filename}"
             ]);
             
