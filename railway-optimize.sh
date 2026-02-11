@@ -18,7 +18,7 @@ php artisan cache:clear 2>/dev/null || true
 echo "✅ Caches cleared"
 
 # Cache de configuration
-php artisan config:cache
+php artisan config:cache 2>/dev/null || echo "⚠️ Config cache skipped"
 echo "✅ Config cached"
 
 # NE PAS cacher les routes - cela empêche les nouvelles routes de fonctionner

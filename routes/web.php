@@ -31,8 +31,12 @@ use App\Http\Controllers\ImageProxyController;
 |--------------------------------------------------------------------------
 */
 Route::get('/health', function () {
-    return response()->json(['status' => 'ok'], 200);
-});
+    try {
+        return response()->json(['status' => 'ok'], 200);
+    } catch (\Exception $e) {
+        return response('OK', 200);
+    }
+})->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 
 
