@@ -156,12 +156,21 @@ window.openTaxonomyImagesModal = function() {
  */
 async function loadTaxonomyImages() {
     const grid = document.getElementById('taxonomy-images-grid');
-    if (!grid || !window.currentArticleTypeId) return;
+    if (!grid || !window.currentArticleTypeId) {
+        console.error('❌ loadTaxonomyImages: grid ou currentArticleTypeId manquant', { grid: !!grid, typeId: window.currentArticleTypeId });
+        return;
+    }
     
     try {
         // Utiliser la route AJAX pour récupérer les images du type
-        const response = await fetch(`/admin/ajax/type-description/${window.currentArticleTypeId}`);
+        const url = `/admin/ajax/type-description/${window.currentArticleTypeId}`;
+        console.log('📡 Fetching taxonomy images from:', url);
+        
+        const response = await fetch(url);
+        console.log('📡 Response status:', response.status, response.statusText);
+        
         const data = await response.json();
+        console.log('📡 API response data:', data);
         
         grid.innerHTML = '';
         
@@ -175,6 +184,7 @@ async function loadTaxonomyImages() {
         let hasImages = false;
         
         imageTypes.forEach(type => {
+            console.log(`🖼️ Checking ${type.key}:`, data[type.key]);
             if (data[type.key]) {
                 hasImages = true;
                 const imageCard = document.createElement('div');
@@ -183,12 +193,15 @@ async function loadTaxonomyImages() {
                     <img src="${data[type.key]}" 
                          alt="${type.label}" 
                          class="w-full aspect-square object-contain rounded mb-2 cursor-pointer"
-                         onclick="window.open('${data[type.key]}', '_blank')">
+                         onclick="window.open('${data[type.key]}', '_blank')"
+                         onerror="console.error('❌ Image failed to load:', '${data[type.key]}'); this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>❌</text></svg>'">
                     <p class="text-sm font-medium text-gray-700 text-center">${type.label}</p>
                 `;
                 grid.appendChild(imageCard);
             }
         });
+        
+        console.log('🖼️ Total images found:', hasImages ? 'yes' : 'no');
         
         if (!hasImages) {
             grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-6">📭 Aucune image générique trouvée</div>';
