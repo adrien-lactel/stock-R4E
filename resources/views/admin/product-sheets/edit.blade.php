@@ -73,14 +73,18 @@
                                 <div class="flex-1 flex items-center justify-center">
 
                                 @php
-                                    $articleImages = $sheet->images ?? [];
+                                    // Pour les fiches existantes, utiliser $sheet->images
+                                    // Pour les nouvelles fiches, utiliser $prefilledData['images'] (depuis la console)
+                                    $articleImages = $sheet->images ?? ($prefilledData['images'] ?? []);
                                     if (is_string($articleImages)) {
                                         $articleImages = json_decode($articleImages, true) ?? [];
                                     }
-                                    // Normaliser les images: extraire les URLs des objets {url, is_generic}
-                                    $articleImages = array_map(function($img) {
-                                        return is_array($img) && isset($img['url']) ? $img['url'] : $img;
-                                    }, $articleImages);
+                                    // Normaliser les images: extraire les URLs des objets {url, is_generic} et filtrer
+                                    $articleImages = array_values(array_filter(array_map(function($img) {
+                                        if (is_string($img) && str_starts_with($img, 'http')) return $img;
+                                        if (is_array($img) && isset($img['url']) && str_starts_with($img['url'], 'http')) return $img['url'];
+                                        return null;
+                                    }, $articleImages)));
                                 @endphp
                                 
                                 @if(count($articleImages) > 0)
@@ -941,8 +945,23 @@ window.DELETE_IMAGE_ROUTE = '{{ route("admin.articles.delete-image") }}'; // Rou
 window.AJAX_ARTICLE_IMAGES_ROUTE = '{{ url("admin/ajax/articles-images-by-type") }}';
 
 // Variables globales pour la gestion des images d'articles (sans let, directement sur window)
-window.uploadedGameImages = {!! json_encode($sheet->images ?? []) !!};
-window.primaryImageUrl = '{{ $sheet->main_image ?? '' }}';
+@php
+    // Pour les fiches existantes, utiliser $sheet->images - sinon utiliser $prefilledData['images']
+    $jsImages = $sheet->images ?? ($prefilledData['images'] ?? []);
+    if (is_string($jsImages)) {
+        $jsImages = json_decode($jsImages, true) ?? [];
+    }
+    // Normaliser: extraire les URLs des objets {url, is_generic}
+    $jsImages = array_values(array_filter(array_map(function($img) {
+        if (is_string($img) && str_starts_with($img, 'http')) return $img;
+        if (is_array($img) && isset($img['url']) && str_starts_with($img['url'], 'http')) return $img['url'];
+        return null;
+    }, $jsImages)));
+    
+    $jsPrimaryImage = $sheet->main_image ?? ($prefilledData['main_image'] ?? '');
+@endphp
+window.uploadedGameImages = {!! json_encode($jsImages) !!};
+window.primaryImageUrl = '{{ $jsPrimaryImage }}';
 window.currentArticleTypeId = {{ isset($selectedType) && $selectedType ? $selectedType->id : 'null' }};
 window.genericArticleImages = [];
 
@@ -1917,18 +1936,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Upload d'images
-    let existingImages = {!! json_encode($sheet->images ?? []) !!};
-    // Normaliser: extraire les URLs des objets {url, is_generic} et filtrer les valeurs invalides
-    existingImages = existingImages
-        .map(img => {
-            if (typeof img === 'string' && img.startsWith('http')) return img;
-            if (typeof img === 'object' && img !== null && typeof img.url === 'string' && img.url.startsWith('http')) return img.url;
-            console.warn('⚠️ Image invalide filtrée (existingImages):', img);
-            return null;
-        })
-        .filter(Boolean);
-    let mainImage = '{{ $sheet->main_image }}';
+    // Upload d'images - utiliser les images déjà normalisées
+    let existingImages = {!! json_encode($jsImages ?? []) !!};
+    let mainImage = '{{ $jsPrimaryImage ?? '' }}';
     let newImages = [];
 
     const imageUpload = document.getElementById('image_upload');
