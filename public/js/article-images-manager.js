@@ -798,7 +798,23 @@ function loadArticleImages() {
     }
     
     window.uploadedGameImages.forEach(img => {
-        const imageUrl = typeof img === 'object' ? img.url : img;
+        // Extraction robuste de l'URL
+        let imageUrl;
+        if (typeof img === 'string') {
+            imageUrl = img;
+        } else if (typeof img === 'object' && img !== null && typeof img.url === 'string') {
+            imageUrl = img.url;
+        } else {
+            console.warn('⚠️ Image invalide ignorée:', img);
+            return; // Skip this invalid entry
+        }
+        
+        // Validation finale
+        if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+            console.warn('⚠️ URL image invalide ignorée:', imageUrl);
+            return;
+        }
+        
         addArticleImageCard(imageUrl, imageUrl.split('/').pop(), 'uploaded');
     });
     

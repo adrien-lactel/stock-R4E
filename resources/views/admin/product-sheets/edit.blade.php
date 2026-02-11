@@ -1470,8 +1470,22 @@ window.openArticleImagesModal = function() {
     }
     
     window.uploadedGameImages.forEach(img => {
-      const imageUrl = typeof img === 'object' ? img.url : img;
-      const isGeneric = typeof img === 'object' && img.is_generic;
+      // Extraction robuste de l'URL
+      let imageUrl;
+      if (typeof img === 'string') {
+        imageUrl = img;
+      } else if (typeof img === 'object' && img !== null && typeof img.url === 'string') {
+        imageUrl = img.url;
+      } else {
+        console.warn('⚠️ Image invalide ignorée:', img);
+        return;
+      }
+      
+      // Validation finale
+      if (!imageUrl || !imageUrl.startsWith('http')) {
+        console.warn('⚠️ URL image invalide ignorée:', imageUrl);
+        return;
+      }
       
       addArticleImageCard(imageUrl, imageUrl.split('/').pop(), 'uploaded');
     });
@@ -1670,8 +1684,19 @@ window.refreshArticleImagesPreview = function() {
       return;
     }
     
-    // Gérer les deux formats: string ou {url, is_generic}
-    const sortedImages = window.uploadedGameImages.map(img => typeof img === 'object' ? img.url : img);
+    // Gérer les deux formats: string ou {url, is_generic} avec validation
+    const sortedImages = window.uploadedGameImages
+      .map(img => {
+        if (typeof img === 'string') return img;
+        if (typeof img === 'object' && img !== null && typeof img.url === 'string') return img.url;
+        return null;
+      })
+      .filter(url => url && typeof url === 'string' && url.startsWith('http'));
+    
+    if (sortedImages.length === 0) {
+      previewContainer.innerHTML = '<div class="col-span-4 text-center text-gray-400 py-6 border-2 border-dashed border-gray-300 rounded-lg">📭 Aucune photo valide</div>';
+      return;
+    }
     
     // Trier pour mettre l'image principale en premier
     if (window.primaryImageUrl) {
@@ -1692,10 +1717,10 @@ window.refreshArticleImagesPreview = function() {
       `;
     }).join('');
     
-    if (window.uploadedGameImages.length > 4) {
+    if (sortedImages.length > 4) {
       const more = document.createElement('div');
       more.className = 'flex items-center justify-center bg-gray-100 rounded border-2 border-gray-300 aspect-square text-gray-500 font-medium';
-      more.textContent = `+${window.uploadedGameImages.length - 4}`;
+      more.textContent = `+${sortedImages.length - 4}`;
       previewContainer.appendChild(more);
     }
 
