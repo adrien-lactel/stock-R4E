@@ -170,11 +170,12 @@
                     progressBar.style.width = '0%';
                 }, 500);
                 
-                // Rafraîchir l'image affichée avec le nouveau logo
+                // Rafraîchir l'image affichée avec le nouveau logo (utiliser logo_url pour URL complète)
                 const logoPreview = document.getElementById('logo-preview');
                 if (logoPreview) {
                     const timestamp = Date.now();
-                    logoPreview.src = data.logo_path + '?t=' + timestamp;
+                    const displayUrl = data.logo_url || ('/' + data.logo_path);
+                    logoPreview.src = displayUrl + '?t=' + timestamp;
                     logoPreview.classList.remove('hidden');
                     console.log('✅ Logo rafraîchi:', logoPreview.src);
                 }
@@ -185,7 +186,8 @@
                         type: 'publisher-logo-updated',
                         publisherId: '{{ $publisher->id }}',
                         publisherName: '{{ $publisher->name }}',
-                        logoPath: data.logo_path
+                        logoPath: data.logo_path,
+                        logoUrl: data.logo_url
                     }, '*');
                 }
             } else {

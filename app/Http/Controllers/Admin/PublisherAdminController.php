@@ -97,6 +97,9 @@ class PublisherAdminController extends Controller
             // Sauvegarder aussi en local pour compatibilité
             $file->move(public_path('images/taxonomy/editeurs'), $filename);
             
+            // Mettre à jour le Publisher avec le nouveau logo
+            $publisher->update(['logo' => $path]);
+            
             // URL R2 directe pour un chargement rapide
             $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev/taxonomy/editeurs';
             
