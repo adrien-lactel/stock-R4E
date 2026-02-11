@@ -388,6 +388,19 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function storeArticle(Request $request)
     {
+        // Pré-traiter article_images : convertir chaîne JSON ou vide en tableau
+        if ($request->has('article_images')) {
+            $articleImages = $request->input('article_images');
+            if (is_string($articleImages)) {
+                if (empty($articleImages) || $articleImages === '[]') {
+                    $request->merge(['article_images' => null]);
+                } else {
+                    $decoded = json_decode($articleImages, true);
+                    $request->merge(['article_images' => is_array($decoded) ? $decoded : null]);
+                }
+            }
+        }
+        
         $data = $request->validate([
             'article_category_id'      => 'required|exists:article_categories,id',
             'article_brand_id'         => 'nullable|exists:article_brands,id',
@@ -548,6 +561,19 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function updateArticle(Request $request, Console $console)
     {
+        // Pré-traiter article_images : convertir chaîne JSON ou vide en tableau
+        if ($request->has('article_images')) {
+            $articleImages = $request->input('article_images');
+            if (is_string($articleImages)) {
+                if (empty($articleImages) || $articleImages === '[]') {
+                    $request->merge(['article_images' => null]);
+                } else {
+                    $decoded = json_decode($articleImages, true);
+                    $request->merge(['article_images' => is_array($decoded) ? $decoded : null]);
+                }
+            }
+        }
+        
         $data = $request->validate([
             'article_category_id'      => 'required|exists:article_categories,id',
             'article_brand_id'         => 'nullable|exists:article_brands,id',
