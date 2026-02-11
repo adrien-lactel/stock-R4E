@@ -29,16 +29,36 @@ class ArticleType extends Model
 
     /**
      * Déterminer le dossier de la plateforme pour R2
+     * Priorité: ROM ID prefix > SubCategory name
      */
     private function getPlatformFolder()
     {
+        // Mapping des préfixes ROM ID vers les dossiers (plus précis)
+        $romIdPrefixMapping = [
+            'DMG' => 'gameboy',  // Game Boy original
+            'CGB' => 'gbc',      // Game Boy Color
+            'AGB' => 'gba',      // Game Boy Advance
+            'SNS' => 'snes',     // Super Nintendo
+            'NES' => 'nes',      // NES
+        ];
+
+        // Priorité 1: détecter depuis le préfixe du ROM ID (plus précis)
+        $romId = $this->getEffectiveRomId();
+        if ($romId && preg_match('/^([A-Z]{3})-/', $romId, $matches)) {
+            $prefix = $matches[1];
+            if (isset($romIdPrefixMapping[$prefix])) {
+                return $romIdPrefixMapping[$prefix];
+            }
+        }
+
+        // Priorité 2: mapping depuis la sous-catégorie
         $platformMapping = [
-            'game boy' => 'gameboy',
-            'gameboy' => 'gameboy',
-            'game boy advance' => 'gba',
+            'game boy advance' => 'gba',  // Plus spécifique d'abord
             'gba' => 'gba',
             'game boy color' => 'gbc',
             'gbc' => 'gbc',
+            'game boy' => 'gameboy',
+            'gameboy' => 'gameboy',
             'super nintendo' => 'snes',
             'snes' => 'snes',
             'super famicom' => 'snes',
@@ -119,9 +139,14 @@ class ArticleType extends Model
 
     /**
      * Accessor pour l'URL de la cover image
+     * Priorité: colonne directe > URL R2 générée
      */
     public function getCoverImageUrlAttribute()
     {
+        // D'abord vérifier si une URL est stockée directement
+        if (!empty($this->cover_image) && str_starts_with($this->cover_image, 'http')) {
+            return $this->cover_image;
+        }
         return $this->getR2ImageUrl('cover');
     }
 
@@ -134,18 +159,28 @@ class ArticleType extends Model
     }
 
     /**
-     * Accessor pour l'URL du screenshot 1
+     * Accessor pour l'URL du screenshot 1 (gameplay)
+     * Priorité: colonne directe > URL R2 générée
      */
     public function getScreenshot1UrlAttribute()
     {
+        // D'abord vérifier si une URL est stockée directement
+        if (!empty($this->gameplay_image) && str_starts_with($this->gameplay_image, 'http')) {
+            return $this->gameplay_image;
+        }
         return $this->getR2ImageUrl('gameplay');
     }
 
     /**
-     * Accessor pour l'URL du screenshot 2
+     * Accessor pour l'URL du screenshot 2 (artwork)
+     * Priorité: colonne directe > URL R2 générée
      */
     public function getScreenshot2UrlAttribute()
     {
+        // D'abord vérifier si une URL est stockée directement
+        if (!empty($this->artwork_image) && str_starts_with($this->artwork_image, 'http')) {
+            return $this->artwork_image;
+        }
         return $this->getR2ImageUrl('artwork');
     }
 
