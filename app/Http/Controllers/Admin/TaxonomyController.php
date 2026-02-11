@@ -501,35 +501,15 @@ public function destroyType(ArticleType $type)
      ===================================================== */
     public function ajaxTypeDescription(ArticleType $type)
     {
-        // Convertir les chemins relatifs en URLs R2 complètes
-        $r2Url = config('filesystems.disks.r2.url');
-        
-        $coverImage = $type->cover_image;
-        $artworkImage = $type->artwork_image;
-        $gameplayImage = $type->gameplay_image;
-        $logoImage = $type->logo_image ?? null;
-        
-        // Si les images commencent par /images/, les convertir en URLs R2
-        if ($coverImage && str_starts_with($coverImage, '/images/')) {
-            $coverImage = $r2Url . '/' . ltrim($coverImage, '/');
-        }
-        if ($artworkImage && str_starts_with($artworkImage, '/images/')) {
-            $artworkImage = $r2Url . '/' . ltrim($artworkImage, '/');
-        }
-        if ($gameplayImage && str_starts_with($gameplayImage, '/images/')) {
-            $gameplayImage = $r2Url . '/' . ltrim($gameplayImage, '/');
-        }
-        if ($logoImage && str_starts_with($logoImage, '/images/')) {
-            $logoImage = $r2Url . '/' . ltrim($logoImage, '/');
-        }
-        
+        // Utiliser les accessors qui génèrent les URLs R2 à partir du rom_id
+        // Ces accessors gèrent automatiquement les fallbacks R2
         return response()->json([
             'description' => $type->description ?? '',
             'publisher' => $type->publisher ?? '',
-            'cover_image' => $coverImage,
-            'artwork_image' => $artworkImage,
-            'gameplay_image' => $gameplayImage,
-            'logo_image' => $logoImage,
+            'cover_image' => $type->cover_image_url,
+            'artwork_image' => $type->screenshot2_url, // screenshot2 = artwork
+            'gameplay_image' => $type->screenshot1_url, // screenshot1 = gameplay
+            'logo_image' => $type->logo_url,
         ]);
     }
 
