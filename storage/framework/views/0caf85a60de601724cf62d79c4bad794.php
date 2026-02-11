@@ -766,7 +766,9 @@
                     <?php if(config('app.debug')): ?>
                     <div class="mb-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
                         <strong>DEBUG Taxonomy URLs:</strong><br>
+                        name: <?php echo e($selectedType->name ?? 'NULL'); ?><br>
                         rom_id: <?php echo e($selectedType->rom_id ?? 'NULL'); ?><br>
+                        effective_rom_id: <?php echo e($selectedType->getEffectiveRomId() ?? 'NULL'); ?><br>
                         subCategory: <?php echo e($selectedType->subCategory->name ?? 'NULL'); ?><br>
                         cover: <?php echo e($selectedType->cover_image_url ?? 'NULL'); ?><br>
                         logo: <?php echo e($selectedType->logo_url ?? 'NULL'); ?><br>

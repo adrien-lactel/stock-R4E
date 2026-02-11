@@ -762,7 +762,9 @@
                     @if(config('app.debug'))
                     <div class="mb-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
                         <strong>DEBUG Taxonomy URLs:</strong><br>
+                        name: {{ $selectedType->name ?? 'NULL' }}<br>
                         rom_id: {{ $selectedType->rom_id ?? 'NULL' }}<br>
+                        effective_rom_id: {{ $selectedType->getEffectiveRomId() ?? 'NULL' }}<br>
                         subCategory: {{ $selectedType->subCategory->name ?? 'NULL' }}<br>
                         cover: {{ $selectedType->cover_image_url ?? 'NULL' }}<br>
                         logo: {{ $selectedType->logo_url ?? 'NULL' }}<br>

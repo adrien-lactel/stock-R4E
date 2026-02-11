@@ -83,11 +83,31 @@ class ArticleType extends Model
     }
 
     /**
+     * Extraire le rom_id du nom si le champ rom_id est vide
+     * Format attendu: "ROM_ID - Nom du jeu" ex: "DMG-VUA - Dr. Mario"
+     */
+    public function getEffectiveRomId()
+    {
+        // Si rom_id existe, l'utiliser
+        if ($this->rom_id) {
+            return $this->rom_id;
+        }
+        
+        // Sinon, essayer d'extraire du nom (format "ROM_ID - Nom")
+        if ($this->name && preg_match('/^([A-Z0-9]{2,4}-[A-Z0-9]+)\s*-/i', $this->name, $matches)) {
+            return strtoupper($matches[1]);
+        }
+        
+        return null;
+    }
+
+    /**
      * Récupérer l'URL d'une image depuis R2
      */
     private function getR2ImageUrl($type)
     {
-        if (!$this->rom_id) {
+        $romId = $this->getEffectiveRomId();
+        if (!$romId) {
             return null;
         }
 
@@ -98,7 +118,7 @@ class ArticleType extends Model
 
         // Générer l'URL de l'image (on assume qu'elle existe en .png)
         // Si elle n'existe pas, elle retournera 404 mais c'est géré par le frontend
-        $filename = "{$this->rom_id}-{$type}.png";
+        $filename = "{$romId}-{$type}.png";
         
         // En production : URL directe R2 (avec fallback hardcodé si config manquante)
         if (app()->environment('production')) {
