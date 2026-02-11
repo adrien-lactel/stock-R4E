@@ -57,13 +57,6 @@ class DashboardController extends Controller
                         'route' => 'admin.articles.create',
                     ],
                     [
-                        'title' => 'Articles récents',
-                        'subtitle' => 'Production',
-                        'description' => 'Consulter les 40 dernières fiches créées.',
-                        'icon' => '📰',
-                        'route' => 'admin.articles.recent',
-                    ],
-                    [
                         'title' => 'Inventaire articles',
                         'subtitle' => 'Stock global',
                         'description' => 'Piloter l’ensemble des articles, statuts et affectations.',
