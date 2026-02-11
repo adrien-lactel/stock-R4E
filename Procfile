@@ -1,1 +1,1 @@
-web: bash railway-optimize.sh && vendor/bin/heroku-php-apache2 public/
+web: mkdir -p storage/framework/{sessions,views,cache} storage/logs && chmod -R 777 storage bootstrap/cache && php -S 0.0.0.0:$PORT -t public
