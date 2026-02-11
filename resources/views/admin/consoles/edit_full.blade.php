@@ -202,10 +202,11 @@
                 </div>
             @endif
 
-            <div class="mt-3 max-w-md">
+            <form method="POST" action="{{ route('admin.consoles.add-mod', $console) }}" class="mt-3 max-w-md">
+                @csrf
                 <div class="p-4 border rounded-lg bg-white">
                     <label class="block text-sm font-medium text-gray-700 mb-2">➕ Ajouter un Mod / Opération</label>
-                    <select name="console_mods[0][mod_id]" class="w-full rounded border-gray-300 text-sm">
+                    <select name="mod_id" class="w-full rounded border-gray-300 text-sm" required>
                         <option value="">— Aucun —</option>
                         <optgroup label="🔧 Opérations (temps uniquement)">
                             @foreach($allMods->where('is_operation', true) as $mod)
@@ -232,22 +233,25 @@
                     <div class="grid grid-cols-2 gap-2 mt-3">
                         <div>
                             <label class="block text-xs text-gray-500">Prix (€)</label>
-                            <input type="number" step="0.01" min="0" name="console_mods[0][price_applied]" 
+                            <input type="number" step="0.01" min="0" name="price_applied" 
                                    class="w-full rounded border-gray-300 text-sm" placeholder="Auto">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500">Temps (min)</label>
-                            <input type="number" min="0" name="console_mods[0][work_time_minutes]" 
+                            <input type="number" min="0" name="work_time_minutes" 
                                    class="w-full rounded border-gray-300 text-sm" placeholder="0">
                         </div>
                     </div>
                     <div class="mt-2">
                         <label class="block text-xs text-gray-500">Notes</label>
-                        <input type="text" name="console_mods[0][notes]" 
+                        <input type="text" name="notes" 
                                class="w-full rounded border-gray-300 text-sm" placeholder="Notes...">
                     </div>
+                    <button type="submit" class="mt-3 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
+                        ✓ Ajouter ce mod
+                    </button>
                 </div>
-            </div>
+            </form>
             <div class="flex items-center gap-4 mt-2">
                 <p class="text-xs text-gray-500">💡 Le mod sera ajouté aux mods existants. Pour retirer un mod, cliquez dessus dans la liste ci-dessus.</p>
                 <a href="{{ route('admin.mods.create') }}" target="_blank" class="text-xs text-indigo-600 hover:underline whitespace-nowrap">➕ Créer un nouveau mod</a>

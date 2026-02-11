@@ -864,6 +864,34 @@ class ConsoleAdminController extends Controller
     }
 
     /* =====================================================
+     | AJOUTER UN MOD À UNE CONSOLE
+     ===================================================== */
+    public function addMod(Request $request, Console $console)
+    {
+        $validated = $request->validate([
+            'mod_id' => ['required', 'exists:mods,id'],
+            'price_applied' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:500'],
+            'work_time_minutes' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $mod = Mod::findOrFail($validated['mod_id']);
+
+        // Vérifier si le mod n'est pas déjà associé
+        if ($console->mods()->where('mod_id', $mod->id)->exists()) {
+            return back()->with('error', 'Ce mod est déjà associé à cet article.');
+        }
+
+        $console->mods()->attach($mod->id, [
+            'price_applied' => $validated['price_applied'] ?? $mod->purchase_price,
+            'notes' => $validated['notes'] ?? null,
+            'work_time_minutes' => $validated['work_time_minutes'] ?? null,
+        ]);
+
+        return back()->with('success', "Mod \"{$mod->name}\" ajouté à l'article #{$console->id}.");
+    }
+
+    /* =====================================================
      | RETIRER UN MOD D'UNE CONSOLE
      ===================================================== */
     public function removeMod(Console $console, Mod $mod)

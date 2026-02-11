@@ -515,6 +515,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::patch('/consoles/{console}/valorisation', [ConsoleAdminController::class, 'updateValorisation'])
             ->name('consoles.update-valorisation');
 
+        Route::post('/consoles/{console}/mods', [ConsoleAdminController::class, 'addMod'])
+            ->name('consoles.add-mod');
+
         Route::delete('/consoles/{console}/mods/{mod}', [ConsoleAdminController::class, 'removeMod'])
             ->name('consoles.remove-mod');
 
