@@ -1919,8 +1919,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Upload d'images
     let existingImages = {!! json_encode($sheet->images ?? []) !!};
-    // Normaliser: extraire les URLs des objets {url, is_generic}
-    existingImages = existingImages.map(img => typeof img === 'object' && img.url ? img.url : img);
+    // Normaliser: extraire les URLs des objets {url, is_generic} et filtrer les valeurs invalides
+    existingImages = existingImages
+        .map(img => {
+            if (typeof img === 'string' && img.startsWith('http')) return img;
+            if (typeof img === 'object' && img !== null && typeof img.url === 'string' && img.url.startsWith('http')) return img.url;
+            console.warn('⚠️ Image invalide filtrée (existingImages):', img);
+            return null;
+        })
+        .filter(Boolean);
     let mainImage = '{{ $sheet->main_image }}';
     let newImages = [];
 
@@ -2078,7 +2085,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentDiv = document.getElementById('currentImages');
         if (!currentDiv) return;
 
-        currentDiv.innerHTML = existingImages.map(img => `
+        currentDiv.innerHTML = existingImages
+            .filter(img => typeof img === 'string' && img.startsWith('http'))
+            .map(img => `
             <div class="relative group" data-image-url="${img}">
                 <img src="${img}" class="w-full h-20 object-cover rounded border ${img === mainImage ? 'ring-2 ring-indigo-600' : ''}">
                 <button type="button" onclick="removeExistingImage('${img}')" 
