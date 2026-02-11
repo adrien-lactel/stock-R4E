@@ -742,13 +742,6 @@ class ProductSheetController extends Controller
      ===================================================== */
     public function update(Request $request, ProductSheet $productSheet)
     {
-        // DEBUG: Log raw request data
-        \Log::info('ProductSheet update - raw images input', [
-            'images_raw' => $request->input('images'),
-            'main_image_raw' => $request->input('main_image'),
-            'all_inputs' => $request->only(['images', 'main_image', 'name'])
-        ]);
-        
         // Décoder les champs JSON si nécessaire
         $images = $request->input('images');
         if (is_string($images)) {
@@ -791,12 +784,6 @@ class ProductSheetController extends Controller
             'condition_criteria_labels' => 'nullable|array',
             'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
-        ]);
-
-        // DEBUG: Log validated data
-        \Log::info('ProductSheet update - validated data', [
-            'images' => $data['images'] ?? 'NOT SET',
-            'main_image' => $data['main_image'] ?? 'NOT SET',
         ]);
 
         $productSheet->update($data);

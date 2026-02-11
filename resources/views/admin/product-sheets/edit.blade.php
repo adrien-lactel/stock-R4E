@@ -41,10 +41,7 @@
 
     {{-- FORMULAIRE --}}
     <div class="bg-white shadow rounded-lg p-6">
-        <form method="POST" 
-              action="{{ $sheet->exists ? route('admin.product-sheets.update', $sheet) : route('admin.product-sheets.store') }}"
-              id="product-sheet-form"
-              onsubmit="console.log('📤 Form submit - images:', document.getElementById('images_input').value); console.log('📤 Form submit - main_image:', document.getElementById('main_image_input').value);">
+        <form method="POST" action="{{ $sheet->exists ? route('admin.product-sheets.update', $sheet) : route('admin.product-sheets.store') }}">
             @csrf
             @if($sheet->exists)
                 @method('PUT')
@@ -761,21 +758,6 @@
 
                 {{-- IMAGES DE TAXONOMIE (JEUX VIDÉO) --}}
                 @if(isset($selectedType) && $selectedType)
-                    {{-- Debug: Show taxonomy image URLs --}}
-                    @if(config('app.debug'))
-                    <div class="mb-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
-                        <strong>DEBUG Taxonomy URLs:</strong><br>
-                        name: {{ $selectedType->name ?? 'NULL' }}<br>
-                        rom_id: {{ $selectedType->rom_id ?? 'NULL' }}<br>
-                        effective_rom_id: {{ $selectedType->getEffectiveRomId() ?? 'NULL' }}<br>
-                        subCategory: {{ $selectedType->subCategory->name ?? 'NULL' }}<br>
-                        cover: {{ $selectedType->cover_image_url ?? 'NULL' }}<br>
-                        logo: {{ $selectedType->logo_url ?? 'NULL' }}<br>
-                        ss1: {{ $selectedType->screenshot1_url ?? 'NULL' }}<br>
-                        ss2: {{ $selectedType->screenshot2_url ?? 'NULL' }}
-                    </div>
-                    @endif
-                    
                     <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <h3 class="text-sm font-semibold text-blue-900 mb-3">
                             🎮 Images du jeu (taxonomie)

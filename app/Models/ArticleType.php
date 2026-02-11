@@ -59,24 +59,9 @@ class ArticleType extends Model
             
             foreach ($platformMapping as $key => $folder) {
                 if (str_contains($subCategoryName, $key)) {
-                    \Log::debug('ArticleType getPlatformFolder', [
-                        'type_id' => $this->id,
-                        'subCategory' => $subCategory->name,
-                        'folder' => $folder
-                    ]);
                     return $folder;
                 }
             }
-            
-            \Log::warning('ArticleType getPlatformFolder: no matching platform', [
-                'type_id' => $this->id,
-                'subCategory' => $subCategory->name
-            ]);
-        } else {
-            \Log::warning('ArticleType getPlatformFolder: no subCategory', [
-                'type_id' => $this->id,
-                'article_sub_category_id' => $this->article_sub_category_id
-            ]);
         }
 
         return null;
