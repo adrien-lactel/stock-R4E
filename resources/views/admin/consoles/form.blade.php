@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- Inclure le gestionnaire d'images réutilisable --}}
+<script src="{{ asset('js/article-images-manager.js') }}"></script>
+
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
     {{-- HEADER --}}
@@ -416,89 +419,32 @@
             </div>
 
             {{-- =====================
-                 IMAGES DE L'ARTICLE (DRAG & DROP)
+                 IMAGES DE L'ARTICLE - COMPOSANT RÉUTILISABLE
             ===================== --}}
             <div class="mt-6">
-                <div id="article_images_field" style="display: block !important;">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">📷 Images de l'article</h3>
-                    
-                    <!-- Pour les jeux vidéo : bouton pour ouvrir la modal -->
-                    <div id="game_images_section" style="display: block;">
-                        <!-- Bouton pour voir les photos génériques de la taxonomie (si article existant avec type) -->
-                        @if(isset($console->id) && ($console->rom_id || $console->article_type_id))
-                        <button type="button" 
-                                onclick="openTaxonomyImagesForArticle()"
-                                class="w-full border-2 border-blue-500 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-50 transition-colors bg-white mb-4">
-                            <div class="flex items-center justify-center gap-3">
-                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                <div class="text-left">
-                                    <p class="text-sm font-semibold text-blue-600">
-                                        🖼️ Voir les photos génériques ({{ $console->rom_id ?? $console->articleType->name ?? 'Type' }})
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        Photos de la taxonomie partagées avec tous les exemplaires de ce type
-                                    </p>
-                                </div>
-                            </div>
-                        </button>
-                        @endif
-                        
-                        <button type="button" 
-                                onclick="openArticleImagesModal()"
-                                class="w-full border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors bg-indigo-50 mb-4">
-                            <div class="mb-3">
-                                <svg class="w-12 h-12 text-indigo-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                            </div>
-                            <p class="text-lg font-semibold text-indigo-600 mb-1">
-                                📸 Gérer les photos de l'article
-                            </p>
-                            <p class="text-sm text-gray-600">
-                                Cliquez pour ouvrir la galerie et prendre/ajouter des photos
-                            </p>
-                        </button>
-                        
-                        <!-- Prévisualisation des photos de l'article -->
-                        <div id="game-images-preview" class="grid grid-cols-4 gap-4 mb-4"></div>
-                        
-                        <p class="text-xs text-gray-500 italic">
-                            💡 Ces photos sont spécifiques à cet article et seront reprises dans la fiche produit.
-                        </p>
-                    </div>
-                            💡 Ces photos sont spécifiques à cet article et seront reprises dans la fiche produit.
-                        </p>
-                    </div>
-
-                    <!-- Pour les autres catégories : upload multiple d'images -->
-                    <div id="generic_images_section">
-                        <div id="dropzone"
-                             class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors bg-gray-50">
-                            <div class="mb-3">
-                                <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-1">
-                                <span class="font-semibold text-indigo-600">Cliquez pour sélectionner</span>
-                                ou glissez-déposez vos images
-                            </p>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF, WEBP jusqu'à 10 MB • 📱 Appareil photo ou galerie sur mobile</p>
-                        </div>
-
-                        <input type="file" id="file-input" accept="image/*" multiple class="hidden">
-
-                        <!-- Prévisualisation des images -->
-                        <div id="preview-container" class="grid grid-cols-4 gap-4 mt-4"></div>
-
-                        <p class="text-xs text-gray-500 mt-2">
-                            💾 Les images sont automatiquement enregistrées dans la taxonomie de l'article
-                        </p>
-                    </div>
-                </div>
+                <x-article-images-manager 
+                    :article-type-id="$console->article_type_id ?? null"
+                    :article-type-name="$console->articleType->name ?? null"
+                    :rom-id="$console->rom_id ?? null"
+                    :uploaded-images="$console->article_images ?? []"
+                    :primary-image="$console->primary_image_url ?? ''"
+                />
+                
+                {{-- Masquer le bouton des photos génériques --}}
+                <style>
+                    button[onclick="openTaxonomyImagesModal()"] {
+                        display: none !important;
+                    }
+                </style>
+                
+                {{-- Configuration des routes pour le gestionnaire d'images --}}
+                <script>
+                window.configureArticleImagesRoutes({
+                    upload: '{{ route("admin.articles.upload-image") }}',
+                    delete: '{{ route("admin.articles.delete-image") }}',
+                    ajaxImages: '{{ url("admin/ajax/articles-images-by-type") }}'
+                });
+                </script>
             </div>
 
             {{-- =====================
@@ -681,12 +627,21 @@ let cropScale = 1;
 let cropOffsetX = 0;
 let cropOffsetY = 0;
 let lightboxContext = {};
-let currentArticleTypeId = null;
 
 // Variables globales pour la gestion des images d'articles
-let uploadedGameImages = [];
-let primaryImageUrl = null;
-let genericArticleImages = [];
+// Utiliser window.* pour éviter les conflits avec article-images-manager.js
+if (typeof window.currentArticleTypeId === 'undefined') {
+    window.currentArticleTypeId = null;
+}
+if (typeof window.uploadedGameImages === 'undefined') {
+    window.uploadedGameImages = [];
+}
+if (typeof window.primaryImageUrl === 'undefined') {
+    window.primaryImageUrl = null;
+}
+if (typeof window.genericArticleImages === 'undefined') {
+    window.genericArticleImages = [];
+}
 
 window.openImageLightbox = function(imageUrl, context = {}) {
   const lightbox = document.getElementById('image-lightbox');
@@ -1060,10 +1015,10 @@ window.applyCrop = async function() {
       formData.append('image', file);
       
       // Récupérer article_type_id depuis le contexte ou la variable globale
-      const articleTypeId = lightboxContext.article_type_id || currentArticleTypeId;
+      const articleTypeId = lightboxContext.article_type_id || window.currentArticleTypeId;
       console.log('🔧 applyCrop - articleTypeId:', articleTypeId);
       console.log('🔧 applyCrop - lightboxContext:', lightboxContext);
-      console.log('🔧 applyCrop - currentArticleTypeId (global):', currentArticleTypeId);
+      console.log('🔧 applyCrop - window.currentArticleTypeId (global):', window.currentArticleTypeId);
       
       if (!articleTypeId) {
         alert('❌ Type d\'article non défini. Veuillez sélectionner un type d\'article.');
@@ -1104,9 +1059,9 @@ window.applyCrop = async function() {
           console.log('✅ Image recadrée uploadée:', data.url);
           
           // Ajouter à la liste
-          uploadedGameImages.push(data.url);
-          if (!primaryImageUrl) {
-            primaryImageUrl = data.url;
+          window.uploadedGameImages.push(data.url);
+          if (!window.primaryImageUrl) {
+            window.primaryImageUrl = data.url;
           }
           
           // Ajouter la carte
@@ -2005,6 +1960,11 @@ window.applyGameTaxonomy = function(game, platform) {
                       const verifyOption = Array.from(typeSelect.options).find(opt => opt.value == data.type.id);
                       if (verifyOption) {
                         typeSelect.value = data.type.id;
+                        
+                        // Mettre à jour immédiatement window.currentArticleTypeId
+                        window.currentArticleTypeId = data.type.id;
+                        console.log('🔧 window.currentArticleTypeId mis à jour:', window.currentArticleTypeId);
+                        
                         typeSelect.dispatchEvent(new Event('change'));
                         console.log('✓ Type sélectionné:', data.type.name);
                       } else {
@@ -2014,6 +1974,11 @@ window.applyGameTaxonomy = function(game, platform) {
                   } else if (typeOption) {
                     // L'option existe déjà, la sélectionner
                     typeSelect.value = data.type.id;
+                    
+                    // Mettre à jour immédiatement window.currentArticleTypeId
+                    window.currentArticleTypeId = data.type.id;
+                    console.log('🔧 window.currentArticleTypeId mis à jour:', window.currentArticleTypeId);
+                    
                     typeSelect.dispatchEvent(new Event('change'));
                     console.log('✓ Type sélectionné (existant):', data.type.name);
                   } else {
@@ -3709,9 +3674,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Détecter le type d'article sélectionné pour associer les images
   if (typeSelect) {
     typeSelect.addEventListener('change', function() {
-      currentArticleTypeId = this.value;
-      if (currentArticleTypeId) {
-        loadExistingImages(currentArticleTypeId);
+      window.currentArticleTypeId = this.value;
+      if (window.currentArticleTypeId) {
+        loadExistingImages(window.currentArticleTypeId);
       } else {
         previewContainer.innerHTML = '';
       }
@@ -3719,8 +3684,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Charger les images si un type est déjà sélectionné (mode édition)
     if (typeSelect.value) {
-      currentArticleTypeId = typeSelect.value;
-      loadExistingImages(currentArticleTypeId);
+      window.currentArticleTypeId = typeSelect.value;
+      loadExistingImages(window.currentArticleTypeId);
     }
   }
 
@@ -3768,9 +3733,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Gérer les fichiers uploadés
   async function handleFiles(files) {
-    if (!currentArticleTypeId) {
-      alert('Veuillez d\'abord sélectionner un type d\'article');
-      return;
+    console.log('📁 handleFiles appelé');
+    console.log('🔍 window.currentArticleTypeId actuel:', window.currentArticleTypeId);
+    
+    // Vérifier si window.currentArticleTypeId existe, sinon récupérer depuis le select
+    if (!window.currentArticleTypeId) {
+      const typeSelect = document.getElementById('article_type_id');
+      if (typeSelect && typeSelect.value) {
+        window.currentArticleTypeId = typeSelect.value;
+        console.log('✅ article_type_id récupéré depuis le select:', window.currentArticleTypeId);
+      } else {
+        console.error('❌ Aucun article_type_id disponible');
+        alert('Veuillez d\'abord sélectionner un type d\'article');
+        return;
+      }
     }
 
     for (let file of files) {
@@ -3778,7 +3754,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('article_type_id', currentArticleTypeId);
+      formData.append('article_type_id', window.currentArticleTypeId);
 
       try {
         const response = await fetch('{{ route('admin.articles.upload-image') }}', {
@@ -3792,7 +3768,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = await response.json();
 
         if (data.success) {
-          addImagePreview(data.url, currentArticleTypeId, false);
+          addImagePreview(data.url, window.currentArticleTypeId, false);
         } else {
           alert('Erreur upload: ' + data.message);
         }
@@ -3883,9 +3859,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const gameImagesPreview = document.getElementById('game-images-preview');
 
   // ✅ Charger les images existantes en mode édition (initialiser les variables globales)
-  uploadedGameImages = @json($console->article_images ?? []);
-  primaryImageUrl = @json($console->primary_image_url ?? null);
-  genericArticleImages = []; // Images provenant d'autres articles du même type
+  window.uploadedGameImages = @json($console->article_images ?? []);
+  window.primaryImageUrl = @json($console->primary_image_url ?? null);
+  window.genericArticleImages = []; // Images provenant d'autres articles du même type
 
   // Ouvrir la modal de gestion des images d'article
   window.openArticleImagesModal = function() {
@@ -4130,9 +4106,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileSize = (file.size / 1024 / 1024).toFixed(2);
     
     console.log(`📤 Upload image: ${fileName} (${fileSize}MB)`);
-    console.log('🎯 currentArticleTypeId:', currentArticleTypeId);
+    console.log('🎯 window.currentArticleTypeId:', window.currentArticleTypeId);
     
-    if (!currentArticleTypeId) {
+    if (!window.currentArticleTypeId) {
       alert('Veuillez d\'abord sélectionner un type d\'article');
       return;
     }
@@ -4146,7 +4122,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const formData = new FormData();
     formData.append('image', file);
-    formData.append('article_type_id', currentArticleTypeId);
+    formData.append('article_type_id', window.currentArticleTypeId);
 
     try {
       const response = await fetch('{{ route('admin.articles.upload-image') }}', {
@@ -4178,19 +4154,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (data.success) {
         console.log('✅ Image uploadée:', data.url);
-        console.log('📦 Avant push, uploadedGameImages:', uploadedGameImages);
+        console.log('📦 Avant push, window.uploadedGameImages:', window.uploadedGameImages);
         
         // Mettre à jour la carte avec l'URL finale
         updateArticleImageCard(fileName, data.url);
-        uploadedGameImages.push(data.url);
+        window.uploadedGameImages.push(data.url);
         
         // Si c'est la première image, la définir comme principale automatiquement
-        if (!primaryImageUrl && uploadedGameImages.length === 1) {
-          primaryImageUrl = data.url;
+        if (!window.primaryImageUrl && window.uploadedGameImages.length === 1) {
+          window.primaryImageUrl = data.url;
           console.log('⭐ Première image définie comme principale automatiquement');
         }
         
-        console.log('📦 Après push, uploadedGameImages:', uploadedGameImages);
+        console.log('📦 Après push, window.uploadedGameImages:', window.uploadedGameImages);
         
         // Rafraîchir l'aperçu dans le formulaire immédiatement
         refreshArticleImagesPreview();
@@ -4229,12 +4205,12 @@ document.addEventListener('DOMContentLoaded', function() {
       card.dataset.isGeneric = 'true';
     }
     
-    const isPrimary = (primaryImageUrl === imageSrc);
+    const isPrimary = (window.primaryImageUrl === imageSrc);
     
     card.innerHTML = `
       <div class="relative group">
         <img src="${imageSrc}" class="w-full aspect-square object-cover rounded cursor-pointer hover:opacity-90" 
-             onclick="event.stopPropagation(); window.openImageLightbox('${imageSrc}', {isArticleImage: true, isPrimary: ${isPrimary}, article_type_id: currentArticleTypeId})">
+             onclick="event.stopPropagation(); window.openImageLightbox('${imageSrc}', {isArticleImage: true, isPrimary: ${isPrimary}, article_type_id: window.currentArticleTypeId})">
         
         <div class="absolute top-2 left-2 flex flex-col gap-1">
           ${isPrimary ? `
@@ -4346,7 +4322,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Définir une image comme principale
   window.setPrimaryImage = function(imageUrl, buttonElement) {
-    primaryImageUrl = imageUrl;
+    window.primaryImageUrl = imageUrl;
     console.log('⭐ Image principale définie:', imageUrl);
 
     // Rafraîchir toutes les cartes pour mettre à jour les badges
@@ -4402,7 +4378,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateArticleImagesCount() {
     const countEl = document.getElementById('article-images-count');
     if (countEl) {
-      countEl.textContent = uploadedGameImages.length;
+      countEl.textContent = window.uploadedGameImages.length;
     }
   }
 
@@ -4416,15 +4392,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // Charger les images existantes
   async function loadArticleImages() {
     // Charger les images de l'article avec détection des images génériques
-    uploadedGameImages.forEach((url, index) => {
-      const isGeneric = genericArticleImages.includes(url);
+    window.uploadedGameImages.forEach((url, index) => {
+      const isGeneric = window.genericArticleImages.includes(url);
       addArticleImageCard(url, `Image ${index + 1}`, 'uploaded', isGeneric);
     });
   }
 
   // Charger les photos génériques du même type d'article
   async function loadGenericArticleImages() {
-    if (!currentArticleTypeId) {
+    if (!window.currentArticleTypeId) {
       const grid = document.getElementById('generic-images-grid');
       if (grid) {
         grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-6">Sélectionnez d\'abord un type d\'article</div>';
@@ -4433,7 +4409,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     try {
-      const response = await fetch(`{{ url('admin/ajax/article-type-images') }}/${currentArticleTypeId}`);
+      const response = await fetch(`{{ url('admin/ajax/article-type-images') }}/${window.currentArticleTypeId}`);
       const data = await response.json();
       
       const grid = document.getElementById('generic-images-grid');
@@ -4446,17 +4422,17 @@ document.addEventListener('DOMContentLoaded', function() {
       if (data.success && data.images && data.images.length > 0) {
         // Recharger les cartes avec le flag isGeneric correct (seulement celles déjà marquées)
         const gridContainer = document.getElementById('article-images-grid');
-        if (gridContainer && gridContainer.children.length > 0 && genericArticleImages.length > 0) {
+        if (gridContainer && gridContainer.children.length > 0 && window.genericArticleImages.length > 0) {
           // Supprimer toutes les cartes et les recréer avec le bon flag
           gridContainer.innerHTML = '';
-          uploadedGameImages.forEach((url, index) => {
-            const isGeneric = genericArticleImages.includes(url);
+          window.uploadedGameImages.forEach((url, index) => {
+            const isGeneric = window.genericArticleImages.includes(url);
             addArticleImageCard(url, `Image ${index + 1}`, 'uploaded', isGeneric);
           });
         }
         
         // Filtrer les images déjà utilisées dans cet article
-        const availableImages = data.images.filter(url => !uploadedGameImages.includes(url));
+        const availableImages = data.images.filter(url => !window.uploadedGameImages.includes(url));
         
         if (countEl) {
           countEl.textContent = `${availableImages.length} photo${availableImages.length > 1 ? 's' : ''} disponible${availableImages.length > 1 ? 's' : ''}`;
@@ -4579,7 +4555,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   async function addGenericImageToArticle(imageUrl) {
-    if (uploadedGameImages.includes(imageUrl)) {
+    if (window.uploadedGameImages.includes(imageUrl)) {
       alert('Cette photo est déjà ajoutée');
       return;
     }
@@ -4587,16 +4563,16 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('➕ Ajout photo générique:', imageUrl);
     
     // Ajouter à la liste des images uploadées
-    uploadedGameImages.push(imageUrl);
+    window.uploadedGameImages.push(imageUrl);
     
     // Marquer comme image générique
-    if (!genericArticleImages.includes(imageUrl)) {
-      genericArticleImages.push(imageUrl);
+    if (!window.genericArticleImages.includes(imageUrl)) {
+      window.genericArticleImages.push(imageUrl);
     }
     
     // Si c'est la première image, la définir comme principale
-    if (!primaryImageUrl) {
-      primaryImageUrl = imageUrl;
+    if (!window.primaryImageUrl) {
+      window.primaryImageUrl = imageUrl;
       console.log('⭐ Photo générique définie comme principale automatiquement');
     }
     
@@ -4618,14 +4594,14 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔙 Désélection photo générique:', imageUrl);
     
     // Retirer de la liste des images uploadées
-    const index = uploadedGameImages.indexOf(imageUrl);
+    const index = window.uploadedGameImages.indexOf(imageUrl);
     if (index > -1) {
-      uploadedGameImages.splice(index, 1);
+      window.uploadedGameImages.splice(index, 1);
     }
     
     // Si c'était l'image principale, réinitialiser
-    if (primaryImageUrl === imageUrl) {
-      primaryImageUrl = uploadedGameImages.length > 0 ? uploadedGameImages[0] : null;
+    if (window.primaryImageUrl === imageUrl) {
+      window.primaryImageUrl = window.uploadedGameImages.length > 0 ? window.uploadedGameImages[0] : null;
     }
     
     // Retirer la carte visuellement
@@ -4656,7 +4632,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Supprimer une image
   window.deleteArticleImage = async function(imageUrl, buttonElement) {
     // Vérifier si c'est une image générique partagée
-    const isGeneric = genericArticleImages.includes(imageUrl);
+    const isGeneric = window.genericArticleImages.includes(imageUrl);
     
     let confirmMessage = 'Supprimer cette photo ?';
     if (isGeneric) {
@@ -4673,7 +4649,7 @@ document.addEventListener('DOMContentLoaded', function() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          article_type_id: currentArticleTypeId,
+          article_type_id: window.currentArticleTypeId,
           image_url: imageUrl
         })
       });
@@ -4684,12 +4660,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = buttonElement.closest('.border-2');
         if (card) card.remove();
         
-        uploadedGameImages = uploadedGameImages.filter(url => url !== imageUrl);
+        window.uploadedGameImages = window.uploadedGameImages.filter(url => url !== imageUrl);
         
         // Si on supprime l'image principale, redéfinir une autre comme principale
-        if (primaryImageUrl === imageUrl) {
-          primaryImageUrl = uploadedGameImages.length > 0 ? uploadedGameImages[0] : null;
-          console.log('🔄 Nouvelle image principale:', primaryImageUrl);
+        if (window.primaryImageUrl === imageUrl) {
+          window.primaryImageUrl = window.uploadedGameImages.length > 0 ? window.uploadedGameImages[0] : null;
+          console.log('🔄 Nouvelle image principale:', window.primaryImageUrl);
         }
         
         updateArticleImagesCount();
@@ -4719,7 +4695,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Rafraîchir l'aperçu des images d'article (fonction globale)
   window.refreshArticleImagesPreview = function() {
     console.log('🔄 refreshArticleImagesPreview appelé');
-    console.log('📦 uploadedGameImages:', uploadedGameImages);
+    console.log('📦 window.uploadedGameImages:', window.uploadedGameImages);
     
     const previewContainer = document.getElementById('game-images-preview');
     console.log('📍 previewContainer:', previewContainer);
@@ -4736,11 +4712,11 @@ document.addEventListener('DOMContentLoaded', function() {
     previewContainer.innerHTML = '';
     
     // Trier les images : image principale en premier
-    const sortedImages = [...uploadedGameImages];
-    if (primaryImageUrl && sortedImages.includes(primaryImageUrl)) {
+    const sortedImages = [...window.uploadedGameImages];
+    if (window.primaryImageUrl && sortedImages.includes(window.primaryImageUrl)) {
       sortedImages.sort((a, b) => {
-        if (a === primaryImageUrl) return -1;
-        if (b === primaryImageUrl) return 1;
+        if (a === window.primaryImageUrl) return -1;
+        if (b === window.primaryImageUrl) return 1;
         return 0;
       });
     }
@@ -4761,7 +4737,7 @@ document.addEventListener('DOMContentLoaded', function() {
       preview.appendChild(img);
       
       // Badge "Photo principale" sur l'image principale
-      if (url === primaryImageUrl) {
+      if (url === window.primaryImageUrl) {
         const badge = document.createElement('div');
         badge.className = 'absolute top-1 left-1 bg-indigo-600 text-white text-xs px-2 py-1 rounded font-bold shadow-lg';
         badge.innerHTML = `
@@ -4779,14 +4755,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('📋 Contenu final de previewContainer, enfants:', previewContainer.children.length);
     
-    if (uploadedGameImages.length > 4) {
+    if (window.uploadedGameImages.length > 4) {
       const more = document.createElement('div');
       more.className = 'flex items-center justify-center bg-gray-100 rounded border-2 border-gray-300 aspect-square text-gray-500 font-medium';
-      more.textContent = `+${uploadedGameImages.length - 4}`;
+      more.textContent = `+${window.uploadedGameImages.length - 4}`;
       previewContainer.appendChild(more);
     }
     
-    console.log('✅ Preview rafraîchi, total images:', uploadedGameImages.length);
+    console.log('✅ Preview rafraîchi, total images:', window.uploadedGameImages.length);
   }
 
   // Basculer entre les sections d'images selon la catégorie
@@ -4835,7 +4811,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Collecter les légendes depuis les inputs
       const captions = {};
-      uploadedGameImages.forEach(url => {
+      window.uploadedGameImages.forEach(url => {
         const card = document.querySelector(`[data-image-url="${url}"]`);
         if (card) {
           const captionInput = card.querySelector('input[placeholder*="légende"]');
@@ -4845,14 +4821,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
+      // Normaliser : extraire seulement les URLs (strings)
+      const imageUrls = window.uploadedGameImages.map(img => {
+        return typeof img === 'object' ? img.url : img;
+      });
+      
       // Remplir les champs cachés
-      document.getElementById('article_images_input').value = JSON.stringify(uploadedGameImages);
-      document.getElementById('primary_image_url_input').value = primaryImageUrl || '';
+      document.getElementById('article_images_input').value = JSON.stringify(imageUrls);
+      document.getElementById('primary_image_url_input').value = window.primaryImageUrl || '';
       document.getElementById('image_captions_input').value = JSON.stringify(captions);
       
       console.log('✅ Champs cachés remplis:', {
-        images: uploadedGameImages.length,
-        primary: primaryImageUrl,
+        images: imageUrls.length,
+        primary: window.primaryImageUrl,
         captions: Object.keys(captions).length
       });
     });

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Sauvegarde Images</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .step { margin: 20px 0; padding: 15px; border: 2px solid #ddd; border-radius: 5px; }
+        .step h3 { margin-top: 0; color: #333; }
+        .pass { border-color: #10b981; background: #d1fae5; }
+        .fail { border-color: #ef4444; background: #fee2e2; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Sauvegarde des Images - Fiche Produit</h1>
+    
+    <div class="step">
+        <h3>📝 Instructions :</h3>
+        <ol>
+            <li>Va sur <a href="http://stock-r4e.test/admin/product-sheets/create?article_type_id=880&console_id=19" target="_blank">Page de création de fiche</a></li>
+            <li>Clique sur "📸 Gérer les photos de l'article"</li>
+            <li>Dans la section "🖼️ Photos d'autres articles du même type", clique sur "➕ Ajouter" sur une ou plusieurs images</li>
+            <li>Ferme le modal</li>
+            <li>Vérifie que les images ajoutées apparaissent dans la section "📷 Images de l'article"</li>
+            <li>Ouvre la console du navigateur (F12) et tape : <code>console.log(window.uploadedGameImages)</code></li>
+            <li>Vérifie que tu vois un tableau avec les URLs des images</li>
+            <li><strong>IMPORTANT</strong> : Remplis le formulaire et clique sur "💾 Enregistrer"</li>
+            <li>Note l'ID de la fiche créée (dans l'URL après redirection)</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h3>🔍 Vérification :</h3>
+        <p>Après avoir créé la fiche, ouvre cette page de vérification :</p>
+        <form id="checkForm" onsubmit="return checkSheet(event)">
+            <label>ID de la fiche créée : <input type="number" id="sheetId" required placeholder="Ex: 4"></label>
+            <button type="submit">Vérifier</button>
+        </form>
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+    
+    <script>
+        async function checkSheet(event) {
+            event.preventDefault();
+            const sheetId = document.getElementById('sheetId').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '<p>⏳ Vérification en cours...</p>';
+            
+            try {
+                const response = await fetch(`http://stock-r4e.test/admin/product-sheets/${sheetId}/edit`);
+                const html = await response.text();
+                
+                // Parser la page pour extraire les données
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Chercher le champ hidden avec les images
+                const imagesInput = doc.querySelector('input[name="images"]');
+                const images = imagesInput ? JSON.parse(imagesInput.value || '[]') : [];
+                
+                if (images.length > 0) {
+                    resultDiv.innerHTML = `
+                        <div class="step pass">
+                            <h3>✅ SUCCÈS - ${images.length} image(s) sauvegardée(s)</h3>
+                            <p><strong>Images trouvées :</strong></p>
+                            <ul>
+                                ${images.map((img, i) => `<li>${i + 1}. <code>${img.substring(img.length - 60)}</code></li>`).join('')}
+                            </ul>
+                            <p>Les images sont correctement sauvegardées en base de données ✓</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="step fail">
+                            <h3>❌ ÉCHEC - Aucune image sauvegardée</h3>
+                            <p>Les images ajoutées dans le modal n'ont pas été enregistrées.</p>
+                            <p><strong>Causes possibles :</strong></p>
+                            <ul>
+                                <li>Le champ hidden <code>article_images_input</code> n'a pas été rempli</li>
+                                <li>Le JavaScript n'a pas synchronisé window.uploadedGameImages</li>
+                                <li>Le formulaire a été soumis avant que les images soient ajoutées</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="step fail">
+                        <h3>❌ ERREUR</h3>
+                        <p>Impossible de vérifier la fiche : ${error.message}</p>
+                        <p>Assure-toi que l'ID est correct et que tu es connecté.</p>
+                    </div>
+                `;
+            }
+            
+            return false;
+        }
+    </script>
+</body>
+</html>

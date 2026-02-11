@@ -397,7 +397,10 @@ function taxonomyManager() {
                     this.typesHtml = data.types.map(type => `
                         <div class="border rounded-lg p-3 hover:bg-gray-50 transition">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="font-medium">${type.name}</span>
+                                <div class="flex items-center gap-3">
+                                    ${type.rom_id ? `<span class="text-xs font-mono bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">${type.rom_id}</span>` : ''}
+                                    <span class="font-medium">${type.name}</span>
+                                </div>
                                 <span class="text-sm text-gray-500">${type.sub_category_name || ''}</span>
                             </div>
                         </div>

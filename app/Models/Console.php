@@ -148,6 +148,7 @@ class Console extends Model
         return $query->where('status', 'vendue');
     }
     public function articleCategory() { return $this->belongsTo(\App\Models\ArticleCategory::class); }
+public function articleBrand() { return $this->belongsTo(\App\Models\ArticleBrand::class); }
 public function articleSubCategory() { return $this->belongsTo(\App\Models\ArticleSubCategory::class); }
 public function articleType() { return $this->belongsTo(\App\Models\ArticleType::class); }
 public function productSheet() { return $this->belongsTo(\App\Models\ProductSheet::class); }

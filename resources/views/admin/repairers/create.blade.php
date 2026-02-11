@@ -66,6 +66,16 @@
                         <label for="is_active" class="text-sm text-gray-700">Actif</label>
                     </div>
 
+                    <div class="flex items-center gap-3 mt-6 md:mt-0">
+                        <input id="can_create_articles" type="checkbox" name="can_create_articles" value="1"
+                               class="rounded border-gray-300"
+                               @checked(old('can_create_articles', $repairer->can_create_articles))>
+                        <label for="can_create_articles" class="text-sm text-gray-700">
+                            ➕ Peut créer des articles
+                            <span class="text-xs text-gray-500 block">Si décoché, peut seulement éditer ses consoles assignées</span>
+                        </label>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <input name="email"

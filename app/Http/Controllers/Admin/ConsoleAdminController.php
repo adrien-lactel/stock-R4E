@@ -252,7 +252,8 @@ class ConsoleAdminController extends Controller
             'stores',
             'offers', // Charger les offres avec sale_price et consignment_price
             'repairer',
-            'mods' // Pour afficher les mods/opérations et calculer les coûts
+            'mods', // Pour afficher les mods/opérations et calculer les coûts
+            'productSheet' // Pour afficher le lien vers la fiche produit
         );
 
         $stores = Store::all();
@@ -322,7 +323,7 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function editArticleFull(Console $console)
     {
-        $console->load(['repairer', 'mods', 'articleCategory', 'articleSubCategory', 'articleType']);
+        $console->load(['repairer', 'mods', 'articleCategory', 'articleBrand', 'articleSubCategory', 'articleType']);
 
         return view('admin.consoles.edit_full', [
             'console' => $console,
@@ -493,11 +494,6 @@ class ConsoleAdminController extends Controller
         $quantity = (int) ($data['quantity'] ?? 1);
         unset($data['quantity']); // Ne pas insérer quantity dans la table consoles
         unset($data['article_type_description']); // Ne pas insérer dans consoles (c'est au niveau du type)
-        
-        // ✅ Retirer les champs d'images (non supportés en base pour l'instant)
-        unset($data['article_images']);
-        unset($data['primary_image_url']);
-        unset($data['image_captions']);
 
         $createdIds = [];
         for ($i = 0; $i < $quantity; $i++) {

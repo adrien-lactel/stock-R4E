@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Critères</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .star-btn { font-size: 30px; cursor: pointer; border: none; background: none; }
+        .text-gray-300 { color: #ccc; }
+        .text-yellow-400 { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <h1>Test des Critères de Collection</h1>
+    
+    <div>
+        <h3>Rareté</h3>
+        <div>
+            <button onclick="setRating('rarity', 1)" class="star-btn text-gray-300">★</button>
+            <button onclick="setRating('rarity', 2)" class="star-btn text-gray-300">★</button>
+            <button onclick="setRating('rarity', 3)" class="star-btn text-gray-300">★</button>
+            <button onclick="setRating('rarity', 4)" class="star-btn text-gray-300">★</button>
+            <button onclick="setRating('rarity', 5)" class="star-btn text-gray-300">★</button>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <h3>État actuel :</h3>
+    <pre id="output">{ }</pre>
+    
+    <button onclick="testSubmit()" style="padding: 10px; background: blue; color: white; border: none; cursor: pointer;">Tester Soumission</button>
+    
+    <script>
+        let conditionCriteria = {};
+        
+        function setRating(criterion, rating) {
+            console.log('🚨🚨🚨 setRating appelée!');
+            console.log(`Critère: ${criterion}, Note: ${rating}`);
+            
+            conditionCriteria[criterion] = rating;
+            
+            console.log('État:', conditionCriteria);
+            
+            document.getElementById('output').textContent = JSON.stringify(conditionCriteria, null, 2);
+        }
+        
+        function testSubmit() {
+            console.log('📤 SOUMISSION TEST');
+            console.log('Données:', JSON.stringify(conditionCriteria));
+            alert('Voir la console F12 pour les logs');
+        }
+        
+        console.log('✅ Page de test chargée');
+    </script>
+</body>
+</html>

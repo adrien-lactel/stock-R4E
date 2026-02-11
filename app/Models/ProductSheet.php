@@ -18,8 +18,10 @@ class ProductSheet extends Model
         'images',
         'main_image',
         'marketing_description',
+        'display_sections',
         'tags',
         'condition_criteria',
+        'condition_criteria_labels',
         'featured_mods',
         'is_active',
     ];
@@ -28,6 +30,8 @@ class ProductSheet extends Model
         'images' => 'array',
         'tags' => 'array',
         'condition_criteria' => 'array',
+        'condition_criteria_labels' => 'array',
+        'display_sections' => 'array',
         'featured_mods' => 'array',
         'is_active' => 'boolean',
     ];

@@ -10,6 +10,7 @@ use App\Models\ArticleCategory;
 use App\Models\ArticleSubCategory;
 use App\Models\ArticleType;
 use App\Models\Mod;
+use App\Models\Console;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -21,9 +22,15 @@ class ProductSheetController extends Controller
      ===================================================== */
     public function index()
     {
-        $sheets = ProductSheet::with('articleType.subCategory.category')
+        $sheets = ProductSheet::with(['articleType.subCategory.category', 'consoles'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
+
+        // Ajouter le prix R4E à chaque fiche
+        foreach ($sheets as $sheet) {
+            $console = $sheet->consoles->first();
+            $sheet->prix_r4e = $console ? ($console->valorisation ?? $console->prix_achat ?? null) : null;
+        }
 
         return view('admin.product-sheets.index', compact('sheets'));
     }
@@ -39,9 +46,63 @@ class ProductSheetController extends Controller
         $selectedSubCategory = null;
         $selectedBrand = null;
         $selectedCategory = null;
+        $console = null;
+        $prefilledData = [];
 
-        // Si un article_type_id est fourni, charger toute la taxonomie
-        if ($request->has('article_type_id')) {
+        // Si un console_id est fourni, charger la console avec ses relations
+        if ($request->has('console_id')) {
+            $console = Console::with(['articleType.subCategory.brand.category', 'stores'])
+                ->find($request->console_id);
+            
+            if ($console) {
+                // Pré-remplir les données de la fiche produit
+                
+                // Récupérer les images spécifiques de l'article (pas la taxonomie)
+                $imageUrls = [];
+                $imagesFull = [];
+                
+                // Priorité 1: Les images uploadées spécifiquement pour cet article
+                if (is_array($console->article_images) && !empty($console->article_images)) {
+                    foreach ($console->article_images as $img) {
+                        if (is_string($img)) {
+                            // Si c'est une simple URL
+                            $imageUrls[] = $img;
+                        } elseif (isset($img['url'])) {
+                            $imageUrls[] = $img['url'];
+                        } elseif (isset($img['path'])) {
+                            $imageUrls[] = $img['path'];
+                        }
+                    }
+                    $imagesFull = $console->article_images;
+                }
+                
+                $prefilledData = [
+                    'article_type_id' => $console->article_type_id,
+                    'name' => $this->generateProductSheetName($console),
+                    'description' => $this->generateProductSheetDescription($console),
+                    'images' => $imageUrls, // Images spécifiques de l'article
+                    'images_full' => $imagesFull, // Structure complète pour debug
+                    'main_image' => $console->primary_image_url,
+                ];
+                
+                // Charger la taxonomie de la console
+                if ($console->articleType) {
+                    $selectedType = $console->articleType;
+                    $selectedSubCategory = $selectedType->subCategory;
+                    $selectedBrand = $selectedSubCategory?->brand;
+                    $selectedCategory = $selectedBrand?->category;
+                    
+                    // Charger le Publisher si disponible
+                    if ($selectedType->publisher) {
+                        $selectedType->publisherModel = \App\Models\Publisher::where('name', 'LIKE', '%' . $selectedType->publisher . '%')
+                            ->orWhere('slug', \Illuminate\Support\Str::slug($selectedType->publisher))
+                            ->first();
+                    }
+                }
+            }
+        }
+        // Si seulement un article_type_id est fourni, charger la taxonomie
+        elseif ($request->has('article_type_id')) {
             $selectedType = ArticleType::with(['subCategory.brand.category'])
                 ->find($request->article_type_id);
             
@@ -49,10 +110,19 @@ class ProductSheetController extends Controller
                 $selectedSubCategory = $selectedType->subCategory()->with('types')->first();
                 $selectedBrand = $selectedSubCategory?->brand()->with('subCategories')->first();
                 $selectedCategory = $selectedBrand?->category()->with('brands')->first();
+                
+                // Charger le Publisher si disponible
+                if ($selectedType->publisher) {
+                    $selectedType->publisherModel = \App\Models\Publisher::where('name', 'LIKE', '%' . $selectedType->publisher . '%')
+                        ->orWhere('slug', \Illuminate\Support\Str::slug($selectedType->publisher))
+                        ->first();
+                }
+                
+                $prefilledData['article_type_id'] = $request->article_type_id;
             }
         }
 
-        return view('admin.product-sheets.create', [
+        return view('admin.product-sheets.edit', [
             'sheet' => new ProductSheet(),
             'categories' => $categories,
             'mods' => $mods,
@@ -60,7 +130,205 @@ class ProductSheetController extends Controller
             'selectedBrand' => $selectedBrand,
             'selectedSubCategory' => $selectedSubCategory,
             'selectedType' => $selectedType,
+            'console' => $console,
+            'prefilledData' => $prefilledData,
+            'associatedConsole' => $console,
         ]);
+    }
+
+    /**
+     * Générer un nom pour la fiche produit basé sur la console
+     */
+    private function generateProductSheetName($console)
+    {
+        $name = $console->articleType?->name ?? 'Produit';
+        
+        // Ajouter le ROM ID si disponible
+        if ($console->rom_id) {
+            $name .= ' - ' . $console->rom_id;
+        }
+        
+        // Ajouter la région si disponible
+        if ($console->region) {
+            $regionEmoji = match($console->region) {
+                'PAL' => '🇪🇺',
+                'NTSC-U' => '🇺🇸',
+                'NTSC-J' => '🇯🇵',
+                default => '🌍',
+            };
+            $name .= ' ' . $regionEmoji . ' ' . $console->region;
+        }
+        
+        return $name;
+    }
+
+    /**
+     * Générer une description pour la fiche produit basée sur la console
+     */
+    private function generateProductSheetDescription($console)
+    {
+        $description = '';
+        
+        // Nom du jeu ou type d'article
+        if ($console->articleType?->name) {
+            $description .= $console->articleType->name;
+        }
+        
+        // Informations du jeu vidéo
+        if ($console->rom_id) {
+            $description .= "\n\n**ROM ID:** " . $console->rom_id;
+        }
+        
+        if ($console->year) {
+            $description .= "\n**Année de sortie:** " . $console->year;
+        }
+        
+        if ($console->region) {
+            $description .= "\n**Région:** " . $console->region;
+        }
+        
+        if ($console->completeness) {
+            $description .= "\n**État de complétude:** " . $console->completeness;
+        }
+        
+        // Commentaire produit si disponible
+        if ($console->product_comment) {
+            $description .= "\n\n**Notes:**\n" . $console->product_comment;
+        }
+        
+        return trim($description);
+    }
+
+    /**
+     * Récupérer les images d'un jeu depuis R2 basées sur le ROM ID
+     */
+    private function getGameImagesFromR2($console)
+    {
+        if (!$console->rom_id) {
+            return [];
+        }
+
+        // Déterminer le dossier de la plateforme
+        $folder = $this->getPlatformFolder($console);
+        if (!$folder) {
+            return [];
+        }
+
+        $identifier = $console->rom_id; // Ex: DMG-VUA
+        $images = [];
+        
+        try {
+            // Lister les fichiers dans taxonomy/{folder}/
+            $r2Path = "taxonomy/{$folder}/";
+            $files = \Storage::disk('r2')->files($r2Path);
+            
+            $r2PublicUrl = config('filesystems.disks.r2.url');
+            
+            foreach ($files as $filePath) {
+                $filename = basename($filePath);
+                
+                // Vérifier si le fichier correspond au ROM ID (ex: DMG-VUA-cover.png)
+                if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.(png|jpg|jpeg)$/i', $filename, $matches)) {
+                    $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork"
+                    
+                    // En production: URL R2 directe, sinon proxy
+                    if (app()->environment('production')) {
+                        $imageUrl = $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
+                    } else {
+                        $imageUrl = route('proxy.taxonomy-image', [
+                            'folder' => $folder,
+                            'filename' => $filename
+                        ]);
+                    }
+                    
+                    // Déterminer le type (cover, artwork, gameplay, logo)
+                    $type = 'other';
+                    if (preg_match('/^(cover|artwork|gameplay|logo)(-\d+)?$/i', $fullType, $typeMatches)) {
+                        $type = strtolower($typeMatches[1]);
+                    }
+                    
+                    $images[] = [
+                        'url' => $imageUrl,
+                        'path' => $filePath,
+                        'type' => $type,
+                        'filename' => $filename,
+                        'source' => 'r2'
+                    ];
+                }
+            }
+            
+            \Log::info('Images R2 récupérées', [
+                'rom_id' => $identifier,
+                'folder' => $folder,
+                'count' => count($images),
+                'images' => $images
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Erreur récupération images R2', [
+                'rom_id' => $identifier,
+                'folder' => $folder,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        return $images;
+    }
+
+    /**
+     * Déterminer le dossier de la plateforme basé sur la sous-catégorie
+     */
+    private function getPlatformFolder($console)
+    {
+        // Mapping des noms de sous-catégories vers les dossiers R2
+        $platformMapping = [
+            'game boy' => 'gameboy',
+            'gameboy' => 'gameboy',
+            'game boy advance' => 'gba',
+            'gba' => 'gba',
+            'game boy color' => 'gbc',
+            'gbc' => 'gbc',
+            'super nintendo' => 'snes',
+            'snes' => 'snes',
+            'super famicom' => 'snes',
+            'nintendo 64' => 'n64',
+            'n64' => 'n64',
+            'nes' => 'nes',
+            'famicom' => 'nes',
+            'nintendo entertainment system' => 'nes',
+        ];
+        
+        // Récupérer le nom de la sous-catégorie
+        if ($console->articleType && $console->articleType->subCategory) {
+            $subCategoryName = strtolower($console->articleType->subCategory->name);
+            
+            // Chercher dans le mapping
+            foreach ($platformMapping as $key => $folder) {
+                if (str_contains($subCategoryName, $key)) {
+                    return $folder;
+                }
+            }
+        }
+        
+        // Fallback: essayer de deviner depuis le ROM ID
+        if ($console->rom_id) {
+            $romPrefix = substr($console->rom_id, 0, 3);
+            $prefixMapping = [
+                'DMG' => 'gameboy', // Game Boy
+                'AGB' => 'gba',      // Game Boy Advance
+                'CGB' => 'gbc',      // Game Boy Color
+                'SHVC' => 'snes',    // Super Famicom (SNES JP)
+                'SNS' => 'snes',     // SNES
+                'NUS' => 'n64',      // N64
+                'HVC' => 'nes',      // Famicom
+            ];
+            
+            if (isset($prefixMapping[$romPrefix])) {
+                return $prefixMapping[$romPrefix];
+            }
+        }
+        
+        return null;
     }
 
     /* =====================================================
@@ -112,18 +380,16 @@ class ProductSheetController extends Controller
                 ], 413);
             }
             
-            // Upload vers Cloudinary via Storage disk dans R4E/products/images
-            $path = Storage::disk('cloudinary')->putFileAs(
-                'R4E/products/images',
-                $file,
-                Str::random(40) . '.' . $file->getClientOriginalExtension(),
-                'public'
-            );
+            // Upload vers Cloudflare R2 dans articles/images
+            $fileName = Str::random(40) . '.' . $file->getClientOriginalExtension();
+            $path = 'articles/images/' . $fileName;
             
-            // Récupérer l'URL complète
-            $uploadedFileUrl = Storage::disk('cloudinary')->url($path);
+            Storage::disk('r2')->put($path, file_get_contents($file), 'public');
+            
+            // URL publique R2
+            $uploadedFileUrl = Storage::disk('r2')->url($path);
 
-            \Log::info('Fichier uploadé vers Cloudinary avec succès', ['url' => $uploadedFileUrl]);
+            \Log::info('Fichier uploadé vers R2 avec succès', ['url' => $uploadedFileUrl]);
 
             return response()->json([
                 'success' => true,
@@ -301,17 +567,28 @@ class ProductSheetController extends Controller
         // Décoder les champs JSON si nécessaire
         $images = $request->input('images');
         if (is_string($images)) {
-            $request->merge(['images' => json_decode($images, true) ?: []]);
+            $decodedImages = ($images === '' || $images === null) ? [] : json_decode($images, true);
+            $request->merge(['images' => is_array($decodedImages) ? $decodedImages : []]);
+        } elseif (!$request->has('images')) {
+            $request->merge(['images' => []]);
         }
 
         $tags = $request->input('tags');
         if (is_string($tags)) {
-            $request->merge(['tags' => json_decode($tags, true) ?: []]);
+            $decodedTags = ($tags === '' || $tags === null) ? [] : json_decode($tags, true);
+            $request->merge(['tags' => is_array($decodedTags) ? $decodedTags : []]);
+        } elseif (!$request->has('tags')) {
+            $request->merge(['tags' => []]);
         }
 
         $conditionCriteria = $request->input('condition_criteria');
         if (is_string($conditionCriteria)) {
             $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
+        }
+
+        $conditionCriteriaLabels = $request->input('condition_criteria_labels');
+        if (is_string($conditionCriteriaLabels)) {
+            $request->merge(['condition_criteria_labels' => json_decode($conditionCriteriaLabels, true) ?: []]);
         }
 
         $featuredMods = $request->input('featured_mods');
@@ -329,8 +606,10 @@ class ProductSheetController extends Controller
             'images.*' => 'url',
             'main_image' => 'nullable|url',
             'marketing_description' => 'nullable|string',
+            'display_sections' => 'nullable|array',
             'tags' => 'nullable|array',
             'condition_criteria' => 'nullable|array',
+            'condition_criteria_labels' => 'nullable|array',
             'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
@@ -352,6 +631,35 @@ class ProductSheetController extends Controller
     }
 
     /* =====================================================
+     | SHOW — Afficher une fiche produit
+     ===================================================== */
+    public function show(ProductSheet $productSheet)
+    {
+        $productSheet->load(['articleType.subCategory.brand.category']);
+        
+        // Vérifier si une console est associée à cette fiche
+        $associatedConsole = Console::where('product_sheet_id', $productSheet->id)->first();
+        
+        // Si une console est associée, utiliser ses mods pour l'affichage
+        if ($associatedConsole) {
+            $mods = $associatedConsole->mods()->orderBy('name')->get();
+            $consoleMods = $mods->map(function($mod) {
+                return [
+                    'id' => $mod->id,
+                    'name' => $mod->name,
+                    'icon' => $mod->icon ?? '🔧'
+                ];
+            })->toArray();
+            $productSheet->featured_mods = $consoleMods;
+        }
+        
+        return view('admin.product-sheets.show', [
+            'sheet' => $productSheet,
+            'associatedConsole' => $associatedConsole,
+        ]);
+    }
+
+    /* =====================================================
      | EDIT — Éditer une fiche produit
      ===================================================== */
     public function edit(ProductSheet $productSheet)
@@ -359,24 +667,33 @@ class ProductSheetController extends Controller
         $categories = ArticleCategory::with('subCategories.types')->orderBy('name')->get();
         $selectedType = null;
         $selectedSubCategory = null;
+        $selectedBrand = null;
         $selectedCategory = null;
 
         if ($productSheet->article_type_id) {
-            $selectedType = ArticleType::with(['subCategory.category'])
+            $selectedType = ArticleType::with(['subCategory.brand.category'])
                 ->find($productSheet->article_type_id);
             
             if ($selectedType) {
                 $selectedSubCategory = $selectedType->subCategory()->with('types')->first();
-                $selectedCategory = $selectedSubCategory?->category()->with('subCategories')->first();
+                $selectedBrand = $selectedSubCategory?->brand()->with('subCategories')->first();
+                $selectedCategory = $selectedBrand?->category()->with('brands')->first();
+                
+                // Charger le Publisher si disponible
+                if ($selectedType->publisher) {
+                    $selectedType->publisherModel = \App\Models\Publisher::where('name', 'LIKE', '%' . $selectedType->publisher . '%')
+                        ->orWhere('slug', \Illuminate\Support\Str::slug($selectedType->publisher))
+                        ->first();
+                }
             }
         }
 
         // Vérifier si une console est associée à cette fiche
-        $associatedConsole = \App\Models\Console::where('product_sheet_id', $productSheet->id)->first();
+        $console = Console::where('product_sheet_id', $productSheet->id)->first();
         
         // Si une console est associée, utiliser uniquement ses mods
-        if ($associatedConsole) {
-            $mods = $associatedConsole->mods()->orderBy('name')->get();
+        if ($console) {
+            $mods = $console->mods()->orderBy('name')->get();
             $consoleMods = $mods->map(function($mod) {
                 return [
                     'id' => $mod->id,
@@ -390,14 +707,33 @@ class ProductSheetController extends Controller
             $mods = Mod::orderBy('name')->get();
         }
 
+        // Préparer les données pré-remplies pour la vue create
+        $prefilledData = [
+            'name' => $productSheet->name,
+            'description' => $productSheet->description,
+            'technical_specs' => $productSheet->technical_specs,
+            'included_items' => $productSheet->included_items,
+            'marketing_description' => $productSheet->marketing_description,
+            'images' => $productSheet->images ?? [],
+            'main_image' => $productSheet->main_image,
+            'tags' => $productSheet->tags ?? [],
+            'is_active' => $productSheet->is_active,
+            'condition_criteria' => $productSheet->condition_criteria ?? [],
+            'condition_criteria_labels' => $productSheet->condition_criteria_labels ?? [],
+            'featured_mods' => $productSheet->featured_mods ?? [],
+        ];
+
         return view('admin.product-sheets.edit', [
             'sheet' => $productSheet,
             'categories' => $categories,
             'mods' => $mods,
             'selectedCategory' => $selectedCategory,
+            'selectedBrand' => $selectedBrand,
             'selectedSubCategory' => $selectedSubCategory,
             'selectedType' => $selectedType,
-            'associatedConsole' => $associatedConsole ?? null,
+            'console' => $console,
+            'prefilledData' => $prefilledData,
+            'associatedConsole' => $console,
         ]);
     }
 
@@ -422,6 +758,11 @@ class ProductSheetController extends Controller
             $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
         }
 
+        $conditionCriteriaLabels = $request->input('condition_criteria_labels');
+        if (is_string($conditionCriteriaLabels)) {
+            $request->merge(['condition_criteria_labels' => json_decode($conditionCriteriaLabels, true) ?: []]);
+        }
+
         $featuredMods = $request->input('featured_mods');
         if (is_string($featuredMods)) {
             $request->merge(['featured_mods' => json_decode($featuredMods, true) ?: []]);
@@ -437,8 +778,10 @@ class ProductSheetController extends Controller
             'images.*' => 'url',
             'main_image' => 'nullable|url',
             'marketing_description' => 'nullable|string',
+            'display_sections' => 'nullable|array',
             'tags' => 'nullable|array',
             'condition_criteria' => 'nullable|array',
+            'condition_criteria_labels' => 'nullable|array',
             'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
         ]);

@@ -36,7 +36,7 @@
             @endif
 
             <h2 class="text-lg font-semibold text-gray-800">Classification</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
                 <div>
                     <label class="block text-sm font-medium">Catégorie *</label>
                     <select id="article_category_id" name="article_category_id" class="w-full rounded border-gray-300" required>
@@ -44,6 +44,13 @@
                         @foreach($articleCategories as $cat)
                             <option value="{{ $cat->id }}" @selected(old('article_category_id', $console->article_category_id) == $cat->id)>{{ $cat->name }}</option>
                         @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium">Marque *</label>
+                    <select id="article_brand_id" name="article_brand_id" class="w-full rounded border-gray-300" required>
+                        <option value="">— Choisir —</option>
                     </select>
                 </div>
 
@@ -291,47 +298,121 @@
 </div>
 
 <script>
-// Cascade taxonomy (same logic as quick form)
+// Cascade taxonomy: Category → Brand → SubCategory → Type
 document.addEventListener('DOMContentLoaded', () => {
-  const catSelect  = document.getElementById('article_category_id');
-  const subSelect  = document.getElementById('article_sub_category_id');
-  const typeSelect = document.getElementById('article_type_id');
-  if (!catSelect || !subSelect || !typeSelect) return;
+  const catSelect   = document.getElementById('article_category_id');
+  const brandSelect = document.getElementById('article_brand_id');
+  const subSelect   = document.getElementById('article_sub_category_id');
+  const typeSelect  = document.getElementById('article_type_id');
+  if (!catSelect || !brandSelect || !subSelect || !typeSelect) return;
 
-  const oldSub  = @json(old('article_sub_category_id', $console->article_sub_category_id));
-  const oldType = @json(old('article_type_id', $console->article_type_id));
+  const oldBrand = @json(old('article_brand_id', $console->article_brand_id));
+  const oldSub   = @json(old('article_sub_category_id', $console->article_sub_category_id));
+  const oldType  = @json(old('article_type_id', $console->article_type_id));
 
   function clearSelect(sel, placeholder = '— Choisir —') {
     sel.innerHTML = '';
-    const opt = document.createElement('option'); opt.value = ''; opt.textContent = placeholder; sel.appendChild(opt);
+    const opt = document.createElement('option'); 
+    opt.value = ''; 
+    opt.textContent = placeholder; 
+    sel.appendChild(opt);
   }
 
-  async function fetchJson(url) { const res = await fetch(url, { headers: { 'Accept': 'application/json' }}); if (!res.ok) throw new Error(`HTTP ${res.status}`); return await res.json(); }
+  async function fetchJson(url) { 
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' }}); 
+    if (!res.ok) throw new Error(`HTTP ${res.status}`); 
+    return await res.json(); 
+  }
+
+  async function loadBrands(categoryId, applyOld = false) {
+    clearSelect(brandSelect); 
+    clearSelect(subSelect); 
+    clearSelect(typeSelect);
+    if (!categoryId) return;
+    
+    const url = `{{ route('admin.ajax.brands', ['category' => '__ID__']) }}`.replace('__ID__', categoryId);
+    const data = await fetchJson(url);
+    const list = data.brands || [];
+    list.forEach(brand => { 
+      const opt = document.createElement('option'); 
+      opt.value = brand.id; 
+      opt.textContent = brand.name; 
+      brandSelect.appendChild(opt); 
+    });
+    
+    if (applyOld && oldBrand) { 
+      brandSelect.value = String(oldBrand); 
+      if (brandSelect.value) {
+        await loadSubCategories(brandSelect.value, true); 
+      }
+    }
+  }
 
   async function loadSubCategories(brandId, applyOld = false) {
-    clearSelect(subSelect); clearSelect(typeSelect);
+    clearSelect(subSelect); 
+    clearSelect(typeSelect);
     if (!brandId) return;
+    
     const url = `{{ route('admin.ajax.sub-categories', ['brand' => '__ID__']) }}`.replace('__ID__', brandId);
     const data = await fetchJson(url);
-    const list = Array.isArray(data) ? data : (data.data ?? []);
-    list.forEach(sc => { const opt = document.createElement('option'); opt.value = sc.id; opt.textContent = sc.name; subSelect.appendChild(opt); });
-    if (applyOld && oldSub) { subSelect.value = String(oldSub); if (subSelect.value) await loadTypes(subSelect.value, true); }
+    const list = data.subcategories || [];
+    list.forEach(sc => { 
+      const opt = document.createElement('option'); 
+      opt.value = sc.id; 
+      opt.textContent = sc.name; 
+      subSelect.appendChild(opt); 
+    });
+    
+    if (applyOld && oldSub) { 
+      subSelect.value = String(oldSub); 
+      if (subSelect.value) {
+        await loadTypes(subSelect.value, true); 
+      }
+    }
   }
 
   async function loadTypes(subCategoryId, applyOld = false) {
     clearSelect(typeSelect);
     if (!subCategoryId) return;
+    
     const url = `{{ route('admin.ajax.types', ['subCategory' => '__ID__']) }}`.replace('__ID__', subCategoryId);
     const data = await fetchJson(url);
-    const list = Array.isArray(data) ? data : (data.data ?? []);
-    list.forEach(t => { const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.name; typeSelect.appendChild(opt); });
-    if (applyOld && oldType) { typeSelect.value = String(oldType); }
+    const list = Array.isArray(data) ? data : [];
+    list.forEach(t => { 
+      const opt = document.createElement('option'); 
+      opt.value = t.id; 
+      opt.textContent = t.name; 
+      typeSelect.appendChild(opt); 
+    });
+    
+    if (applyOld && oldType) { 
+      typeSelect.value = String(oldType); 
+    }
   }
 
-  catSelect.addEventListener('change', async () => { try { await loadSubCategories(catSelect.value, false); } catch(e){console.error(e);} });
-  subSelect.addEventListener('change', async () => { try { await loadTypes(subSelect.value, false); } catch(e){console.error(e);} });
+  catSelect.addEventListener('change', async () => { 
+    try { await loadBrands(catSelect.value, false); } catch(e) { console.error(e); } 
+  });
+  
+  brandSelect.addEventListener('change', async () => { 
+    try { await loadSubCategories(brandSelect.value, false); } catch(e) { console.error(e); } 
+  });
+  
+  subSelect.addEventListener('change', async () => { 
+    try { await loadTypes(subSelect.value, false); } catch(e) { console.error(e); } 
+  });
 
-  (async () => { clearSelect(subSelect); clearSelect(typeSelect); if (catSelect.value) { try{ await loadSubCategories(catSelect.value, true); } catch(e){console.error(e);} } })();
+  // Charger les données initiales au chargement de la page
+  (async () => { 
+    const initialCategoryId = catSelect.value;
+    if (initialCategoryId) { 
+      try { 
+        await loadBrands(initialCategoryId, true); 
+      } catch(e) {
+        console.error('Erreur lors du chargement des marques:', e);
+      } 
+    }
+  })();
 });
 </script>
 

@@ -1,88 +1,91 @@
-﻿@extends('layouts.app')
+﻿
 
-@section('content')
-{{-- Inclure le gestionnaire d'images réutilisable --}}
-<script src="{{ asset('js/article-images-manager.js') }}"></script>
+<?php $__env->startSection('content'); ?>
+
+<script src="<?php echo e(asset('js/article-images-manager.js')); ?>"></script>
 
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
-    {{-- HEADER --}}
+    
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-800">
-            {{ $sheet->exists ? '✏️ Éditer la fiche produit' : '➕ Créer une fiche produit' }}
+            <?php echo e($sheet->exists ? '✏️ Éditer la fiche produit' : '➕ Créer une fiche produit'); ?>
+
         </h1>
         <div class="flex items-center gap-2">
-            @if($sheet->exists)
-                <a href="{{ route('admin.product-sheets.show', $sheet) }}" 
+            <?php if($sheet->exists): ?>
+                <a href="<?php echo e(route('admin.product-sheets.show', $sheet)); ?>" 
                    class="px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-700">
                     👁️ Voir la fiche
                 </a>
-                @if(isset($associatedConsole))
-                    <a href="{{ route('admin.articles.edit_full', $associatedConsole) }}" 
+                <?php if(isset($associatedConsole)): ?>
+                    <a href="<?php echo e(route('admin.articles.edit_full', $associatedConsole)); ?>" 
                        class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
-                        📝 Éditer l'article #{{ $associatedConsole->id }}
+                        📝 Éditer l'article #<?php echo e($associatedConsole->id); ?>
+
                     </a>
-                @endif
-            @endif
-            <a href="{{ route('admin.product-sheets.index') }}" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour</a>
+                <?php endif; ?>
+            <?php endif; ?>
+            <a href="<?php echo e(route('admin.product-sheets.index')); ?>" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour</a>
         </div>
     </div>
 
-    {{-- MESSAGES --}}
-    @if ($errors->any())
+    
+    <?php if($errors->any()): ?>
         <div class="mb-6 p-4 bg-red-50 text-red-800 rounded border border-red-200">
             <ul class="list-disc pl-5 space-y-1 text-sm">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $err): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($err); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- FORMULAIRE --}}
+    
     <div class="bg-white shadow rounded-lg p-6">
-        <form method="POST" action="{{ $sheet->exists ? route('admin.product-sheets.update', $sheet) : route('admin.product-sheets.store') }}">
-            @csrf
-            @if($sheet->exists)
-                @method('PUT')
-            @endif
+        <form method="POST" action="<?php echo e($sheet->exists ? route('admin.product-sheets.update', $sheet) : route('admin.product-sheets.store')); ?>">
+            <?php echo csrf_field(); ?>
+            <?php if($sheet->exists): ?>
+                <?php echo method_field('PUT'); ?>
+            <?php endif; ?>
 
-            {{-- Champ hidden pour article_type_id --}}
-            @if(isset($selectedType) && $selectedType)
-                <input type="hidden" name="article_type_id" value="{{ $selectedType->id }}">
-            @endif
+            
+            <?php if(isset($selectedType) && $selectedType): ?>
+                <input type="hidden" name="article_type_id" value="<?php echo e($selectedType->id); ?>">
+            <?php endif; ?>
 
-            {{-- PRÉVISUALISATION DE LA FICHE EN TEMPS RÉEL --}}
-            @if(isset($selectedType) && $selectedType)
+            
+            <?php if(isset($selectedType) && $selectedType): ?>
                 <div class="mb-8">
                     <h2 class="text-lg font-semibold text-gray-800 mb-4">Prévisualisation de la fiche</h2>
                     
                     <div id="product-sheet-preview" class="bg-white rounded-lg p-6">
                         <div class="flex flex-wrap justify-center w-fit lg:w-full mx-auto" style="border: 3px solid #1f2937; border-radius: 12px; padding: 12px;">
                             
-                            {{-- COLONNE 1: Slideshow images de l'article + Prix R4E (GAUCHE - ADAPTATIF) --}}
+                            
                             <div class="flex flex-col items-center justify-between shrink-0 order-1">
-                                {{-- TAXONOMIE BREADCRUMB (en haut) --}}
+                                
                                 <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; width: 100%; height: 76px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
                                     <div style="font-size: 16px; color: #111827; font-weight: 700; text-align: center;">
-                                        {{ $selectedSubCategory?->brand?->category?->name ?? 'Catégorie' }} › {{ $selectedSubCategory?->brand?->name ?? 'Marque' }} › {{ $selectedSubCategory?->name ?? 'Sous-catégorie' }}
+                                        <?php echo e($selectedSubCategory?->brand?->category?->name ?? 'Catégorie'); ?> › <?php echo e($selectedSubCategory?->brand?->name ?? 'Marque'); ?> › <?php echo e($selectedSubCategory?->name ?? 'Sous-catégorie'); ?>
+
                                     </div>
                                 </div>
                                 
-                                {{-- Slideshow centré verticalement --}}
+                                
                                 <div class="flex-1 flex items-center justify-center">
 
-                                @php
+                                <?php
                                     $articleImages = $sheet->images ?? [];
                                     if (is_string($articleImages)) {
                                         $articleImages = json_decode($articleImages, true) ?? [];
                                     }
-                                @endphp
+                                ?>
                                 
-                                @if(count($articleImages) > 0)
+                                <?php if(count($articleImages) > 0): ?>
                                     <div x-data="{
                                         currentIndex: 0,
-                                        images: @js($articleImages),
+                                        images: <?php echo \Illuminate\Support\Js::from($articleImages)->toHtml() ?>,
                                         get currentImage() { return this.images[this.currentIndex]; },
                                         next() {
                                             this.currentIndex = (this.currentIndex + 1) % this.images.length;
@@ -97,25 +100,25 @@
                                                  class="max-h-64 w-auto object-contain rounded-lg cursor-zoom-in"
                                                  @click="openZoomModal(currentImage)">
                                             
-                                            {{-- MODS ICONS en surbrillance sur l'image --}}
-                                            @php
-                                                $displayMods = $sheet->featured_mods ?? [];
-                                            @endphp
-                                            @if(count($displayMods) > 0)
-                                                <div id="mods-icons-display" class="absolute top-2 right-2 flex flex-wrap gap-1 bg-black/60 rounded-lg p-1.5 max-w-[60%] justify-end">
-                                                    @foreach($displayMods as $mod)
-                                                        @if(isset($mod['icon']) && str_starts_with($mod['icon'], 'data:image/'))
-                                                            <img src="{{ $mod['icon'] }}" alt="{{ $mod['name'] ?? 'Mod' }}" class="w-6 h-6 drop-shadow-lg" style="image-rendering: pixelated;" title="{{ $mod['name'] ?? 'Mod' }}">
-                                                        @else
-                                                            <span class="text-lg drop-shadow-lg" title="{{ $mod['name'] ?? 'Mod' }}">{{ $mod['icon'] ?? '🔧' }}</span>
-                                                        @endif
-                                                    @endforeach
-                                                </div>
-                                            @else
-                                                <div id="mods-icons-display" class="hidden absolute top-2 right-2 flex flex-wrap gap-1 bg-black/60 rounded-lg p-1.5 max-w-[60%] justify-end"></div>
-                                            @endif
                                             
-                                            {{-- Boutons de navigation --}}
+                                            <?php
+                                                $displayMods = $sheet->featured_mods ?? [];
+                                            ?>
+                                            <?php if(count($displayMods) > 0): ?>
+                                                <div id="mods-icons-display" class="absolute top-2 right-2 flex flex-wrap gap-1 bg-black/60 rounded-lg p-1.5 max-w-[60%] justify-end">
+                                                    <?php $__currentLoopData = $displayMods; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        <?php if(isset($mod['icon']) && str_starts_with($mod['icon'], 'data:image/')): ?>
+                                                            <img src="<?php echo e($mod['icon']); ?>" alt="<?php echo e($mod['name'] ?? 'Mod'); ?>" class="w-6 h-6 drop-shadow-lg" style="image-rendering: pixelated;" title="<?php echo e($mod['name'] ?? 'Mod'); ?>">
+                                                        <?php else: ?>
+                                                            <span class="text-lg drop-shadow-lg" title="<?php echo e($mod['name'] ?? 'Mod'); ?>"><?php echo e($mod['icon'] ?? '🔧'); ?></span>
+                                                        <?php endif; ?>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <div id="mods-icons-display" class="hidden absolute top-2 right-2 flex flex-wrap gap-1 bg-black/60 rounded-lg p-1.5 max-w-[60%] justify-end"></div>
+                                            <?php endif; ?>
+                                            
+                                            
                                             <button @click="prev()" type="button" class="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -127,97 +130,97 @@
                                                 </svg>
                                             </button>
                                             
-                                            {{-- Indicateur de position --}}
+                                            
                                             <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
                                                 <span x-text="(currentIndex + 1) + '/' + images.length"></span>
                                             </div>
                                         </div>
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <div class="h-64 w-48 flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded-lg">
                                         <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                         </svg>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                                 </div>
 
-                                {{-- Prix R4E (en bas) = valorisation --}}
-                                @php
+                                
+                                <?php
                                     $prixR4E = isset($associatedConsole) ? ($associatedConsole->valorisation ?? $associatedConsole->prix_achat ?? null) : null;
-                                @endphp
-                                @if($prixR4E)
+                                ?>
+                                <?php if($prixR4E): ?>
                                     <div class="w-full mt-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 text-center">
                                         <div class="text-xs text-white/80 uppercase font-medium mb-1">Valorisation R4E</div>
                                         <div class="text-2xl font-bold text-white">
-                                            {{ number_format($prixR4E, 2) }} €
+                                            <?php echo e(number_format($prixR4E, 2)); ?> €
                                         </div>
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <div class="w-full mt-3 bg-gradient-to-r from-gray-400 to-gray-500 rounded-lg p-3 text-center">
                                         <div class="text-xs text-white/80 uppercase font-medium mb-1">Valorisation R4E</div>
                                         <div class="text-2xl font-bold text-white">—</div>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
 
-                            {{-- Séparateur vertical 1 --}}
+                            
                             <div class="hidden lg:block w-px bg-gray-800 mx-4 self-stretch order-2"></div>
 
-                            {{-- COLONNE 2: Logo du jeu + Informations (MILIEU - FLEXIBLE) --}}
+                            
                             <div class="flex-1 order-4 lg:order-3" style="min-width: 256px;">
-                                {{-- Logo du jeu (image-logo) dans conteneur aligné --}}
+                                
                                 <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center; height: 76px; box-sizing: border-box;">
-                                    @php
+                                    <?php
                                         $logoImage = $selectedType->logo_url ?? null;
-                                    @endphp
+                                    ?>
                                     
-                                    @if($logoImage)
-                                        <img src="{{ $logoImage }}" 
+                                    <?php if($logoImage): ?>
+                                        <img src="<?php echo e($logoImage); ?>" 
                                              alt="Logo" 
                                              style="max-height: 40px; object-fit: contain;">
-                                    @else
+                                    <?php else: ?>
                                         <span style="font-size: 12px; color: #6b7280;">&nbsp;</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
 
-                                <h2 id="preview-name" class="text-2xl font-bold text-gray-800 mb-2">{{ $sheet->name ?? $selectedType->name }}</h2>
+                                <h2 id="preview-name" class="text-2xl font-bold text-gray-800 mb-2"><?php echo e($sheet->name ?? $selectedType->name); ?></h2>
                                 
-                                {{-- Informations supplémentaires --}}
-                                @if(isset($associatedConsole))
+                                
+                                <?php if(isset($associatedConsole)): ?>
                                     <div class="space-y-1.5">
-                                        @if($associatedConsole->rom_id)
+                                        <?php if($associatedConsole->rom_id): ?>
                                             <div class="flex items-center gap-2">
                                                 <span class="text-sm font-semibold text-gray-700">ID:</span>
-                                                <span class="text-sm text-gray-600">{{ $associatedConsole->rom_id }}</span>
+                                                <span class="text-sm text-gray-600"><?php echo e($associatedConsole->rom_id); ?></span>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                         
-                                        @if($associatedConsole->year)
+                                        <?php if($associatedConsole->year): ?>
                                             <div class="flex items-center gap-2">
                                                 <span class="text-sm font-semibold text-gray-700">Année:</span>
-                                                <span class="text-sm text-gray-600">{{ $associatedConsole->year }}</span>
+                                                <span class="text-sm text-gray-600"><?php echo e($associatedConsole->year); ?></span>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                         
-                                        @if($associatedConsole->region)
+                                        <?php if($associatedConsole->region): ?>
                                             <div class="flex items-center gap-2">
                                                 <span class="text-sm font-semibold text-gray-700">Région:</span>
-                                                <span class="text-sm text-gray-600">{{ $associatedConsole->region }}</span>
+                                                <span class="text-sm text-gray-600"><?php echo e($associatedConsole->region); ?></span>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                         
-                                        @if($selectedType->publisher)
+                                        <?php if($selectedType->publisher): ?>
                                             <div class="flex items-center gap-2">
                                                 <span class="text-sm font-semibold text-gray-700">Éditeur:</span>
-                                                <span class="text-sm text-gray-600">{{ $selectedType->publisher }}</span>
+                                                <span class="text-sm text-gray-600"><?php echo e($selectedType->publisher); ?></span>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
-                                @endif
+                                <?php endif; ?>
 
-                                {{-- CRITÈRES DE COLLECTION (affichage des sélectionnés) --}}
-                                @php
+                                
+                                <?php
                                     $criteria = $sheet->condition_criteria ?? [];
                                     $criteriaLabels = $sheet->condition_criteria_labels ?? [
                                         'box_condition' => 'Boîte',
@@ -227,11 +230,11 @@
                                         'rarity' => 'Rareté',
                                         'overall_condition' => 'État général'
                                     ];
-                                @endphp
+                                ?>
                                 <div id="criteria-display-container" class="mt-4 pt-4 border-t border-gray-200">
                                     <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Critères</h3>
                                     <div id="criteria-display-list" class="space-y-2">
-                                        @php
+                                        <?php
                                             $allCriteriaKeys = ['box_condition', 'manual_condition', 'media_condition', 'completeness', 'rarity', 'overall_condition'];
                                             $defaultLabelsDisplay = [
                                                 'box_condition' => 'Boîte',
@@ -241,70 +244,71 @@
                                                 'rarity' => 'Rareté',
                                                 'overall_condition' => 'État général'
                                             ];
-                                        @endphp
-                                        @foreach($allCriteriaKeys as $key)
-                                            @php
+                                        ?>
+                                        <?php $__currentLoopData = $allCriteriaKeys; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php
                                                 $value = $criteria[$key] ?? 0;
                                                 $isVisible = isset($criteria[$key]) && $criteria[$key] > 0;
-                                            @endphp
-                                            <div data-display-criterion="{{ $key }}" class="flex items-center justify-between {{ $isVisible ? '' : 'hidden' }}">
-                                                <span class="criterion-label text-sm text-gray-600">{{ $criteriaLabels[$key] ?? $defaultLabelsDisplay[$key] }}</span>
+                                            ?>
+                                            <div data-display-criterion="<?php echo e($key); ?>" class="flex items-center justify-between <?php echo e($isVisible ? '' : 'hidden'); ?>">
+                                                <span class="criterion-label text-sm text-gray-600"><?php echo e($criteriaLabels[$key] ?? $defaultLabelsDisplay[$key]); ?></span>
                                                 <div class="criterion-stars flex gap-0.5">
-                                                    @for($i = 1; $i <= 5; $i++)
-                                                        <span class="text-lg {{ $value >= $i ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
-                                                    @endfor
+                                                    <?php for($i = 1; $i <= 5; $i++): ?>
+                                                        <span class="text-lg <?php echo e($value >= $i ? 'text-yellow-400' : 'text-gray-300'); ?>">★</span>
+                                                    <?php endfor; ?>
                                                 </div>
                                             </div>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </div>
                                 </div>
 
-                                {{-- SECTIONS SÉLECTIONNÉES (affichage dynamique) --}}
+                                
                                 <div id="display-sections-container">
-                                    <div data-section="marketing_description" class="mt-4 pt-4 border-t border-gray-200 {{ in_array('marketing_description', $sheet->display_sections ?? []) ? '' : 'hidden' }}">
+                                    <div data-section="marketing_description" class="mt-4 pt-4 border-t border-gray-200 <?php echo e(in_array('marketing_description', $sheet->display_sections ?? []) ? '' : 'hidden'); ?>">
                                         <h3 class="text-sm font-semibold text-gray-700 mb-2">💬 Avis de l'équipe R4E</h3>
-                                        <p class="text-sm text-gray-600 leading-relaxed section-content">{{ $sheet->marketing_description }}</p>
+                                        <p class="text-sm text-gray-600 leading-relaxed section-content"><?php echo e($sheet->marketing_description); ?></p>
                                     </div>
 
-                                    <div data-section="description" class="mt-4 pt-4 border-t border-gray-200 {{ in_array('description', $sheet->display_sections ?? []) ? '' : 'hidden' }}">
+                                    <div data-section="description" class="mt-4 pt-4 border-t border-gray-200 <?php echo e(in_array('description', $sheet->display_sections ?? []) ? '' : 'hidden'); ?>">
                                         <h3 class="text-sm font-semibold text-gray-700 mb-2">📝 Description</h3>
-                                        <p class="text-sm text-gray-600 leading-relaxed section-content">{{ $sheet->description }}</p>
+                                        <p class="text-sm text-gray-600 leading-relaxed section-content"><?php echo e($sheet->description); ?></p>
                                     </div>
 
-                                    <div data-section="technical_specs" class="mt-4 pt-4 border-t border-gray-200 {{ in_array('technical_specs', $sheet->display_sections ?? []) ? '' : 'hidden' }}">
+                                    <div data-section="technical_specs" class="mt-4 pt-4 border-t border-gray-200 <?php echo e(in_array('technical_specs', $sheet->display_sections ?? []) ? '' : 'hidden'); ?>">
                                         <h3 class="text-sm font-semibold text-gray-700 mb-2">⚙️ Caractéristiques techniques</h3>
-                                        <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line section-content">{{ $sheet->technical_specs }}</p>
+                                        <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line section-content"><?php echo e($sheet->technical_specs); ?></p>
                                     </div>
 
-                                    <div data-section="included_items" class="mt-4 pt-4 border-t border-gray-200 {{ in_array('included_items', $sheet->display_sections ?? []) ? '' : 'hidden' }}">
+                                    <div data-section="included_items" class="mt-4 pt-4 border-t border-gray-200 <?php echo e(in_array('included_items', $sheet->display_sections ?? []) ? '' : 'hidden'); ?>">
                                         <h3 class="text-sm font-semibold text-gray-700 mb-2">📦 Accessoires inclus</h3>
-                                        <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line section-content">{{ $sheet->included_items }}</p>
+                                        <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line section-content"><?php echo e($sheet->included_items); ?></p>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Séparateur vertical 2 --}}
+                            
                             <div class="hidden lg:block w-px bg-gray-800 mx-4 self-stretch order-4"></div>
 
-                            {{-- COLONNE 3: Cover/Artwork/Gameplay + Logo Éditeur (DROITE - FIXE) --}}
+                            
                             <div class="flex flex-col w-64 shrink-0 order-3 lg:order-5 justify-between">
-                                {{-- Conteneur pour info images (en haut, même taille que taxonomie) --}}
+                                
                                 <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; height: 76px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
                                     <div style="font-size: 14px; color: #111827; font-weight: 700; text-align: center;">
                                         Images gameplay, cover et artwork
                                     </div>
                                 </div>
                                 
-                                {{-- Slideshow centré verticalement --}}
+                                
                                 <div class="flex-1 flex items-center justify-center">
 
-                                {{-- Image Cover/Artwork/Gameplay (depuis la taxonomie) avec navigation --}}
+                                
                                 <div x-data="{
                                     imageType: 'cover',
                                     images: {
-                                        cover: {{ $selectedType->cover_image_url ? "'" . $selectedType->cover_image_url . "'" : 'null' }},
-                                        artwork: {{ $selectedType->screenshot2_url ? "'" . $selectedType->screenshot2_url . "'" : 'null' }},
-                                        gameplay: {{ $selectedType->screenshot1_url ? "'" . $selectedType->screenshot1_url . "'" : 'null' }}
+                                        cover: <?php echo e($selectedType->cover_image_url ? "'" . $selectedType->cover_image_url . "'" : 'null'); ?>,
+                                        artwork: <?php echo e($selectedType->screenshot2_url ? "'" . $selectedType->screenshot2_url . "'" : 'null'); ?>,
+                                        gameplay: <?php echo e($selectedType->screenshot1_url ? "'" . $selectedType->screenshot1_url . "'" : 'null'); ?>
+
                                     },
                                     get currentImage() { return this.images[this.imageType]; },
                                     get currentLabel() {
@@ -337,7 +341,7 @@
                                             </div>
                                         </template>
                                         
-                                        {{-- Boutons de navigation --}}
+                                        
                                         <button @click="prevImage()" type="button" class="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -352,26 +356,26 @@
                                 </div>
                                 </div>
 
-                                {{-- Logo Éditeur (en bas) - Cliquable pour modifier --}}
+                                
                                 <div class="w-64 cursor-pointer" onclick="openPublisherLogoModal()">
-                                    @if($selectedType->publisher_logo_url)
-                                        <img src="{{ $selectedType->publisher_logo_url }}" 
+                                    <?php if($selectedType->publisher_logo_url): ?>
+                                        <img src="<?php echo e($selectedType->publisher_logo_url); ?>" 
                                              alt="Logo éditeur" 
                                              id="preview-publisher-logo"
                                              class="w-full h-16 object-contain rounded-lg hover:opacity-80 transition border-2 border-transparent hover:border-purple-400">
-                                    @else
+                                    <?php else: ?>
                                         <div class="w-full h-16 flex items-center justify-center bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-purple-400 transition">
                                             <span class="text-xs text-gray-500">+ Ajouter logo</span>
                                         </div>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            {{-- INFORMATIONS PRODUIT --}}
+            
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Informations produit</h2>
 
@@ -379,28 +383,28 @@
                     <div>
                         <label class="block text-sm font-medium mb-1">Nom de la fiche *</label>
                         <input type="text" name="name"
-                               value="{{ old('name', $sheet->name) }}"
-                               oninput="document.getElementById('preview-name').textContent = this.value || '{{ $selectedType->name ?? 'Nom du produit' }}'"
+                               value="<?php echo e(old('name', $sheet->name)); ?>"
+                               oninput="document.getElementById('preview-name').textContent = this.value || '<?php echo e($selectedType->name ?? 'Nom du produit'); ?>'"
                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                required>
                     </div>
 
-                    @php
+                    <?php
                         $displaySections = $sheet->display_sections ?? [];
-                    @endphp
+                    ?>
 
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <input type="checkbox" name="display_sections[]" value="marketing_description" 
                                    id="show_marketing" class="rounded border-gray-300 text-blue-600 section-checkbox"
                                    onchange="toggleSectionDisplay('marketing_description', this.checked)"
-                                   {{ in_array('marketing_description', $displaySections) ? 'checked' : '' }}>
+                                   <?php echo e(in_array('marketing_description', $displaySections) ? 'checked' : ''); ?>>
                             <label for="show_marketing" class="text-sm font-medium cursor-pointer">Avis R4E</label>
                             <span class="text-xs text-gray-400">(afficher dans la fiche)</span>
                         </div>
                         <textarea name="marketing_description" rows="3"
                                   oninput="updateSectionContent('marketing_description', this.value)"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('marketing_description', $sheet->marketing_description) }}</textarea>
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"><?php echo e(old('marketing_description', $sheet->marketing_description)); ?></textarea>
                     </div>
 
                     <div>
@@ -408,13 +412,13 @@
                             <input type="checkbox" name="display_sections[]" value="description" 
                                    id="show_description" class="rounded border-gray-300 text-blue-600 section-checkbox"
                                    onchange="toggleSectionDisplay('description', this.checked)"
-                                   {{ in_array('description', $displaySections) ? 'checked' : '' }}>
+                                   <?php echo e(in_array('description', $displaySections) ? 'checked' : ''); ?>>
                             <label for="show_description" class="text-sm font-medium cursor-pointer">Description du produit</label>
                             <span class="text-xs text-gray-400">(afficher dans la fiche)</span>
                         </div>
                         <textarea name="description" rows="4"
                                   oninput="updateSectionContent('description', this.value)"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $sheet->description) }}</textarea>
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"><?php echo e(old('description', $sheet->description)); ?></textarea>
                     </div>
 
                     <div>
@@ -422,13 +426,13 @@
                             <input type="checkbox" name="display_sections[]" value="technical_specs" 
                                    id="show_technical" class="rounded border-gray-300 text-blue-600 section-checkbox"
                                    onchange="toggleSectionDisplay('technical_specs', this.checked)"
-                                   {{ in_array('technical_specs', $displaySections) ? 'checked' : '' }}>
+                                   <?php echo e(in_array('technical_specs', $displaySections) ? 'checked' : ''); ?>>
                             <label for="show_technical" class="text-sm font-medium cursor-pointer">Caractéristiques techniques</label>
                             <span class="text-xs text-gray-400">(afficher dans la fiche)</span>
                         </div>
                         <textarea name="technical_specs" rows="4"
                                   oninput="updateSectionContent('technical_specs', this.value)"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('technical_specs', $sheet->technical_specs) }}</textarea>
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"><?php echo e(old('technical_specs', $sheet->technical_specs)); ?></textarea>
                     </div>
 
                     <div>
@@ -436,13 +440,13 @@
                             <input type="checkbox" name="display_sections[]" value="included_items" 
                                    id="show_included" class="rounded border-gray-300 text-blue-600 section-checkbox"
                                    onchange="toggleSectionDisplay('included_items', this.checked)"
-                                   {{ in_array('included_items', $displaySections) ? 'checked' : '' }}>
+                                   <?php echo e(in_array('included_items', $displaySections) ? 'checked' : ''); ?>>
                             <label for="show_included" class="text-sm font-medium cursor-pointer">Accessoires inclus</label>
                             <span class="text-xs text-gray-400">(afficher dans la fiche)</span>
                         </div>
                         <textarea name="included_items" rows="3"
                                   oninput="updateSectionContent('included_items', this.value)"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('included_items', $sheet->included_items) }}</textarea>
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"><?php echo e(old('included_items', $sheet->included_items)); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -480,10 +484,10 @@
                 }
             </script>
 
-            {{-- CRITÈRES DE COLLECTION --}}
+            
             <script>
                 // Variable globale pour les critères
-                var conditionCriteria = @json($sheet->condition_criteria ?? []);
+                var conditionCriteria = <?php echo json_encode($sheet->condition_criteria ?? [], 15, 512) ?>;
                 
                 // Fonction globale pour les étoiles (appelée par onclick)
                 function setRating(criterion, rating) {
@@ -584,7 +588,7 @@
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">⭐ Critères de collection</h2>
                 <p class="text-sm text-gray-600 mb-4">Sélectionnez les critères à afficher et personnalisez leur nom</p>
 
-                @php
+                <?php
                     $criteria = $sheet->condition_criteria ?? [];
                     $criteriaLabels = $sheet->condition_criteria_labels ?? [];
                     $defaultLabels = [
@@ -595,117 +599,117 @@
                         'rarity' => 'Rareté',
                         'overall_condition' => 'État général'
                     ];
-                @endphp
+                ?>
 
                 <div class="space-y-3">
-                    {{-- Boîte --}}
-                    <div class="flex items-center gap-4 p-3 rounded-lg border {{ isset($criteria['box_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200' }}" data-form-criterion="box_condition">
-                        <input type="checkbox" class="criterion-toggle rounded" value="box_condition" {{ isset($criteria['box_condition']) ? 'checked' : '' }} onchange="updateCriterionDisplay('box_condition')">
+                    
+                    <div class="flex items-center gap-4 p-3 rounded-lg border <?php echo e(isset($criteria['box_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'); ?>" data-form-criterion="box_condition">
+                        <input type="checkbox" class="criterion-toggle rounded" value="box_condition" <?php echo e(isset($criteria['box_condition']) ? 'checked' : ''); ?> onchange="updateCriterionDisplay('box_condition')">
                         <input type="text" name="condition_criteria_labels[box_condition]" 
-                               value="{{ $criteriaLabels['box_condition'] ?? $defaultLabels['box_condition'] }}"
+                               value="<?php echo e($criteriaLabels['box_condition'] ?? $defaultLabels['box_condition']); ?>"
                                class="flex-1 text-sm rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                placeholder="Nom du critère"
                                oninput="updateCriterionLabel('box_condition', this.value)">
                         <div class="flex gap-0.5" data-criterion="box_condition">
-                            @for($i = 1; $i <= 5; $i++)
-                                <button type="button" onclick="setRating('box_condition', {{ $i }})" 
-                                        class="star-btn text-2xl {{ isset($criteria['box_condition']) && $criteria['box_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300' }} hover:text-yellow-400 transition"
-                                        data-star="{{ $i }}">★</button>
-                            @endfor
+                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('box_condition', <?php echo e($i); ?>)" 
+                                        class="star-btn text-2xl <?php echo e(isset($criteria['box_condition']) && $criteria['box_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300'); ?> hover:text-yellow-400 transition"
+                                        data-star="<?php echo e($i); ?>">★</button>
+                            <?php endfor; ?>
                         </div>
                     </div>
 
-                    {{-- Manuel --}}
-                    <div class="flex items-center gap-4 p-3 rounded-lg border {{ isset($criteria['manual_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200' }}" data-form-criterion="manual_condition">
-                        <input type="checkbox" class="criterion-toggle rounded" value="manual_condition" {{ isset($criteria['manual_condition']) ? 'checked' : '' }} onchange="updateCriterionDisplay('manual_condition')">
+                    
+                    <div class="flex items-center gap-4 p-3 rounded-lg border <?php echo e(isset($criteria['manual_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'); ?>" data-form-criterion="manual_condition">
+                        <input type="checkbox" class="criterion-toggle rounded" value="manual_condition" <?php echo e(isset($criteria['manual_condition']) ? 'checked' : ''); ?> onchange="updateCriterionDisplay('manual_condition')">
                         <input type="text" name="condition_criteria_labels[manual_condition]" 
-                               value="{{ $criteriaLabels['manual_condition'] ?? $defaultLabels['manual_condition'] }}"
+                               value="<?php echo e($criteriaLabels['manual_condition'] ?? $defaultLabels['manual_condition']); ?>"
                                class="flex-1 text-sm rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                placeholder="Nom du critère"
                                oninput="updateCriterionLabel('manual_condition', this.value)">
                         <div class="flex gap-0.5" data-criterion="manual_condition">
-                            @for($i = 1; $i <= 5; $i++)
-                                <button type="button" onclick="setRating('manual_condition', {{ $i }})" 
-                                        class="star-btn text-2xl {{ isset($criteria['manual_condition']) && $criteria['manual_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300' }} hover:text-yellow-400 transition"
-                                        data-star="{{ $i }}">★</button>
-                            @endfor
+                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('manual_condition', <?php echo e($i); ?>)" 
+                                        class="star-btn text-2xl <?php echo e(isset($criteria['manual_condition']) && $criteria['manual_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300'); ?> hover:text-yellow-400 transition"
+                                        data-star="<?php echo e($i); ?>">★</button>
+                            <?php endfor; ?>
                         </div>
                     </div>
 
-                    {{-- Support --}}
-                    <div class="flex items-center gap-4 p-3 rounded-lg border {{ isset($criteria['media_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200' }}" data-form-criterion="media_condition">
-                        <input type="checkbox" class="criterion-toggle rounded" value="media_condition" {{ isset($criteria['media_condition']) ? 'checked' : '' }} onchange="updateCriterionDisplay('media_condition')">
+                    
+                    <div class="flex items-center gap-4 p-3 rounded-lg border <?php echo e(isset($criteria['media_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'); ?>" data-form-criterion="media_condition">
+                        <input type="checkbox" class="criterion-toggle rounded" value="media_condition" <?php echo e(isset($criteria['media_condition']) ? 'checked' : ''); ?> onchange="updateCriterionDisplay('media_condition')">
                         <input type="text" name="condition_criteria_labels[media_condition]" 
-                               value="{{ $criteriaLabels['media_condition'] ?? $defaultLabels['media_condition'] }}"
+                               value="<?php echo e($criteriaLabels['media_condition'] ?? $defaultLabels['media_condition']); ?>"
                                class="flex-1 text-sm rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                placeholder="Nom du critère"
                                oninput="updateCriterionLabel('media_condition', this.value)">
                         <div class="flex gap-0.5" data-criterion="media_condition">
-                            @for($i = 1; $i <= 5; $i++)
-                                <button type="button" onclick="setRating('media_condition', {{ $i }})" 
-                                        class="star-btn text-2xl {{ isset($criteria['media_condition']) && $criteria['media_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300' }} hover:text-yellow-400 transition"
-                                        data-star="{{ $i }}">★</button>
-                            @endfor
+                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('media_condition', <?php echo e($i); ?>)" 
+                                        class="star-btn text-2xl <?php echo e(isset($criteria['media_condition']) && $criteria['media_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300'); ?> hover:text-yellow-400 transition"
+                                        data-star="<?php echo e($i); ?>">★</button>
+                            <?php endfor; ?>
                         </div>
                     </div>
 
-                    {{-- Complétude --}}
-                    <div class="flex items-center gap-4 p-3 rounded-lg border {{ isset($criteria['completeness']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200' }}" data-form-criterion="completeness">
-                        <input type="checkbox" class="criterion-toggle rounded" value="completeness" {{ isset($criteria['completeness']) ? 'checked' : '' }} onchange="updateCriterionDisplay('completeness')">
+                    
+                    <div class="flex items-center gap-4 p-3 rounded-lg border <?php echo e(isset($criteria['completeness']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'); ?>" data-form-criterion="completeness">
+                        <input type="checkbox" class="criterion-toggle rounded" value="completeness" <?php echo e(isset($criteria['completeness']) ? 'checked' : ''); ?> onchange="updateCriterionDisplay('completeness')">
                         <input type="text" name="condition_criteria_labels[completeness]" 
-                               value="{{ $criteriaLabels['completeness'] ?? $defaultLabels['completeness'] }}"
+                               value="<?php echo e($criteriaLabels['completeness'] ?? $defaultLabels['completeness']); ?>"
                                class="flex-1 text-sm rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                placeholder="Nom du critère"
                                oninput="updateCriterionLabel('completeness', this.value)">
                         <div class="flex gap-0.5" data-criterion="completeness">
-                            @for($i = 1; $i <= 5; $i++)
-                                <button type="button" onclick="setRating('completeness', {{ $i }})" 
-                                        class="star-btn text-2xl {{ isset($criteria['completeness']) && $criteria['completeness'] >= $i ? 'text-yellow-400' : 'text-gray-300' }} hover:text-yellow-400 transition"
-                                        data-star="{{ $i }}">★</button>
-                            @endfor
+                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('completeness', <?php echo e($i); ?>)" 
+                                        class="star-btn text-2xl <?php echo e(isset($criteria['completeness']) && $criteria['completeness'] >= $i ? 'text-yellow-400' : 'text-gray-300'); ?> hover:text-yellow-400 transition"
+                                        data-star="<?php echo e($i); ?>">★</button>
+                            <?php endfor; ?>
                         </div>
                     </div>
 
-                    {{-- Rareté --}}
-                    <div class="flex items-center gap-4 p-3 rounded-lg border {{ isset($criteria['rarity']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200' }}" data-form-criterion="rarity">
-                        <input type="checkbox" class="criterion-toggle rounded" value="rarity" {{ isset($criteria['rarity']) ? 'checked' : '' }} onchange="updateCriterionDisplay('rarity')">
+                    
+                    <div class="flex items-center gap-4 p-3 rounded-lg border <?php echo e(isset($criteria['rarity']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'); ?>" data-form-criterion="rarity">
+                        <input type="checkbox" class="criterion-toggle rounded" value="rarity" <?php echo e(isset($criteria['rarity']) ? 'checked' : ''); ?> onchange="updateCriterionDisplay('rarity')">
                         <input type="text" name="condition_criteria_labels[rarity]" 
-                               value="{{ $criteriaLabels['rarity'] ?? $defaultLabels['rarity'] }}"
+                               value="<?php echo e($criteriaLabels['rarity'] ?? $defaultLabels['rarity']); ?>"
                                class="flex-1 text-sm rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                placeholder="Nom du critère"
                                oninput="updateCriterionLabel('rarity', this.value)">
                         <div class="flex gap-0.5" data-criterion="rarity">
-                            @for($i = 1; $i <= 5; $i++)
-                                <button type="button" onclick="setRating('rarity', {{ $i }})" 
-                                        class="star-btn text-2xl {{ isset($criteria['rarity']) && $criteria['rarity'] >= $i ? 'text-yellow-400' : 'text-gray-300' }} hover:text-yellow-400 transition"
-                                        data-star="{{ $i }}">★</button>
-                            @endfor
+                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('rarity', <?php echo e($i); ?>)" 
+                                        class="star-btn text-2xl <?php echo e(isset($criteria['rarity']) && $criteria['rarity'] >= $i ? 'text-yellow-400' : 'text-gray-300'); ?> hover:text-yellow-400 transition"
+                                        data-star="<?php echo e($i); ?>">★</button>
+                            <?php endfor; ?>
                         </div>
                     </div>
 
-                    {{-- État général --}}
-                    <div class="flex items-center gap-4 p-3 rounded-lg border {{ isset($criteria['overall_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200' }}" data-form-criterion="overall_condition">
-                        <input type="checkbox" class="criterion-toggle rounded" value="overall_condition" {{ isset($criteria['overall_condition']) ? 'checked' : '' }} onchange="updateCriterionDisplay('overall_condition')">
+                    
+                    <div class="flex items-center gap-4 p-3 rounded-lg border <?php echo e(isset($criteria['overall_condition']) ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'); ?>" data-form-criterion="overall_condition">
+                        <input type="checkbox" class="criterion-toggle rounded" value="overall_condition" <?php echo e(isset($criteria['overall_condition']) ? 'checked' : ''); ?> onchange="updateCriterionDisplay('overall_condition')">
                         <input type="text" name="condition_criteria_labels[overall_condition]" 
-                               value="{{ $criteriaLabels['overall_condition'] ?? $defaultLabels['overall_condition'] }}"
+                               value="<?php echo e($criteriaLabels['overall_condition'] ?? $defaultLabels['overall_condition']); ?>"
                                class="flex-1 text-sm rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                placeholder="Nom du critère"
                                oninput="updateCriterionLabel('overall_condition', this.value)">
                         <div class="flex gap-0.5" data-criterion="overall_condition">
-                            @for($i = 1; $i <= 5; $i++)
-                                <button type="button" onclick="setRating('overall_condition', {{ $i }})" 
-                                        class="star-btn text-2xl {{ isset($criteria['overall_condition']) && $criteria['overall_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300' }} hover:text-yellow-400 transition"
-                                        data-star="{{ $i }}">★</button>
-                            @endfor
+                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                <button type="button" onclick="setRating('overall_condition', <?php echo e($i); ?>)" 
+                                        class="star-btn text-2xl <?php echo e(isset($criteria['overall_condition']) && $criteria['overall_condition'] >= $i ? 'text-yellow-400' : 'text-gray-300'); ?> hover:text-yellow-400 transition"
+                                        data-star="<?php echo e($i); ?>">★</button>
+                            <?php endfor; ?>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Champ caché pour les critères de collection --}}
-            <input type="hidden" name="condition_criteria" id="condition_criteria_input" value="{{ json_encode($sheet->condition_criteria ?? []) }}">
+            
+            <input type="hidden" name="condition_criteria" id="condition_criteria_input" value="<?php echo e(json_encode($sheet->condition_criteria ?? [])); ?>">
 
-            {{-- MODS DISPONIBLES --}}
+            
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <div>
@@ -717,47 +721,47 @@
                     </button>
                 </div>
 
-                @php
+                <?php
                     $selectedMods = $sheet->featured_mods ?? [];
                     $selectedModIds = collect($selectedMods)->pluck('id')->toArray();
-                @endphp
+                ?>
 
-                @if($mods->count() > 0)
+                <?php if($mods->count() > 0): ?>
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
-                        @foreach($mods as $mod)
+                        <?php $__currentLoopData = $mods; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <label class="flex items-start border rounded-lg p-3 hover:bg-gray-50 cursor-pointer">
                                 <input type="checkbox" class="mod-checkbox rounded mt-1 mr-2" 
-                                       value="{{ $mod->id }}" 
-                                       data-name="{{ $mod->name }}"
-                                       data-icon="{{ $mod->icon ?? '🔧' }}"
-                                       {{ in_array($mod->id, $selectedModIds) ? 'checked' : '' }}>
+                                       value="<?php echo e($mod->id); ?>" 
+                                       data-name="<?php echo e($mod->name); ?>"
+                                       data-icon="<?php echo e($mod->icon ?? '🔧'); ?>"
+                                       <?php echo e(in_array($mod->id, $selectedModIds) ? 'checked' : ''); ?>>
                                 <div class="flex-1">
                                     <div class="font-medium text-sm flex items-center gap-2">
-                                        @if($mod->icon && str_starts_with($mod->icon, 'data:image/'))
-                                            <img src="{{ $mod->icon }}" alt="{{ $mod->name }}" class="w-5 h-5" style="image-rendering: pixelated;">
-                                        @else
-                                            <span class="text-lg">{{ $mod->icon ?? '🔧' }}</span>
-                                        @endif
-                                        <span>{{ $mod->name }}</span>
+                                        <?php if($mod->icon && str_starts_with($mod->icon, 'data:image/')): ?>
+                                            <img src="<?php echo e($mod->icon); ?>" alt="<?php echo e($mod->name); ?>" class="w-5 h-5" style="image-rendering: pixelated;">
+                                        <?php else: ?>
+                                            <span class="text-lg"><?php echo e($mod->icon ?? '🔧'); ?></span>
+                                        <?php endif; ?>
+                                        <span><?php echo e($mod->name); ?></span>
                                     </div>
-                                    <div class="text-xs text-gray-500">{{ $mod->type }}</div>
+                                    <div class="text-xs text-gray-500"><?php echo e($mod->type); ?></div>
                                 </div>
                             </label>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                @else
-                    <p class="text-sm text-gray-500 italic">Aucun mod disponible. <a href="{{ route('admin.mods.create') }}" class="text-indigo-600 hover:underline">Créer un mod</a></p>
-                @endif
+                <?php else: ?>
+                    <p class="text-sm text-gray-500 italic">Aucun mod disponible. <a href="<?php echo e(route('admin.mods.create')); ?>" class="text-indigo-600 hover:underline">Créer un mod</a></p>
+                <?php endif; ?>
 
-                <input type="hidden" name="featured_mods" id="featured_mods_input" value="{{ json_encode($selectedMods) }}">
+                <input type="hidden" name="featured_mods" id="featured_mods_input" value="<?php echo e(json_encode($selectedMods)); ?>">
             </div>
 
-            {{-- GESTION DES IMAGES --}}
+            
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">📷 Images</h2>
 
-                {{-- IMAGES DE TAXONOMIE (JEUX VIDÉO) --}}
-                @if(isset($selectedType) && $selectedType)
+                
+                <?php if(isset($selectedType) && $selectedType): ?>
                     <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <h3 class="text-sm font-semibold text-blue-900 mb-3">
                             🎮 Images du jeu (taxonomie)
@@ -765,61 +769,61 @@
                         <p class="text-xs text-blue-700 mb-3">Images partagées pour tous les exemplaires de ce jeu</p>
                         
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {{-- Cover --}}
+                            
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
-                                    @if($selectedType->cover_image_url)
-                                        <img src="{{ $selectedType->cover_image_url }}" class="w-full h-full object-cover" alt="Cover">
-                                    @else
+                                    <?php if($selectedType->cover_image_url): ?>
+                                        <img src="<?php echo e($selectedType->cover_image_url); ?>" class="w-full h-full object-cover" alt="Cover">
+                                    <?php else: ?>
                                         <span class="text-gray-400 text-xs">Aucune image</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                                 <p class="text-xs text-center font-medium text-gray-600">Cover</p>
                             </div>
 
-                            {{-- Logo --}}
+                            
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
-                                    @if($selectedType->logo_url)
-                                        <img src="{{ $selectedType->logo_url }}" class="w-full h-full object-contain p-2" alt="Logo">
-                                    @else
+                                    <?php if($selectedType->logo_url): ?>
+                                        <img src="<?php echo e($selectedType->logo_url); ?>" class="w-full h-full object-contain p-2" alt="Logo">
+                                    <?php else: ?>
                                         <span class="text-gray-400 text-xs">Aucune image</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                                 <p class="text-xs text-center font-medium text-gray-600">Logo</p>
                             </div>
 
-                            {{-- Screenshot 1 --}}
+                            
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
-                                    @if($selectedType->screenshot1_url)
-                                        <img src="{{ $selectedType->screenshot1_url }}" class="w-full h-full object-cover" alt="Screenshot 1">
-                                    @else
+                                    <?php if($selectedType->screenshot1_url): ?>
+                                        <img src="<?php echo e($selectedType->screenshot1_url); ?>" class="w-full h-full object-cover" alt="Screenshot 1">
+                                    <?php else: ?>
                                         <span class="text-gray-400 text-xs">Aucune image</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                                 <p class="text-xs text-center font-medium text-gray-600">Screenshot 1</p>
                             </div>
 
-                            {{-- Screenshot 2 --}}
+                            
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
-                                    @if($selectedType->screenshot2_url)
-                                        <img src="{{ $selectedType->screenshot2_url }}" class="w-full h-full object-cover" alt="Screenshot 2">
-                                    @else
+                                    <?php if($selectedType->screenshot2_url): ?>
+                                        <img src="<?php echo e($selectedType->screenshot2_url); ?>" class="w-full h-full object-cover" alt="Screenshot 2">
+                                    <?php else: ?>
                                         <span class="text-gray-400 text-xs">Aucune image</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                                 <p class="text-xs text-center font-medium text-gray-600">Screenshot 2</p>
                             </div>
                         </div>
                         
                         <p class="text-xs text-blue-600 mt-3">
-                            💡 Ces images sont gérées dans <a href="{{ route('admin.product-sheets.images-manager') }}" class="underline hover:text-blue-800">le gestionnaire d'images</a>
+                            💡 Ces images sont gérées dans <a href="<?php echo e(route('admin.product-sheets.images-manager')); ?>" class="underline hover:text-blue-800">le gestionnaire d'images</a>
                         </p>
                     </div>
 
-                    {{-- LOGO ÉDITEUR --}}
+                    
                     <div class="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
                         <h3 class="text-sm font-semibold text-purple-900 mb-3">
                             🏢 Logo de l'éditeur
@@ -828,98 +832,111 @@
                             <button type="button" 
                                     onclick="openPublisherLogoModal()"
                                     class="w-40 h-20 bg-white rounded-lg border-2 border-dashed border-purple-300 flex items-center justify-center overflow-hidden p-2 cursor-pointer hover:border-purple-500 transition-colors">
-                                @if($selectedType->publisher_logo_url)
-                                    <img src="{{ $selectedType->publisher_logo_url }}" 
-                                         alt="Logo {{ $selectedType->publisher ?? 'éditeur' }}" 
+                                <?php if($selectedType->publisher_logo_url): ?>
+                                    <img src="<?php echo e($selectedType->publisher_logo_url); ?>" 
+                                         alt="Logo <?php echo e($selectedType->publisher ?? 'éditeur'); ?>" 
                                          id="form-publisher-logo"
                                          class="max-w-full max-h-full object-contain">
-                                @else
+                                <?php else: ?>
                                     <span class="text-gray-400 text-xs text-center">+ Ajouter logo</span>
-                                @endif
+                                <?php endif; ?>
                             </button>
                             <div class="text-sm text-purple-800">
-                                <p class="font-medium">{{ $selectedType->publisher ?? 'Non défini' }}</p>
+                                <p class="font-medium"><?php echo e($selectedType->publisher ?? 'Non défini'); ?></p>
                                 <p class="text-xs text-purple-600 mt-1">
                                     👉 Cliquez pour modifier le logo
                                 </p>
                             </div>
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
 
-                {{-- =====================
-                     IMAGES DE L'ARTICLE - COMPOSANT RÉUTILISABLE
-                ===================== --}}
-                <x-article-images-manager 
-                    :article-type-id="$selectedType->id ?? null"
-                    :article-type-name="$selectedType->name ?? null"
-                    :rom-id="null"
-                    :uploaded-images="$sheet->images ?? []"
-                    :primary-image="$sheet->main_image ?? ''"
-                />
                 
-                {{-- Masquer le bouton des photos génériques pour les fiches produits --}}
+                <?php if (isset($component)) { $__componentOriginal9a3eb116445d5b725243e375f9d62eb1 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal9a3eb116445d5b725243e375f9d62eb1 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.article-images-manager','data' => ['articleTypeId' => $selectedType->id ?? null,'articleTypeName' => $selectedType->name ?? null,'romId' => null,'uploadedImages' => $sheet->images ?? [],'primaryImage' => $sheet->main_image ?? '']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('article-images-manager'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['article-type-id' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($selectedType->id ?? null),'article-type-name' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($selectedType->name ?? null),'rom-id' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(null),'uploaded-images' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($sheet->images ?? []),'primary-image' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($sheet->main_image ?? '')]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal9a3eb116445d5b725243e375f9d62eb1)): ?>
+<?php $attributes = $__attributesOriginal9a3eb116445d5b725243e375f9d62eb1; ?>
+<?php unset($__attributesOriginal9a3eb116445d5b725243e375f9d62eb1); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal9a3eb116445d5b725243e375f9d62eb1)): ?>
+<?php $component = $__componentOriginal9a3eb116445d5b725243e375f9d62eb1; ?>
+<?php unset($__componentOriginal9a3eb116445d5b725243e375f9d62eb1); ?>
+<?php endif; ?>
+                
+                
                 <style>
                     button[onclick="openTaxonomyImagesModal()"] {
                         display: none !important;
                     }
                 </style>
                 
-                {{-- Configuration des routes pour le gestionnaire d'images --}}
+                
                 <script>
                 window.configureArticleImagesRoutes({
-                    upload: '{{ route("admin.product-sheets.upload-image") }}',
-                    delete: '{{ route("admin.articles.delete-image") }}',
-                    ajaxImages: '{{ url("admin/ajax/articles-images-by-type") }}'
+                    upload: '<?php echo e(route("admin.product-sheets.upload-image")); ?>',
+                    delete: '<?php echo e(route("admin.articles.delete-image")); ?>',
+                    ajaxImages: '<?php echo e(url("admin/ajax/articles-images-by-type")); ?>'
                 });
                 </script>
             </div>
 
-            {{-- TAGS --}}
+            
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Tags</h2>
                 <input type="text" id="tags_input"
-                       value="{{ $sheet->tags ? implode(', ', $sheet->tags) : '' }}"
+                       value="<?php echo e($sheet->tags ? implode(', ', $sheet->tags) : ''); ?>"
                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                        placeholder="gaming, console, sony">
-                <input type="hidden" name="tags" id="tags_hidden" value="{{ json_encode($sheet->tags ?? []) }}">
+                <input type="hidden" name="tags" id="tags_hidden" value="<?php echo e(json_encode($sheet->tags ?? [])); ?>">
             </div>
 
-            {{-- STATUT --}}
+            
             <div class="mb-8">
                 <label class="flex items-center">
                     <input type="checkbox" name="is_active" value="1" 
-                           {{ old('is_active', $sheet->is_active) ? 'checked' : '' }}
+                           <?php echo e(old('is_active', $sheet->is_active) ? 'checked' : ''); ?>
+
                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                     <span class="ml-2 text-sm">Fiche active</span>
                 </label>
             </div>
 
-            {{-- Hidden fields pour conserver les images --}}
-            <input type="hidden" name="images" id="images_input" value="{{ json_encode($sheet->images ?? []) }}">
-            <input type="hidden" name="main_image" id="main_image_input" value="{{ $sheet->main_image }}">
+            
+            <input type="hidden" name="images" id="images_input" value="<?php echo e(json_encode($sheet->images ?? [])); ?>">
+            <input type="hidden" name="main_image" id="main_image_input" value="<?php echo e($sheet->main_image); ?>">
 
-            {{-- ACTIONS --}}
+            
             <div class="flex items-center justify-end gap-3">
-                <a href="{{ route('admin.product-sheets.index') }}" 
+                <a href="<?php echo e(route('admin.product-sheets.index')); ?>" 
                    class="px-4 py-2 rounded border hover:bg-gray-50">
                     Annuler
                 </a>
                 <button type="submit" 
                         class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
-                    💾 {{ $sheet->exists ? 'Mettre à jour' : 'Créer' }}
+                    💾 <?php echo e($sheet->exists ? 'Mettre à jour' : 'Créer'); ?>
+
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- Script inline pour les fonctions appelées par onclick --}}
+
 <script>
 console.log('🚀 Script de gestion d\'images chargé - début');
 
 // Données PHP injectées pour éviter les problèmes de parsing
-@php
+<?php
     $taxonomyImagesData = [
         'cover' => isset($selectedType) && $selectedType->cover_image_url ? $selectedType->cover_image_url : null,
         'artwork' => isset($selectedType) && $selectedType->screenshot2_url ? $selectedType->screenshot2_url : null,
@@ -927,23 +944,23 @@ console.log('🚀 Script de gestion d\'images chargé - début');
         'logo' => isset($selectedType) && $selectedType->logo_url ? $selectedType->logo_url : null,
         'publisher_logo' => isset($selectedType) && $selectedType->publisher_logo_url ? $selectedType->publisher_logo_url : null,
     ];
-@endphp
-const TAXONOMY_IMAGES = {!! json_encode($taxonomyImagesData) !!};
-const SELECTED_TYPE_NAME = {!! isset($selectedType) && $selectedType ? json_encode($selectedType->name) : '""' !!};
+?>
+const TAXONOMY_IMAGES = <?php echo json_encode($taxonomyImagesData); ?>;
+const SELECTED_TYPE_NAME = <?php echo isset($selectedType) && $selectedType ? json_encode($selectedType->name) : '""'; ?>;
 
 // Routes adaptées pour Product Sheets
-window.UPLOAD_ROUTE = '{{ route("admin.product-sheets.upload-image") }}';
-window.DELETE_IMAGE_ROUTE = '{{ route("admin.articles.delete-image") }}'; // Route partagée
-window.AJAX_ARTICLE_IMAGES_ROUTE = '{{ url("admin/ajax/articles-images-by-type") }}';
+window.UPLOAD_ROUTE = '<?php echo e(route("admin.product-sheets.upload-image")); ?>';
+window.DELETE_IMAGE_ROUTE = '<?php echo e(route("admin.articles.delete-image")); ?>'; // Route partagée
+window.AJAX_ARTICLE_IMAGES_ROUTE = '<?php echo e(url("admin/ajax/articles-images-by-type")); ?>';
 
 // Variables globales pour la gestion des images d'articles (sans let, directement sur window)
-window.uploadedGameImages = {!! json_encode($sheet->images ?? []) !!};
-window.primaryImageUrl = '{{ $sheet->main_image ?? '' }}';
-window.currentArticleTypeId = {{ isset($selectedType) && $selectedType ? $selectedType->id : 'null' }};
+window.uploadedGameImages = <?php echo json_encode($sheet->images ?? []); ?>;
+window.primaryImageUrl = '<?php echo e($sheet->main_image ?? ''); ?>';
+window.currentArticleTypeId = <?php echo e(isset($selectedType) && $selectedType ? $selectedType->id : 'null'); ?>;
 window.genericArticleImages = [];
 
 // Variables globales pour les mods
-let featuredMods = {!! json_encode($sheet->featured_mods ?? []) !!};
+let featuredMods = <?php echo json_encode($sheet->featured_mods ?? []); ?>;
 
 console.log('📦 Variables globales initialisées:', {
     window.uploadedGameImages: window.uploadedGameImages.length,
@@ -1889,8 +1906,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Upload d'images
-    let existingImages = {!! json_encode($sheet->images ?? []) !!};
-    let mainImage = '{{ $sheet->main_image }}';
+    let existingImages = <?php echo json_encode($sheet->images ?? []); ?>;
+    let mainImage = '<?php echo e($sheet->main_image); ?>';
     let newImages = [];
 
     const imageUpload = document.getElementById('image_upload');
@@ -1913,7 +1930,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const formData = new FormData();
                     formData.append('image', file);
 
-                    const response = await fetch('{{ route("admin.product-sheets.upload-image") }}', {
+                    const response = await fetch('<?php echo e(route("admin.product-sheets.upload-image")); ?>', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -2014,7 +2031,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const img = newImages[index];
         
         try {
-            await fetch('{{ route("admin.product-sheets.delete-image") }}', {
+            await fetch('<?php echo e(route("admin.product-sheets.delete-image")); ?>', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2063,16 +2080,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-{{-- Modal pour logo éditeur --}}
+
 <script>
     // Variables globales pour le modal éditeur
     let selectedPublisherId = null;
-    let selectedPublisherName = '{{ $selectedType->publisher ?? '' }}';
+    let selectedPublisherName = '<?php echo e($selectedType->publisher ?? ''); ?>';
     let selectedLogoFile = null;
     
     // Ouvrir le modal de gestion de l'éditeur
     window.openPublisherLogoModal = function() {
-        const articleTypeId = {{ isset($selectedType) && $selectedType ? $selectedType->id : 'null' }};
+        const articleTypeId = <?php echo e(isset($selectedType) && $selectedType ? $selectedType->id : 'null'); ?>;
         
         if (!articleTypeId) {
             alert('Aucun type d\'article sélectionné');
@@ -2154,11 +2171,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const previewSection = document.createElement('div');
         previewSection.id = 'publisher-logo-preview';
         previewSection.className = 'flex items-center justify-center p-8 bg-gray-50 rounded-lg border border-gray-200 min-h-[150px]';
-        @if($selectedType->publisher_logo_url)
-            previewSection.innerHTML = '<img src="{{ $selectedType->publisher_logo_url }}" class="max-h-32 object-contain rounded-lg">';
-        @else
+        <?php if($selectedType->publisher_logo_url): ?>
+            previewSection.innerHTML = '<img src="<?php echo e($selectedType->publisher_logo_url); ?>" class="max-h-32 object-contain rounded-lg">';
+        <?php else: ?>
             previewSection.innerHTML = '<p class="text-gray-400">Aucun logo disponible</p>';
-        @endif
+        <?php endif; ?>
         
         body.appendChild(publisherSection);
         body.appendChild(uploadSection);
@@ -2518,4 +2535,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') closeZoomModal();
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\stock-R4E\resources\views/admin/product-sheets/edit.blade.php ENDPATH**/ ?>

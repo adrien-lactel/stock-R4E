@@ -257,6 +257,14 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::put('/taxonomy/type/{type}', [TaxonomyController::class, 'updateType'])
             ->name('taxonomy.type.update');
 
+        // Upload logo éditeur pour ArticleType
+        Route::post('/article-types/{articleType}/publisher-logo', [TaxonomyController::class, 'uploadPublisherLogo'])
+            ->name('article-types.publisher-logo');
+        
+        // Mettre à jour l'éditeur d'un ArticleType (nom + logo optionnel)
+        Route::post('/article-types/{articleType}/publisher', [TaxonomyController::class, 'updatePublisher'])
+            ->name('article-types.publisher');
+
         // DELETE (optionnel mais utile)
         Route::delete('/taxonomy/category/{category}', [TaxonomyController::class, 'destroyCategory'])
             ->name('taxonomy.category.destroy');
@@ -316,6 +324,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         
         Route::get('/ajax/article-type-images/{typeId}', [TaxonomyController::class, 'getArticleTypeImages'])
             ->name('ajax.article-type-images');
+        
+        // Images d'articles (Consoles) par type - pour photos génériques dans modal
+        Route::get('/ajax/articles-images-by-type/{typeId}', [TaxonomyController::class, 'getArticlesImagesByType'])
+            ->name('ajax.articles-images-by-type');
         
         Route::get('/ajax/lookup-rom-id/{romId}', [TaxonomyController::class, 'lookupRomId'])
             ->name('ajax.lookup-rom-id');
@@ -391,6 +403,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
 
         Route::get('/product-sheets/{productSheet}/edit', [ProductSheetController::class, 'edit'])
             ->name('product-sheets.edit');
+
+        Route::get('/product-sheets/{productSheet}', [ProductSheetController::class, 'show'])
+            ->name('product-sheets.show');
 
         Route::put('/product-sheets/{productSheet}', [ProductSheetController::class, 'update'])
             ->name('product-sheets.update');

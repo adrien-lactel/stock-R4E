@@ -368,4 +368,127 @@ class RepairerConsoleController extends Controller
 
         return back()->with('success', 'Console repassée en réparation.');
     }
+
+    /**
+     * Formulaire de création d'article (pour réparateurs autorisés)
+     */
+    public function createArticle()
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if (!$repairer || !$repairer->canCreateArticles()) {
+            abort(403, 'Vous n\'êtes pas autorisé à créer des articles.');
+        }
+
+        // Ré-utiliser le formulaire admin mais avec des données limitées
+        $articleCategories = \App\Models\ArticleCategory::orderBy('name')->get();
+        $repairers = \App\Models\Repairer::where('id', $repairer->id)->get();
+        $stores = \App\Models\Store::orderBy('name')->get();
+        $console = new Console();
+        
+        // Pré-remplir le réparateur
+        $console->repairer_id = $repairer->id;
+        $console->lieu_stockage = $repairer->address . ', ' . $repairer->city;
+
+        $provenances = Console::whereNotNull('provenance_article')->distinct()->pluck('provenance_article');
+        $mods = Console::whereNotNull('mod_1')->distinct()->pluck('mod_1');
+        $lieux = Console::whereNotNull('lieu_stockage')->distinct()->pluck('lieu_stockage');
+        $lastConsoles = Console::with(['articleCategory','articleSubCategory','articleType','repairer'])
+            ->where('repairer_id', $repairer->id)
+            ->latest()
+            ->take(15)
+            ->get();
+
+        return view('admin.consoles.form', compact(
+            'console', 
+            'articleCategories', 
+            'repairers', 
+            'stores', 
+            'provenances', 
+            'mods', 
+            'lieux',
+            'lastConsoles'
+        ));
+    }
+
+    /**
+     * Enregistrer un nouvel article créé par un réparateur
+     */
+    public function storeArticle(Request $request)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if (!$repairer || !$repairer->canCreateArticles()) {
+            abort(403, 'Vous n\'êtes pas autorisé à créer des articles.');
+        }
+
+        // Forcer le repairer_id
+        $data = $request->all();
+        $data['repairer_id'] = $repairer->id;
+        
+        // Déléguer au controller admin
+        $adminController = app(\App\Http\Controllers\Admin\ConsoleAdminController::class);
+        $console = $adminController->storeArticle($request);
+        
+        return redirect()->route('repairer.dashboard')
+            ->with('success', 'Article créé avec succès !');
+    }
+
+    /**
+     * Formulaire d'édition d'article assigné au réparateur
+     */
+    public function editArticle(Console $console)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if (!$repairer || $console->repairer_id !== $repairer->id) {
+            abort(403, 'Vous n\'êtes pas autorisé à modifier cette console.');
+        }
+
+        $articleCategories = \App\Models\ArticleCategory::orderBy('name')->get();
+        $repairers = \App\Models\Repairer::where('id', $repairer->id)->get();
+        $stores = \App\Models\Store::orderBy('name')->get();
+
+        $provenances = Console::whereNotNull('provenance_article')->distinct()->pluck('provenance_article');
+        $mods = Console::whereNotNull('mod_1')->distinct()->pluck('mod_1');
+        $lieux = Console::whereNotNull('lieu_stockage')->distinct()->pluck('lieu_stockage');
+        $lastConsoles = Console::with(['articleCategory','articleSubCategory','articleType','repairer'])
+            ->where('repairer_id', $repairer->id)
+            ->latest()
+            ->take(15)
+            ->get();
+
+        return view('admin.consoles.form', compact(
+            'console', 
+            'articleCategories', 
+            'repairers', 
+            'stores', 
+            'provenances', 
+            'mods', 
+            'lieux',
+            'lastConsoles'
+        ));
+    }
+
+    /**
+     * Mettre à jour un article assigné au réparateur
+     */
+    public function updateArticle(Request $request, Console $console)
+    {
+        $repairer = $this->getCurrentRepairer();
+        
+        if (!$repairer || $console->repairer_id !== $repairer->id) {
+            abort(403, 'Vous n\'êtes pas autorisé à modifier cette console.');
+        }
+
+        // Empêcher de changer le repairer_id
+        $data = $request->except('repairer_id');
+        
+        // Déléguer au controller admin
+        $adminController = app(\App\Http\Controllers\Admin\ConsoleAdminController::class);
+        $result = $adminController->updateArticle($request, $console);
+        
+        return redirect()->route('repairer.dashboard')
+            ->with('success', 'Article mis à jour avec succès !');
+    }
 }

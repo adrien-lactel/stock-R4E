@@ -605,6 +605,91 @@ public function destroyType(ArticleType $type)
         }
     }
 
+    /**
+     * Récupérer les images d'articles (Consoles) d'un même type
+     * Pour afficher les photos génériques dans la modal
+     */
+    public function getArticlesImagesByType($typeId)
+    {
+        try {
+            $allImages = [];
+            $excludeTaxonomy = request()->get('exclude_taxonomy') == '1' || request()->get('exclude_taxonomy') === true;
+            
+            \Log::info('getArticlesImagesByType appelé', [
+                'type_id' => $typeId,
+                'exclude_taxonomy_param' => request()->get('exclude_taxonomy'),
+                'exclude_taxonomy_bool' => $excludeTaxonomy
+            ]);
+            
+            // 1. Récupérer les images uploadées sur des CONSOLES spécifiques
+            $consoles = \App\Models\Console::where('article_type_id', $typeId)
+                ->whereNotNull('article_images')
+                ->get();
+            
+            foreach ($consoles as $console) {
+                if (!empty($console->article_images) && is_array($console->article_images)) {
+                    foreach ($console->article_images as $imageUrl) {
+                        if (!in_array($imageUrl, $allImages)) {
+                            $allImages[] = $imageUrl;
+                        }
+                    }
+                }
+            }
+            
+            // 2. Récupérer les images uploadées sur des FICHES PRODUITS spécifiques
+            $productSheets = \App\Models\ProductSheet::where('article_type_id', $typeId)
+                ->whereNotNull('images')
+                ->get();
+            
+            foreach ($productSheets as $sheet) {
+                if (!empty($sheet->images) && is_array($sheet->images)) {
+                    foreach ($sheet->images as $imageUrl) {
+                        if (!in_array($imageUrl, $allImages)) {
+                            $allImages[] = $imageUrl;
+                        }
+                    }
+                }
+            }
+            
+            // 3. Si on n'exclut PAS la taxonomie, ajouter les images de l'ArticleType
+            if (!$excludeTaxonomy) {
+                $articleType = \App\Models\ArticleType::find($typeId);
+                if ($articleType) {
+                    // Ajouter les images génériques du type
+                    if (!empty($articleType->images) && is_array($articleType->images)) {
+                        foreach ($articleType->images as $imageUrl) {
+                            if (!in_array($imageUrl, $allImages)) {
+                                $allImages[] = $imageUrl;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            \Log::info('Images d\'articles récupérées pour le type', [
+                'type_id' => $typeId,
+                'exclude_taxonomy' => $excludeTaxonomy,
+                'consoles_count' => $consoles->count(),
+                'product_sheets_count' => $productSheets->count(),
+                'total_images_count' => count($allImages)
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'images' => $allImages,
+                'count' => count($allImages)
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur getArticlesImagesByType: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'images' => [],
+                'count' => 0,
+                'message' => 'Erreur lors de la récupération des images d\'articles'
+            ], 500);
+        }
+    }
+
     /* =====================================================
      | GET TAXONOMY IMAGES - Récupère toutes les images d'un jeu
      | COMPATIBLE LOCAL + CLOUDINARY (Railway)
@@ -1077,6 +1162,7 @@ public function destroyType(ArticleType $type)
                 return [
                     'id' => $type->id,
                     'name' => $type->name,
+                    'rom_id' => $type->rom_id,
                     'sub_category_name' => $type->subCategory->name ?? ''
                 ];
             }),
@@ -1086,6 +1172,143 @@ public function destroyType(ArticleType $type)
             'to' => $types->lastItem(),
             'total' => $types->total()
         ]);
+    }
+
+    /**
+     * Upload du logo éditeur pour un ArticleType
+     */
+    public function uploadPublisherLogo(Request $request, ArticleType $articleType)
+    {
+        $request->validate([
+            'logo' => 'required|image|max:2048', // 2MB max
+        ]);
+
+        try {
+            $file = $request->file('logo');
+            $publisherName = $articleType->publisher ?? 'editeur';
+            
+            // Trouver ou créer le Publisher
+            $publisher = \App\Models\Publisher::firstOrCreate(
+                ['name' => $publisherName],
+                ['name' => $publisherName]
+            );
+            
+            // Générer un nom de fichier
+            $extension = $file->getClientOriginalExtension();
+            $filename = \Str::slug($publisherName) . '.' . $extension;
+            $path = "taxonomy/editeurs/{$filename}";
+            
+            // Sauvegarder sur R2 si configuré
+            $r2Url = config('filesystems.disks.r2.url');
+            if (config('filesystems.disks.r2.key')) {
+                \Storage::disk('r2')->putFileAs(
+                    'taxonomy/editeurs',
+                    $file,
+                    $filename,
+                    'public'
+                );
+                $logoUrl = $r2Url . '/taxonomy/editeurs/' . $filename;
+            } else {
+                // Sauvegarder en local
+                if (!file_exists(public_path('images/taxonomy/editeurs'))) {
+                    mkdir(public_path('images/taxonomy/editeurs'), 0755, true);
+                }
+                $file->move(public_path('images/taxonomy/editeurs'), $filename);
+                $logoUrl = url("/images/taxonomy/editeurs/{$filename}");
+            }
+            
+            // Mettre à jour le Publisher avec le nouveau logo
+            $publisher->logo = $path;
+            $publisher->save();
+            
+            return response()->json([
+                'success' => true,
+                'logo_path' => $path,
+                'logo_url' => $logoUrl
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mettre à jour l'éditeur d'un ArticleType (nom + logo optionnel)
+     */
+    public function updatePublisher(Request $request, ArticleType $articleType)
+    {
+        $request->validate([
+            'publisher_name' => 'required|string|max:255',
+            'publisher_id' => 'nullable|integer|exists:publishers,id',
+            'logo' => 'nullable|image|max:2048',
+        ]);
+
+        try {
+            $publisherName = $request->publisher_name;
+            $logoUrl = null;
+            
+            // Trouver ou créer le Publisher
+            if ($request->publisher_id) {
+                $publisher = \App\Models\Publisher::find($request->publisher_id);
+            } else {
+                // Créer un nouvel éditeur
+                $publisher = \App\Models\Publisher::firstOrCreate(
+                    ['name' => $publisherName],
+                    ['name' => $publisherName]
+                );
+            }
+            
+            // Upload du logo si fourni
+            if ($request->hasFile('logo')) {
+                $file = $request->file('logo');
+                $extension = $file->getClientOriginalExtension();
+                $filename = \Str::slug($publisherName) . '.' . $extension;
+                $path = "taxonomy/editeurs/{$filename}";
+                
+                $r2Url = config('filesystems.disks.r2.url');
+                if (config('filesystems.disks.r2.key')) {
+                    \Storage::disk('r2')->putFileAs(
+                        'taxonomy/editeurs',
+                        $file,
+                        $filename,
+                        'public'
+                    );
+                    $logoUrl = $r2Url . '/taxonomy/editeurs/' . $filename;
+                } else {
+                    if (!file_exists(public_path('images/taxonomy/editeurs'))) {
+                        mkdir(public_path('images/taxonomy/editeurs'), 0755, true);
+                    }
+                    $file->move(public_path('images/taxonomy/editeurs'), $filename);
+                    $logoUrl = url("/images/taxonomy/editeurs/{$filename}");
+                }
+                
+                $publisher->logo = $path;
+                $publisher->save();
+            } else {
+                // Récupérer l'URL du logo existant
+                $logoUrl = $publisher->logo_url;
+            }
+            
+            // Mettre à jour l'ArticleType avec le nouveau nom d'éditeur
+            $articleType->publisher = $publisherName;
+            $articleType->save();
+            
+            return response()->json([
+                'success' => true,
+                'publisher_name' => $publisherName,
+                'publisher_id' => $publisher->id,
+                'logo_url' => $logoUrl
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     
 }

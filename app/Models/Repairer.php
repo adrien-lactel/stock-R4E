@@ -18,6 +18,7 @@ class Repairer extends Model
         'address',
         'notes',
         'is_active',
+        'can_create_articles',
         'delay_days_default',
         'shipping_method',
         'vat_number',
@@ -52,5 +53,13 @@ class Repairer extends Model
     public function canPerform(Mod $operation): bool
     {
         return $this->operations()->where('mod_id', $operation->id)->exists();
+    }
+
+    /**
+     * Vérifie si le réparateur peut créer de nouveaux articles
+     */
+    public function canCreateArticles(): bool
+    {
+        return $this->can_create_articles === true || $this->can_create_articles === 1;
     }
 }

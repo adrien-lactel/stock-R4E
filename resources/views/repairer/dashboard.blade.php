@@ -6,6 +6,15 @@
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-800">🛠️ Dashboard Réparateur</h1>
         <p class="text-gray-600 mt-1">Bienvenue, {{ $repairer->name }}</p>
+        
+        @if($repairer->canCreateArticles())
+            <div class="mt-4">
+                <a href="{{ route('repairer.articles.create') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
+                    ➕ Créer un nouvel article
+                </a>
+            </div>
+        @endif
     </div>
 
     @if(session('success'))
@@ -311,9 +320,13 @@
                                                 </form>
                                             @endif
                                         @else
+                                            <a href="{{ route('repairer.consoles.edit', $console) }}" 
+                                               class="inline-flex items-center px-2 py-1 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded">
+                                                ✏️ Éditer
+                                            </a>
                                             <a href="{{ route('repairer.consoles.edit-mods', $console) }}" 
-                                               class="text-indigo-600 hover:text-indigo-900 font-medium">
-                                                ✏️ Gérer
+                                               class="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 rounded ml-1">
+                                                🔧 Mods
                                             </a>
                                             @if(in_array($console->status, ['repair', 'defective']) && $console->assignment_status === 'received')
                                                 <form action="{{ route('repairer.consoles.mark-functional', $console) }}" 
