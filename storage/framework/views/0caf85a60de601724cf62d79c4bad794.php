@@ -762,6 +762,20 @@
 
                 
                 <?php if(isset($selectedType) && $selectedType): ?>
+                    
+                    <?php if(config('app.debug')): ?>
+                    <div class="mb-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
+                        <strong>DEBUG Taxonomy URLs:</strong><br>
+                        rom_id: <?php echo e($selectedType->rom_id ?? 'NULL'); ?><br>
+                        subCategory: <?php echo e($selectedType->subCategory->name ?? 'NULL'); ?><br>
+                        cover: <?php echo e($selectedType->cover_image_url ?? 'NULL'); ?><br>
+                        logo: <?php echo e($selectedType->logo_url ?? 'NULL'); ?><br>
+                        ss1: <?php echo e($selectedType->screenshot1_url ?? 'NULL'); ?><br>
+                        ss2: <?php echo e($selectedType->screenshot2_url ?? 'NULL'); ?>
+
+                    </div>
+                    <?php endif; ?>
+                    
                     <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <h3 class="text-sm font-semibold text-blue-900 mb-3">
                             🎮 Images du jeu (taxonomie)

@@ -758,6 +758,19 @@
 
                 {{-- IMAGES DE TAXONOMIE (JEUX VIDÉO) --}}
                 @if(isset($selectedType) && $selectedType)
+                    {{-- Debug: Show taxonomy image URLs --}}
+                    @if(config('app.debug'))
+                    <div class="mb-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
+                        <strong>DEBUG Taxonomy URLs:</strong><br>
+                        rom_id: {{ $selectedType->rom_id ?? 'NULL' }}<br>
+                        subCategory: {{ $selectedType->subCategory->name ?? 'NULL' }}<br>
+                        cover: {{ $selectedType->cover_image_url ?? 'NULL' }}<br>
+                        logo: {{ $selectedType->logo_url ?? 'NULL' }}<br>
+                        ss1: {{ $selectedType->screenshot1_url ?? 'NULL' }}<br>
+                        ss2: {{ $selectedType->screenshot2_url ?? 'NULL' }}
+                    </div>
+                    @endif
+                    
                     <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <h3 class="text-sm font-semibold text-blue-900 mb-3">
                             🎮 Images du jeu (taxonomie)
