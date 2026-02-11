@@ -2138,21 +2138,29 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Section Upload Logo
         const uploadSection = document.createElement('div');
-        uploadSection.className = 'border-2 border-dashed border-purple-300 rounded-lg p-6 bg-purple-50';
+        uploadSection.id = 'publisher-logo-dropzone';
+        uploadSection.className = 'border-2 border-dashed border-purple-300 rounded-lg p-6 bg-purple-50 transition-all cursor-pointer';
         uploadSection.innerHTML = `
           <div class="text-center">
             <h4 class="font-semibold text-gray-700 mb-2">📷 Logo de l'éditeur</h4>
-            <p class="text-sm text-gray-500 mb-4">Optionnel : ajouter ou modifier le logo</p>
+            <p class="text-sm text-gray-500 mb-4">Glissez-déposez une image ou cliquez pour sélectionner</p>
             
             <input type="file" id="publisher-logo-file" accept="image/*" class="hidden">
             
-            <button type="button" onclick="document.getElementById('publisher-logo-file').click()" 
-                    class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 mx-auto">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              📁 Choisir une image
-            </button>
+            <div class="flex flex-col items-center gap-3">
+              <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                <svg class="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+              </div>
+              <button type="button" onclick="document.getElementById('publisher-logo-file').click()" 
+                      class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                📁 Choisir une image
+              </button>
+            </div>
           </div>
         `;
         
@@ -2305,11 +2313,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('publisher-logo-preview').innerHTML = '<p class="text-gray-400">Aucun logo disponible</p>';
     };
     
-    // Configurer l'upload de logo
+    // Configurer l'upload de logo (avec drag & drop)
     function setupLogoUpload() {
-        document.getElementById('publisher-logo-file').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        const dropzone = document.getElementById('publisher-logo-dropzone');
+        const fileInput = document.getElementById('publisher-logo-file');
+        
+        // Handler pour traiter le fichier
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Veuillez sélectionner une image valide');
+                return;
+            }
             
             selectedLogoFile = file;
             
@@ -2319,6 +2333,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<img src="' + e.target.result + '" class="max-h-32 object-contain rounded-lg">';
             };
             reader.readAsDataURL(file);
+        }
+        
+        // Événement change classique
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+        
+        // Drag & Drop events
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('border-purple-500', 'bg-purple-100');
+            dropzone.classList.remove('border-purple-300', 'bg-purple-50');
+        });
+        
+        dropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('border-purple-500', 'bg-purple-100');
+            dropzone.classList.add('border-purple-300', 'bg-purple-50');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('border-purple-500', 'bg-purple-100');
+            dropzone.classList.add('border-purple-300', 'bg-purple-50');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        // Permettre le clic sur toute la zone
+        dropzone.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                fileInput.click();
+            }
         });
     }
     
