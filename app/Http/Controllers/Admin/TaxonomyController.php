@@ -622,15 +622,18 @@ public function destroyType(ArticleType $type)
             ]);
             
             // 1. Récupérer les images uploadées sur des CONSOLES spécifiques
-            $consoles = \App\Models\Console::where('article_type_id', $typeId)
-                ->whereNotNull('article_images')
-                ->get();
-            
-            foreach ($consoles as $console) {
-                if (!empty($console->article_images) && is_array($console->article_images)) {
-                    foreach ($console->article_images as $imageUrl) {
-                        if (!in_array($imageUrl, $allImages)) {
-                            $allImages[] = $imageUrl;
+            // Vérifier si la colonne article_type_id existe avant de requêter
+            if (\Schema::hasColumn('consoles', 'article_type_id')) {
+                $consoles = \App\Models\Console::where('article_type_id', $typeId)
+                    ->whereNotNull('article_images')
+                    ->get();
+                
+                foreach ($consoles as $console) {
+                    if (!empty($console->article_images) && is_array($console->article_images)) {
+                        foreach ($console->article_images as $imageUrl) {
+                            if (!in_array($imageUrl, $allImages)) {
+                                $allImages[] = $imageUrl;
+                            }
                         }
                     }
                 }
