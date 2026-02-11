@@ -568,10 +568,24 @@ class ProductSheetController extends Controller
         $images = $request->input('images');
         if (is_string($images)) {
             $decodedImages = ($images === '' || $images === null) ? [] : json_decode($images, true);
-            $request->merge(['images' => is_array($decodedImages) ? $decodedImages : []]);
-        } elseif (!$request->has('images')) {
-            $request->merge(['images' => []]);
+            $images = is_array($decodedImages) ? $decodedImages : [];
+        } elseif (!is_array($images)) {
+            $images = [];
         }
+        
+        // Conserver le format original pour stockage (avec is_generic flags)
+        $originalImages = $images;
+        
+        // Normaliser les images pour la validation (extraire les URLs des objets)
+        $normalizedImages = [];
+        foreach ($images as $img) {
+            if (is_array($img) && isset($img['url'])) {
+                $normalizedImages[] = $img['url'];
+            } elseif (is_string($img)) {
+                $normalizedImages[] = $img;
+            }
+        }
+        $request->merge(['images' => $normalizedImages]);
 
         $tags = $request->input('tags');
         if (is_string($tags)) {
@@ -613,6 +627,9 @@ class ProductSheetController extends Controller
             'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
+        
+        // Restaurer le format original des images (avec is_generic flags)
+        $data['images'] = $originalImages;
 
         $sheet = ProductSheet::create($data);
 
@@ -745,8 +762,24 @@ class ProductSheetController extends Controller
         // Décoder les champs JSON si nécessaire
         $images = $request->input('images');
         if (is_string($images)) {
-            $request->merge(['images' => json_decode($images, true) ?: []]);
+            $images = json_decode($images, true) ?: [];
         }
+        
+        // Conserver le format original pour stockage (avec is_generic flags)
+        $originalImages = $images;
+        
+        // Normaliser les images pour la validation (extraire les URLs des objets)
+        $normalizedImages = [];
+        if (is_array($images)) {
+            foreach ($images as $img) {
+                if (is_array($img) && isset($img['url'])) {
+                    $normalizedImages[] = $img['url'];
+                } elseif (is_string($img)) {
+                    $normalizedImages[] = $img;
+                }
+            }
+        }
+        $request->merge(['images' => $normalizedImages]);
 
         $tags = $request->input('tags');
         if (is_string($tags)) {
@@ -785,6 +818,9 @@ class ProductSheetController extends Controller
             'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
+        
+        // Restaurer le format original des images (avec is_generic flags)
+        $data['images'] = $originalImages;
 
         $productSheet->update($data);
 
