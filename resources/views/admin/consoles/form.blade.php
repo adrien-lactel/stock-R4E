@@ -5023,24 +5023,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoSection = document.getElementById('console-logo-section');
     const type = document.getElementById('article_type_id');
     
-    if (!cat || !logoSection) return;
+    console.log('🎮 updateConsoleLogoSection appelée:', {
+      cat: cat?.value,
+      logoSection: !!logoSection,
+      type: type?.value,
+      typeIndex: type?.selectedIndex
+    });
+    
+    if (!cat || !logoSection) {
+      console.log('❌ Éléments manquants:', { cat: !!cat, logoSection: !!logoSection });
+      return;
+    }
     
     const isConsoleCategory = parseInt(cat.value) === CONSOLE_CATEGORY_ID;
     const hasType = type && type.value && type.selectedIndex > 0;
     
+    console.log('🎮 Conditions:', { isConsoleCategory, hasType, catValue: cat.value, CONSOLE_CATEGORY_ID });
+    
     if (isConsoleCategory && hasType) {
       logoSection.classList.remove('hidden');
+      console.log('✅ Section images console affichée');
       // Mettre à jour le nom de la console
       const typeName = type.options[type.selectedIndex].text;
       consoleLogoName = typeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     } else {
       logoSection.classList.add('hidden');
+      console.log('🔒 Section images console masquée');
     }
   }
   
   // Écouter les changements de catégorie et type
   document.getElementById('article_category_id')?.addEventListener('change', updateConsoleLogoSection);
   document.getElementById('article_type_id')?.addEventListener('change', updateConsoleLogoSection);
+  
+  // Appel initial pour afficher la section si déjà en mode édition
+  updateConsoleLogoSection();
+  console.log('📦 Console images section initialized');
   
   // Ouvrir le modal
   window.openConsoleLogoModal = function() {
