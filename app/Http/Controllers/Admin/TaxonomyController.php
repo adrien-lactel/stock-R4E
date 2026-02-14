@@ -850,7 +850,7 @@ public function destroyType(ArticleType $type)
             'identifier' => 'required|string',
             'folder' => 'required|string',
             'platform' => 'required|string',
-            'type' => 'required|string|in:cover,logo,artwork,gameplay', // Type choisi par l'utilisateur
+            'type' => 'required|string|in:cover,logo,artwork,gameplay,display1,display2,display3', // Type choisi par l'utilisateur
         ]);
 
         $identifier = $request->identifier;

@@ -132,11 +132,11 @@
     {{-- TOAST NOTIFICATIONS --}}
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    {{-- MODAL UPLOAD LOGO CONSOLE --}}
-    <div id="console-logo-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6" onclick="event.stopPropagation()">
+    {{-- MODAL UPLOAD IMAGES CONSOLE (logo + display1-3) --}}
+    <div id="console-logo-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-6 my-8" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-gray-800">📷 Logo de la console</h3>
+                <h3 class="text-lg font-bold text-gray-800">📷 Images de la console</h3>
                 <button type="button" onclick="closeConsoleLogoModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -144,37 +144,101 @@
                 </button>
             </div>
             
-            <p class="text-sm text-gray-600 mb-4">
-                Glissez-déposez ou sélectionnez le logo du nom de cette console. 
-                Il sera sauvegardé dans la taxonomie pour être réutilisé.
+            <p class="text-sm text-gray-600 mb-2">
+                Ajoutez les images pour cette console. Elles seront sauvegardées dans la taxonomie R2.
             </p>
             
             <div id="console-logo-name" class="text-center font-medium text-indigo-600 mb-4"></div>
             
-            {{-- Zone de drop --}}
-            <div id="console-logo-dropzone" 
-                 class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
-                <div id="console-logo-preview" class="hidden mb-4">
-                    <img id="console-logo-preview-img" src="" class="max-h-32 mx-auto rounded">
+            {{-- Grille des 4 zones d'upload --}}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {{-- Logo --}}
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-2 text-center">🏷️ Logo</label>
+                    <div id="console-img-dropzone-logo" data-type="logo"
+                         class="console-img-dropzone border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors aspect-square flex flex-col items-center justify-center">
+                        <div class="console-img-preview hidden w-full h-full">
+                            <img src="" class="w-full h-full object-contain rounded">
+                        </div>
+                        <div class="console-img-placeholder flex flex-col items-center">
+                            <svg class="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Logo du nom</p>
+                        </div>
+                        <input type="file" class="console-img-input hidden" accept="image/*" data-type="logo">
+                    </div>
+                    <div class="console-img-status text-xs text-center mt-1 text-gray-400" data-type="logo"></div>
                 </div>
-                <div id="console-logo-placeholder">
-                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <p class="text-gray-500">Glissez une image ici ou cliquez pour sélectionner</p>
-                    <p class="text-xs text-gray-400 mt-1">PNG, JPG (max 5 MB)</p>
+                
+                {{-- Display 1 --}}
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-2 text-center">📸 Display 1</label>
+                    <div id="console-img-dropzone-display1" data-type="display1"
+                         class="console-img-dropzone border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors aspect-square flex flex-col items-center justify-center">
+                        <div class="console-img-preview hidden w-full h-full">
+                            <img src="" class="w-full h-full object-contain rounded">
+                        </div>
+                        <div class="console-img-placeholder flex flex-col items-center">
+                            <svg class="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Photo 1</p>
+                        </div>
+                        <input type="file" class="console-img-input hidden" accept="image/*" data-type="display1">
+                    </div>
+                    <div class="console-img-status text-xs text-center mt-1 text-gray-400" data-type="display1"></div>
                 </div>
-                <input type="file" id="console-logo-input" accept="image/*" class="hidden">
+                
+                {{-- Display 2 --}}
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-2 text-center">📸 Display 2</label>
+                    <div id="console-img-dropzone-display2" data-type="display2"
+                         class="console-img-dropzone border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors aspect-square flex flex-col items-center justify-center">
+                        <div class="console-img-preview hidden w-full h-full">
+                            <img src="" class="w-full h-full object-contain rounded">
+                        </div>
+                        <div class="console-img-placeholder flex flex-col items-center">
+                            <svg class="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Photo 2</p>
+                        </div>
+                        <input type="file" class="console-img-input hidden" accept="image/*" data-type="display2">
+                    </div>
+                    <div class="console-img-status text-xs text-center mt-1 text-gray-400" data-type="display2"></div>
+                </div>
+                
+                {{-- Display 3 --}}
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-2 text-center">📸 Display 3</label>
+                    <div id="console-img-dropzone-display3" data-type="display3"
+                         class="console-img-dropzone border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors aspect-square flex flex-col items-center justify-center">
+                        <div class="console-img-preview hidden w-full h-full">
+                            <img src="" class="w-full h-full object-contain rounded">
+                        </div>
+                        <div class="console-img-placeholder flex flex-col items-center">
+                            <svg class="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Photo 3</p>
+                        </div>
+                        <input type="file" class="console-img-input hidden" accept="image/*" data-type="display3">
+                    </div>
+                    <div class="console-img-status text-xs text-center mt-1 text-gray-400" data-type="display3"></div>
+                </div>
             </div>
+            
+            <p class="text-xs text-gray-400 mt-4 text-center">PNG, JPG (max 5 MB par image) • Les images existantes seront remplacées</p>
             
             {{-- Boutons --}}
             <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="closeConsoleLogoModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
-                    Ignorer
+                    Fermer
                 </button>
-                <button type="button" id="console-logo-upload-btn" onclick="uploadConsoleLogo()" 
+                <button type="button" id="console-logo-upload-btn" onclick="uploadConsoleImages()" 
                         class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    📤 Enregistrer le logo
+                    📤 Enregistrer les images
                 </button>
             </div>
         </div>
@@ -4942,10 +5006,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // =====================
-  // MODAL LOGO CONSOLE
+  // MODAL IMAGES CONSOLE (logo + display1-3)
   // =====================
   
-  let consoleLogoFile = null;
+  let consoleImageFiles = { logo: null, display1: null, display2: null, display3: null };
   let consoleLogoName = '';
   const CONSOLE_CATEGORY_ID = 1; // ID de la catégorie "Consoles"
   
@@ -4987,10 +5051,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     nameDisplay.textContent = `🎮 ${typeName}`;
     
-    // Reset
-    consoleLogoFile = null;
-    document.getElementById('console-logo-preview').classList.add('hidden');
-    document.getElementById('console-logo-placeholder').classList.remove('hidden');
+    // Reset toutes les dropzones
+    consoleImageFiles = { logo: null, display1: null, display2: null, display3: null };
+    document.querySelectorAll('.console-img-dropzone').forEach(dropzone => {
+      const preview = dropzone.querySelector('.console-img-preview');
+      const placeholder = dropzone.querySelector('.console-img-placeholder');
+      const imgType = dropzone.dataset.type;
+      const status = document.querySelector(`.console-img-status[data-type="${imgType}"]`);
+      
+      if (preview) {
+        preview.classList.add('hidden');
+        preview.querySelector('img').src = '';
+      }
+      if (placeholder) placeholder.classList.remove('hidden');
+      if (status) {
+        status.textContent = '';
+        status.classList.remove('text-green-600', 'text-red-600', 'text-yellow-600');
+        status.classList.add('text-gray-400');
+      }
+    });
     document.getElementById('console-logo-upload-btn').disabled = true;
     
     modal.classList.remove('hidden');
@@ -4999,62 +5078,83 @@ document.addEventListener('DOMContentLoaded', function() {
   // Fermer le modal
   window.closeConsoleLogoModal = function() {
     document.getElementById('console-logo-modal').classList.add('hidden');
+    // Reset les fichiers en attente
+    consoleImageFiles = { logo: null, display1: null, display2: null, display3: null };
   };
   
-  // Gestion du dropzone console logo
-  const consoleLogoDropzone = document.getElementById('console-logo-dropzone');
-  const consoleLogoFileInput = document.getElementById('console-logo-input');
-  
-  if (consoleLogoDropzone && consoleLogoFileInput) {
-    consoleLogoDropzone.addEventListener('click', () => consoleLogoFileInput.click());
+  // Initialiser les dropzones
+  document.querySelectorAll('.console-img-dropzone').forEach(dropzone => {
+    const imgType = dropzone.dataset.type;
+    const input = dropzone.querySelector('.console-img-input');
     
-    consoleLogoDropzone.addEventListener('dragover', (e) => {
+    if (!input) return;
+    
+    dropzone.addEventListener('click', () => input.click());
+    
+    dropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      consoleLogoDropzone.classList.add('border-indigo-500', 'bg-indigo-50');
+      dropzone.classList.add('border-indigo-500', 'bg-indigo-50');
     });
     
-    consoleLogoDropzone.addEventListener('dragleave', () => {
-      consoleLogoDropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
     });
     
-    consoleLogoDropzone.addEventListener('drop', (e) => {
+    dropzone.addEventListener('drop', (e) => {
       e.preventDefault();
-      consoleLogoDropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
+      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
       
       const files = e.dataTransfer.files;
       if (files.length > 0 && files[0].type.startsWith('image/')) {
-        handleConsoleLogoFile(files[0]);
+        handleConsoleImageFile(files[0], imgType, dropzone);
       }
     });
     
-    consoleLogoFileInput.addEventListener('change', () => {
-      if (consoleLogoFileInput.files.length > 0) {
-        handleConsoleLogoFile(consoleLogoFileInput.files[0]);
+    input.addEventListener('change', () => {
+      if (input.files.length > 0) {
+        handleConsoleImageFile(input.files[0], imgType, dropzone);
       }
     });
-  }
+  });
   
-  function handleConsoleLogoFile(file) {
+  function handleConsoleImageFile(file, imgType, dropzone) {
     if (file.size > 5 * 1024 * 1024) {
       alert('❌ L\'image dépasse 5 MB');
       return;
     }
     
-    consoleLogoFile = file;
+    consoleImageFiles[imgType] = file;
+    
+    const preview = dropzone.querySelector('.console-img-preview');
+    const placeholder = dropzone.querySelector('.console-img-placeholder');
+    const status = document.querySelector(`.console-img-status[data-type="${imgType}"]`);
     
     const reader = new FileReader();
     reader.onload = (e) => {
-      document.getElementById('console-logo-preview-img').src = e.target.result;
-      document.getElementById('console-logo-preview').classList.remove('hidden');
-      document.getElementById('console-logo-placeholder').classList.add('hidden');
-      document.getElementById('console-logo-upload-btn').disabled = false;
+      preview.querySelector('img').src = e.target.result;
+      preview.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+      if (status) status.textContent = '✓ Prêt';
+      status?.classList.remove('text-gray-400');
+      status?.classList.add('text-green-600');
+      
+      // Activer le bouton si au moins une image est sélectionnée
+      updateUploadButton();
     };
     reader.readAsDataURL(file);
   }
   
-  // Upload du logo
-  window.uploadConsoleLogo = async function() {
-    if (!consoleLogoFile || !consoleLogoName) {
+  function updateUploadButton() {
+    const btn = document.getElementById('console-logo-upload-btn');
+    const hasAnyFile = Object.values(consoleImageFiles).some(f => f !== null);
+    btn.disabled = !hasAnyFile;
+  }
+  
+  // Upload de toutes les images
+  window.uploadConsoleImages = async function() {
+    const filesToUpload = Object.entries(consoleImageFiles).filter(([k, v]) => v !== null);
+    
+    if (filesToUpload.length === 0 || !consoleLogoName) {
       alert('❌ Aucun fichier sélectionné');
       return;
     }
@@ -5063,44 +5163,73 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.disabled = true;
     btn.textContent = '⏳ Envoi...';
     
-    const formData = new FormData();
-    formData.append('images[]', consoleLogoFile);
-    formData.append('identifier', consoleLogoName);
-    formData.append('folder', 'consoles');
-    formData.append('platform', 'Consoles');
-    formData.append('type', 'logo');
+    let successCount = 0;
+    let errorCount = 0;
     
-    try {
-      const response = await fetch('{{ route("admin.taxonomy.upload-image") }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin',
-        body: formData
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Mettre à jour la thumbnail
-        const thumb = document.getElementById('console-logo-thumb');
-        if (thumb && data.urls && data.urls[0]) {
-          thumb.innerHTML = `<img src="${data.urls[0]}" class="w-full h-full object-contain">`;
-        }
-        
-        closeConsoleLogoModal();
-        alert('✅ Logo enregistré !');
-      } else {
-        throw new Error(data.message || 'Erreur lors de l\'upload');
+    for (const [imgType, file] of filesToUpload) {
+      const status = document.querySelector(`.console-img-status[data-type="${imgType}"]`);
+      if (status) {
+        status.textContent = '⏳ Envoi...';
+        status.classList.remove('text-green-600');
+        status.classList.add('text-yellow-600');
       }
-    } catch (error) {
-      console.error('Erreur upload logo:', error);
-      alert('❌ ' + error.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '📤 Enregistrer le logo';
+      
+      const formData = new FormData();
+      formData.append('images[]', file);
+      formData.append('identifier', consoleLogoName);
+      formData.append('folder', 'consoles');
+      formData.append('platform', 'Consoles');
+      formData.append('type', imgType);
+      
+      try {
+        const response = await fetch('{{ route("admin.taxonomy.upload-image") }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'same-origin',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          successCount++;
+          if (status) {
+            status.textContent = '✅ OK';
+            status.classList.remove('text-yellow-600');
+            status.classList.add('text-green-600');
+          }
+          // Mettre à jour la thumbnail si c'est le logo
+          if (imgType === 'logo') {
+            const thumb = document.getElementById('console-logo-thumb');
+            if (thumb && data.urls && data.urls[0]) {
+              thumb.innerHTML = `<img src="${data.urls[0]}" class="w-full h-full object-contain">`;
+            }
+          }
+        } else {
+          throw new Error(data.message || 'Erreur');
+        }
+      } catch (error) {
+        errorCount++;
+        console.error(`Erreur upload ${imgType}:`, error);
+        if (status) {
+          status.textContent = '❌ Erreur';
+          status.classList.remove('text-yellow-600');
+          status.classList.add('text-red-600');
+        }
+      }
+    }
+    
+    btn.disabled = false;
+    btn.textContent = '📤 Enregistrer les images';
+    
+    if (errorCount === 0) {
+      alert(`✅ ${successCount} image(s) enregistrée(s) !`);
+      closeConsoleLogoModal();
+    } else {
+      alert(`⚠️ ${successCount} réussie(s), ${errorCount} erreur(s)`);
     }
   };
   
