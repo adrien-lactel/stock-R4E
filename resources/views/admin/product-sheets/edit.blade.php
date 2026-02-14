@@ -772,48 +772,72 @@
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
                                     @if($selectedType->cover_image_url)
-                                        <img src="{{ $selectedType->cover_image_url }}" class="w-full h-full object-cover" alt="Cover">
+                                        <img src="{{ $selectedType->cover_image_url }}" class="w-full h-full object-cover cursor-pointer" alt="Cover" onclick="openZoomModal('{{ $selectedType->cover_image_url }}')">
                                     @else
                                         <span class="text-gray-400 text-xs">Aucune image</span>
                                     @endif
                                 </div>
-                                <p class="text-xs text-center font-medium text-gray-600">Cover</p>
+                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Cover</p>
+                                @if($selectedType->cover_image_url)
+                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->cover_image_url }}')" 
+                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                        ⭐ Utiliser
+                                    </button>
+                                @endif
                             </div>
 
                             {{-- Logo --}}
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
                                     @if($selectedType->logo_url)
-                                        <img src="{{ $selectedType->logo_url }}" class="w-full h-full object-contain p-2" alt="Logo">
+                                        <img src="{{ $selectedType->logo_url }}" class="w-full h-full object-contain p-2 cursor-pointer" alt="Logo" onclick="openZoomModal('{{ $selectedType->logo_url }}')">
                                     @else
                                         <span class="text-gray-400 text-xs">Aucune image</span>
                                     @endif
                                 </div>
-                                <p class="text-xs text-center font-medium text-gray-600">Logo</p>
+                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Logo</p>
+                                @if($selectedType->logo_url)
+                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->logo_url }}')" 
+                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                        ⭐ Utiliser
+                                    </button>
+                                @endif
                             </div>
 
                             {{-- Screenshot 1 --}}
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
                                     @if($selectedType->screenshot1_url)
-                                        <img src="{{ $selectedType->screenshot1_url }}" class="w-full h-full object-cover" alt="Screenshot 1">
+                                        <img src="{{ $selectedType->screenshot1_url }}" class="w-full h-full object-cover cursor-pointer" alt="Screenshot 1" onclick="openZoomModal('{{ $selectedType->screenshot1_url }}')">
                                     @else
                                         <span class="text-gray-400 text-xs">Aucune image</span>
                                     @endif
                                 </div>
-                                <p class="text-xs text-center font-medium text-gray-600">Screenshot 1</p>
+                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Screenshot 1</p>
+                                @if($selectedType->screenshot1_url)
+                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot1_url }}')" 
+                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                        ⭐ Utiliser
+                                    </button>
+                                @endif
                             </div>
 
                             {{-- Screenshot 2 --}}
                             <div class="bg-white rounded-lg p-3 border border-blue-200">
                                 <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
                                     @if($selectedType->screenshot2_url)
-                                        <img src="{{ $selectedType->screenshot2_url }}" class="w-full h-full object-cover" alt="Screenshot 2">
+                                        <img src="{{ $selectedType->screenshot2_url }}" class="w-full h-full object-cover cursor-pointer" alt="Screenshot 2" onclick="openZoomModal('{{ $selectedType->screenshot2_url }}')">
                                     @else
                                         <span class="text-gray-400 text-xs">Aucune image</span>
                                     @endif
                                 </div>
-                                <p class="text-xs text-center font-medium text-gray-600">Screenshot 2</p>
+                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Screenshot 2</p>
+                                @if($selectedType->screenshot2_url)
+                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot2_url }}')" 
+                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                        ⭐ Utiliser
+                                    </button>
+                                @endif
                             </div>
                         </div>
                         
@@ -979,6 +1003,45 @@ console.log('📦 Variables globales initialisées:', {
     currentArticleTypeId: window.currentArticleTypeId,
     featuredMods: featuredMods.length
 });
+
+// Fonction pour utiliser une image de taxonomie comme image principale
+window.useTaxonomyImageAsPrimary = function(imageUrl) {
+    if (!imageUrl) return;
+    
+    console.log('⭐ Sélection image taxonomie comme principale:', imageUrl);
+    
+    // Vérifier si l'image est déjà dans la liste
+    const existingIndex = window.uploadedGameImages.findIndex(img => {
+        if (typeof img === 'string') return img === imageUrl;
+        if (typeof img === 'object' && img !== null) return img.url === imageUrl;
+        return false;
+    });
+    
+    if (existingIndex > -1) {
+        // L'image existe déjà, la déplacer en première position
+        const [existingImg] = window.uploadedGameImages.splice(existingIndex, 1);
+        window.uploadedGameImages.unshift(existingImg);
+        console.log('🔄 Image déplacée en première position');
+    } else {
+        // Ajouter l'image en première position (avec marqueur is_generic: true car c'est une image taxonomie)
+        window.uploadedGameImages.unshift({
+            url: imageUrl,
+            is_generic: true
+        });
+        console.log('➕ Image ajoutée en première position');
+    }
+    
+    // Définir comme image principale
+    window.primaryImageUrl = imageUrl;
+    
+    // Rafraîchir l'affichage
+    if (typeof window.refreshArticleImagesPreview === 'function') {
+        window.refreshArticleImagesPreview();
+    }
+    
+    // Feedback visuel
+    alert('✅ Image définie comme image principale !');
+};
 
 // Fonction pour ouvrir les images de la taxonomie
 // ========================================
@@ -2286,12 +2349,14 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
-    window.closeTaxonomyImageEditorModal = function() {
+    window.closeTaxonomyImageEditorModal = function(skipReload = false) {
         const modal = document.getElementById('taxonomy-image-editor-modal');
         if (modal) {
             modal.remove();
-            // Recharger la page pour afficher les nouvelles images
-            window.location.reload();
+            // Recharger la page pour afficher les nouvelles images (sauf si skipReload)
+            if (!skipReload) {
+                window.location.reload();
+            }
         }
     };
     
@@ -2448,12 +2513,25 @@ document.addEventListener('DOMContentLoaded', function() {
             imageCard.appendChild(img);
             imageCard.appendChild(labelRow);
             
+            // Bouton "Utiliser pour cette fiche" - toujours visible
+            const useForSheetBtn = document.createElement('button');
+            useForSheetBtn.type = 'button';
+            useForSheetBtn.className = 'w-full text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
+            useForSheetBtn.innerHTML = '⭐ Utiliser pour cette fiche';
+            useForSheetBtn.title = 'Définir comme image principale de cette fiche produit';
+            useForSheetBtn.onclick = () => {
+                window.useTaxonomyImageAsPrimary(image.url);
+                closeTaxonomyImageEditorModal(true); // Ne pas recharger la page
+            };
+            imageCard.appendChild(useForSheetBtn);
+            
             // Bouton "Définir comme principale" pour les images indexées (seulement R2)
             if (image.index > 1 && image.source !== 'php') {
                 const setPrimaryBtn = document.createElement('button');
                 setPrimaryBtn.type = 'button';
                 setPrimaryBtn.className = 'w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
-                setPrimaryBtn.innerHTML = '⭐ Définir comme principale';
+                setPrimaryBtn.innerHTML = '🔄 Définir comme principale (R2)';
+                setPrimaryBtn.title = 'Remplacer l\'image principale de ce type sur R2';
                 setPrimaryBtn.onclick = () => setAsPrimaryImageEdit(identifier, folder, image.full_type, image.type);
                 imageCard.appendChild(setPrimaryBtn);
             }
