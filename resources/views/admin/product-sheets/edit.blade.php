@@ -2112,6 +2112,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const subCategoryName = @json($selectedSubCategory->name ?? '');
         const categoryName = @json($selectedCategory->name ?? '');
         
+        // Images déjà connues depuis PHP (pour affichage immédiat)
+        const knownImages = {
+            cover: @json($selectedType->cover_image_url ?? null),
+            logo: @json($selectedType->logo_url ?? null),
+            artwork: @json($selectedType->screenshot2_url ?? null),
+            gameplay: @json($selectedType->screenshot1_url ?? null)
+        };
+        
         // Déterminer le folder basé sur la catégorie/sous-catégorie
         let folder = 'other';
         if (subCategoryName) {
@@ -2129,7 +2137,7 @@ document.addEventListener('DOMContentLoaded', function() {
         taxonomyModalFolder = folder;
         taxonomyModalPlatform = platform;
         
-        console.log('📂 Données modal taxonomie:', { identifier, folder, platform, romId });
+        console.log('📂 Données modal taxonomie:', { identifier, folder, platform, romId, knownImages });
         
         // Créer la modal
         const modal = document.createElement('div');
@@ -2287,11 +2295,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Images connues depuis PHP (pour affichage immédiat)
+    const knownTaxonomyImages = {
+        cover: @json($selectedType->cover_image_url ?? null),
+        logo: @json($selectedType->logo_url ?? null),
+        artwork: @json($selectedType->screenshot2_url ?? null),
+        gameplay: @json($selectedType->screenshot1_url ?? null)
+    };
+    
     // Charger les images de taxonomie dans la grille
     async function loadTaxonomyImagesGrid(identifier, folder) {
         const gridContainer = document.getElementById('taxonomy-images-grid');
         if (!gridContainer) return;
         
+        // 1. AFFICHAGE IMMÉDIAT des images PHP connues
+        const knownImages = [];
+        Object.entries(knownTaxonomyImages).forEach(([type, url]) => {
+            if (url) {
+                knownImages.push({
+                    url: url,
+                    type: type,
+                    full_type: type,
+                    index: 1,
+                    size: 0,
+                    source: 'php'
+                });
+            }
+        });
+        
+        if (knownImages.length > 0) {
+            renderTaxonomyImagesGrid(gridContainer, knownImages, identifier, folder);
+        } else {
+            gridContainer.innerHTML = `
+                <div class="col-span-2 sm:col-span-4 text-center text-gray-400 py-8">
+                    <div class="text-4xl mb-2">📭</div>
+                    <div>Aucune image trouvée pour ce type</div>
+                    <div class="text-sm mt-2">Utilisez le formulaire ci-dessus pour ajouter des images</div>
+                </div>
+            `;
+        }
+        
+        // 2. ENRICHISSEMENT en arrière-plan depuis R2 (optionnel, pour les images -2, -3, etc)
         try {
             const response = await fetch(`{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`, {
                 headers: {
@@ -2302,110 +2346,111 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-                console.error('❌ Réponse non-JSON reçue pour get-images');
-                throw new Error('Le serveur a retourné une erreur');
+                console.warn('⚠️ Réponse non-JSON pour get-images R2 (images PHP affichées)');
+                return;
             }
             
             const data = await response.json();
             
             if (data.success && data.images.length > 0) {
-                gridContainer.innerHTML = '';
-                
-                const timestamp = Date.now();
-                
-                data.images.forEach(image => {
-                    const imageCard = document.createElement('div');
-                    imageCard.className = 'border-2 border-gray-200 rounded-lg p-3 bg-white hover:border-blue-400 transition-colors';
-                    
-                    const img = document.createElement('img');
-                    img.src = `${image.url}?t=${timestamp}`;
-                    img.className = 'w-full h-40 object-cover rounded mb-2 cursor-pointer';
-                    img.onclick = () => window.openZoomModal ? window.openZoomModal(image.url) : window.open(image.url, '_blank');
-                    img.onerror = function() {
-                        this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23999" text-anchor="middle" dy=".3em"%3EErreur%3C/text%3E%3C/svg%3E';
-                    };
-                    
-                    // Label avec dropdown de changement de catégorie
-                    const labelRow = document.createElement('div');
-                    labelRow.className = 'flex items-center justify-between mb-2';
-                    
-                    const select = document.createElement('select');
-                    select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
-                    select.innerHTML = `
-                        <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
-                        <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
-                        <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
-                        <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
-                    `;
-                    select.onchange = () => renameTaxonomyImageEdit(identifier, folder, image.full_type, select.value);
-                    
-                    labelRow.appendChild(select);
-                    
-                    // Badge d'index si > 1
-                    if (image.index > 1) {
-                        const badge = document.createElement('span');
-                        badge.className = 'text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold ml-2';
-                        badge.textContent = '#' + image.index;
-                        labelRow.appendChild(badge);
-                    }
-                    
-                    // Bouton suppression
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.type = 'button';
-                    deleteBtn.className = 'text-red-600 hover:text-red-800 text-xl leading-none ml-2';
-                    deleteBtn.innerHTML = '🗑️';
-                    deleteBtn.title = 'Supprimer cette image';
-                    deleteBtn.onclick = () => deleteTaxonomyImageEdit(identifier, folder, image.full_type);
-                    
-                    labelRow.appendChild(deleteBtn);
-                    
-                    // Taille du fichier
-                    const sizeInfo = document.createElement('div');
-                    sizeInfo.className = 'text-xs text-gray-500 text-center mt-1';
-                    const sizeKb = (image.size / 1024).toFixed(1);
-                    sizeInfo.textContent = `${sizeKb} Ko`;
-                    
-                    // Assembler
-                    imageCard.appendChild(img);
-                    imageCard.appendChild(labelRow);
-                    
-                    // Bouton "Définir comme principale" pour les images indexées
-                    if (image.index > 1) {
-                        const setPrimaryBtn = document.createElement('button');
-                        setPrimaryBtn.type = 'button';
-                        setPrimaryBtn.className = 'w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
-                        setPrimaryBtn.innerHTML = '⭐ Définir comme principale';
-                        setPrimaryBtn.onclick = () => setAsPrimaryImageEdit(identifier, folder, image.full_type, image.type);
-                        imageCard.appendChild(setPrimaryBtn);
-                    }
-                    
-                    imageCard.appendChild(sizeInfo);
-                    gridContainer.appendChild(imageCard);
-                });
-                
-                // Compteur
-                const countInfo = document.createElement('div');
-                countInfo.className = 'col-span-2 sm:col-span-4 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
-                countInfo.textContent = `Total : ${data.total} image${data.total > 1 ? 's' : ''}`;
-                gridContainer.appendChild(countInfo);
-                
-            } else {
-                gridContainer.innerHTML = `
-                    <div class="col-span-2 sm:col-span-4 text-center text-gray-400 py-8">
-                        <div class="text-4xl mb-2">📭</div>
-                        <div>Aucune image trouvée pour ce type</div>
-                    </div>
-                `;
+                // Fusionner avec les images R2 (pour avoir les -2, -3, etc.)
+                renderTaxonomyImagesGrid(gridContainer, data.images, identifier, folder);
             }
         } catch (e) {
-            console.error('Erreur chargement images:', e);
-            gridContainer.innerHTML = `
-                <div class="col-span-2 sm:col-span-4 text-center text-red-500 py-8">
-                    <div class="text-4xl mb-2">⚠️</div>
-                    <div>Erreur lors du chargement des images</div>
-                </div>
-            `;
+            console.warn('⚠️ Erreur chargement R2 (images PHP affichées):', e);
         }
+    }
+    
+    // Fonction de rendu des images
+    function renderTaxonomyImagesGrid(gridContainer, images, identifier, folder) {
+        gridContainer.innerHTML = '';
+        
+        const timestamp = Date.now();
+        
+        images.forEach(image => {
+            const imageCard = document.createElement('div');
+            imageCard.className = 'border-2 border-gray-200 rounded-lg p-3 bg-white hover:border-blue-400 transition-colors';
+            
+            const img = document.createElement('img');
+            img.src = `${image.url}?t=${timestamp}`;
+            img.className = 'w-full h-40 object-cover rounded mb-2 cursor-pointer';
+            img.onclick = () => window.openZoomModal ? window.openZoomModal(image.url) : window.open(image.url, '_blank');
+            img.onerror = function() {
+                this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23999" text-anchor="middle" dy=".3em"%3EErreur%3C/text%3E%3C/svg%3E';
+            };
+            
+            // Label avec dropdown de changement de catégorie
+            const labelRow = document.createElement('div');
+            labelRow.className = 'flex items-center justify-between mb-2';
+            
+            const select = document.createElement('select');
+            select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
+            select.innerHTML = `
+                <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
+                <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
+                <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
+                <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
+            `;
+            // Désactiver le select pour les images PHP (pas renommables directement)
+            if (image.source === 'php') {
+                select.disabled = true;
+                select.className += ' bg-gray-100 cursor-not-allowed';
+            } else {
+                select.onchange = () => renameTaxonomyImageEdit(identifier, folder, image.full_type, select.value);
+            }
+            
+            labelRow.appendChild(select);
+            
+            // Badge d'index si > 1
+            if (image.index > 1) {
+                const badge = document.createElement('span');
+                badge.className = 'text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold ml-2';
+                badge.textContent = '#' + image.index;
+                labelRow.appendChild(badge);
+            }
+            
+            // Bouton suppression (seulement pour images R2, pas PHP)
+            if (image.source !== 'php') {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'text-red-600 hover:text-red-800 text-xl leading-none ml-2';
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.title = 'Supprimer cette image';
+                deleteBtn.onclick = () => deleteTaxonomyImageEdit(identifier, folder, image.full_type);
+                labelRow.appendChild(deleteBtn);
+            }
+            
+            // Assembler
+            imageCard.appendChild(img);
+            imageCard.appendChild(labelRow);
+            
+            // Bouton "Définir comme principale" pour les images indexées (seulement R2)
+            if (image.index > 1 && image.source !== 'php') {
+                const setPrimaryBtn = document.createElement('button');
+                setPrimaryBtn.type = 'button';
+                setPrimaryBtn.className = 'w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
+                setPrimaryBtn.innerHTML = '⭐ Définir comme principale';
+                setPrimaryBtn.onclick = () => setAsPrimaryImageEdit(identifier, folder, image.full_type, image.type);
+                imageCard.appendChild(setPrimaryBtn);
+            }
+            
+            // Afficher la taille si disponible
+            if (image.size > 0) {
+                const sizeInfo = document.createElement('div');
+                sizeInfo.className = 'text-xs text-gray-500 text-center mt-1';
+                const sizeKb = (image.size / 1024).toFixed(1);
+                sizeInfo.textContent = `${sizeKb} Ko`;
+                imageCard.appendChild(sizeInfo);
+            }
+            
+            gridContainer.appendChild(imageCard);
+        });
+        
+        // Compteur
+        const countInfo = document.createElement('div');
+        countInfo.className = 'col-span-2 sm:col-span-4 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
+        countInfo.textContent = `Total : ${images.length} image${images.length > 1 ? 's' : ''}`;
+        gridContainer.appendChild(countInfo);
     }
     
     // Upload d'images de taxonomie
