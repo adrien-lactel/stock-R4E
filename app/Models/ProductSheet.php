@@ -24,6 +24,7 @@ class ProductSheet extends Model
         'condition_criteria_labels',
         'featured_mods',
         'is_active',
+        'is_favorite',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class ProductSheet extends Model
         'display_sections' => 'array',
         'featured_mods' => 'array',
         'is_active' => 'boolean',
+        'is_favorite' => 'boolean',
     ];
 
     /* =====================================================

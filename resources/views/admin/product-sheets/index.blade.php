@@ -116,7 +116,7 @@
                                 <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ Str::limit($sheet->description, 100) }}</p>
                             @endif
 
-                            {{-- Critères de collection --}}
+                            {{-- Points forts --}}
                             @if($sheet->condition_criteria && count($sheet->condition_criteria) > 0)
                                 <div class="mb-3 space-y-1">
                                     @foreach($sheet->condition_criteria as $criterion => $rating)

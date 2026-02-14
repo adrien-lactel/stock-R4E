@@ -105,6 +105,13 @@
                                                  class="max-h-64 w-auto object-contain rounded-lg cursor-zoom-in"
                                                  @click="openZoomModal(currentImage)">
                                             
+                                            {{-- COUP DE COEUR - Coeur en haut à gauche --}}
+                                            <div id="favorite-heart-display" class="{{ $sheet->is_favorite ? '' : 'hidden' }} absolute top-2 left-2 bg-red-500/90 rounded-full p-2 shadow-lg">
+                                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                                </svg>
+                                            </div>
+                                            
                                             {{-- MODS ICONS en surbrillance sur l'image --}}
                                             @php
                                                 $displayMods = $sheet->featured_mods ?? [];
@@ -235,7 +242,7 @@
                                     </div>
                                 @endif
 
-                                {{-- CRITÈRES DE COLLECTION (affichage des sélectionnés) --}}
+                                {{-- POINTS FORTS (affichage des sélectionnés) --}}
                                 @php
                                     $criteria = $sheet->condition_criteria ?? [];
                                     $criteriaLabels = $sheet->condition_criteria_labels ?? [
@@ -248,7 +255,7 @@
                                     ];
                                 @endphp
                                 <div id="criteria-display-container" class="mt-4 pt-4 border-t border-gray-200">
-                                    <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Critères</h3>
+                                    <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Points forts</h3>
                                     <div id="criteria-display-list" class="space-y-2">
                                         @php
                                             $allCriteriaKeys = ['box_condition', 'manual_condition', 'media_condition', 'completeness', 'rarity', 'overall_condition'];
@@ -404,6 +411,19 @@
                                required>
                     </div>
 
+                    {{-- Coup de coeur --}}
+                    <div class="flex items-center gap-3 p-3 rounded-lg border {{ old('is_favorite', $sheet->is_favorite) ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200' }}">
+                        <input type="checkbox" name="is_favorite" value="1" id="is_favorite_checkbox"
+                               class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                               {{ old('is_favorite', $sheet->is_favorite) ? 'checked' : '' }}
+                               onchange="toggleFavoriteHeart(this.checked); this.closest('div').classList.toggle('bg-red-50', this.checked); this.closest('div').classList.toggle('border-red-200', this.checked); this.closest('div').classList.toggle('bg-gray-50', !this.checked); this.closest('div').classList.toggle('border-gray-200', !this.checked);">
+                        <label for="is_favorite_checkbox" class="flex items-center gap-2 cursor-pointer">
+                            <span class="text-red-500 text-xl">❤️</span>
+                            <span class="text-sm font-medium text-gray-700">Coup de cœur de l'équipe</span>
+                        </label>
+                        <span class="text-xs text-gray-400 ml-auto">(affiche un cœur sur l'image produit)</span>
+                    </div>
+
                     @php
                         $displaySections = $sheet->display_sections ?? [];
                         // Auto-cocher "Description du produit" si une description est pré-remplie
@@ -489,6 +509,18 @@
                     }
                 }
 
+                // Fonction pour afficher/masquer le coeur coup de coeur
+                function toggleFavoriteHeart(isVisible) {
+                    var heartDiv = document.getElementById('favorite-heart-display');
+                    if (heartDiv) {
+                        if (isVisible) {
+                            heartDiv.classList.remove('hidden');
+                        } else {
+                            heartDiv.classList.add('hidden');
+                        }
+                    }
+                }
+
                 function updateSectionContent(sectionName, content) {
                     var checkbox = document.querySelector('input[value="' + sectionName + '"].section-checkbox');
                     if (checkbox && checkbox.checked) {
@@ -503,7 +535,7 @@
                 }
             </script>
 
-            {{-- CRITÈRES DE COLLECTION --}}
+            {{-- POINTS FORTS --}}
             <script>
                 // Variable globale pour les critères
                 var conditionCriteria = @json($sheet->condition_criteria ?? []);
@@ -604,8 +636,8 @@
                 }
             </script>
             <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">⭐ Critères de collection</h2>
-                <p class="text-sm text-gray-600 mb-4">Sélectionnez les critères à afficher et personnalisez leur nom</p>
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">⭐ Points forts</h2>
+                <p class="text-sm text-gray-600 mb-4">Sélectionnez les points forts à afficher et personnalisez leur nom</p>
 
                 @php
                     $criteria = $sheet->condition_criteria ?? [];

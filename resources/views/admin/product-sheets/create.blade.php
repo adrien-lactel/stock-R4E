@@ -291,9 +291,9 @@
                                     </div>
                                 @endif
 
-                                {{-- CRITÈRES DE COLLECTION (Preview - affichage uniquement des critères remplis) --}}
+                                {{-- POINTS FORTS (Preview - affichage uniquement des critères remplis) --}}
                                 <div class="mt-3 pt-3 border-t border-gray-200" id="criteria-preview">
-                                    <h3 class="text-sm font-semibold text-gray-700 mb-2">⭐ Critères de collection</h3>
+                                    <h3 class="text-sm font-semibold text-gray-700 mb-2">⭐ Points forts</h3>
                                     <div class="space-y-2" id="criteria-preview-list">
                                         @php
                                             $criteriaDefaults = [
@@ -609,10 +609,10 @@
                 @endif
             </div>
 
-            {{-- CRITÈRES DE COLLECTION --}}
+            {{-- POINTS FORTS --}}
             <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">⭐ Critères de collection</h2>
-                <p class="text-sm text-gray-600 mb-4">Configurez les critères que vous souhaitez afficher sur cette fiche produit. Vous pouvez personnaliser le nom de chaque critère.</p>
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">⭐ Points forts</h2>
+                <p class="text-sm text-gray-600 mb-4">Configurez les points forts que vous souhaitez afficher sur cette fiche produit. Vous pouvez personnaliser le nom de chaque point.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     @php

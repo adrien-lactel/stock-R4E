@@ -68,6 +68,15 @@
                                      class="max-h-64 w-auto object-contain rounded-lg cursor-zoom-in"
                                      @click="openZoomModal(currentImage)">
                                 
+                                {{-- COUP DE COEUR - Coeur en haut à gauche --}}
+                                @if($sheet->is_favorite)
+                                    <div class="absolute top-2 left-2 bg-red-500/90 rounded-full p-2 shadow-lg">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                        </svg>
+                                    </div>
+                                @endif
+                                
                                 {{-- MODS ICONS en surbrillance sur l'image --}}
                                 @php
                                     $displayMods = $sheet->featured_mods ?? [];
@@ -185,7 +194,7 @@
                         </div>
                     @endif
 
-                    {{-- CRITÈRES DE COLLECTION --}}
+                    {{-- POINTS FORTS --}}
                     @php
                         $criteria = $sheet->condition_criteria ?? [];
                         $criteriaLabels = $sheet->condition_criteria_labels ?? [
@@ -219,7 +228,7 @@
                     
                     @if($hasVisibleCriteria)
                         <div class="mt-4 pt-4 border-t border-gray-200">
-                            <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Critères</h3>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Points forts</h3>
                             <div class="space-y-2">
                                 @foreach($allCriteriaKeys as $key)
                                     @php
