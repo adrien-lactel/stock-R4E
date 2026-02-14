@@ -2777,7 +2777,7 @@ async function deleteTaxonomyImage(identifier, folder, type) {
 }
 
 // Afficher le résultat de la recherche avec l'image (v2.1 - Structure mise à jour)
-async function displayGameResult(game, platform) {
+window.displayGameResult = async function(game, platform) {
   console.log('🎮 displayGameResult v2.1 - Début', { game, platform });
   
   // Stocker l'objet game dans le cache pour pouvoir le mettre à jour
@@ -5003,10 +5003,10 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Gestion du dropzone console logo
   const consoleLogoDropzone = document.getElementById('console-logo-dropzone');
-  const fileInput = document.getElementById('console-logo-input');
+  const consoleLogoFileInput = document.getElementById('console-logo-input');
   
-  if (consoleLogoDropzone && fileInput) {
-    consoleLogoDropzone.addEventListener('click', () => fileInput.click());
+  if (consoleLogoDropzone && consoleLogoFileInput) {
+    consoleLogoDropzone.addEventListener('click', () => consoleLogoFileInput.click());
     
     consoleLogoDropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -5027,9 +5027,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) {
-        handleConsoleLogoFile(fileInput.files[0]);
+    consoleLogoFileInput.addEventListener('change', () => {
+      if (consoleLogoFileInput.files.length > 0) {
+        handleConsoleLogoFile(consoleLogoFileInput.files[0]);
       }
     });
   }
