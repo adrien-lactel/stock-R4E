@@ -22,14 +22,11 @@ window.onGameInput = function() {
 async function fetchGameSuggestions(query) {
   const platform = document.getElementById('game-platform')?.value || 'gameboy';
   
-  // Vérifier que l'URL AJAX est définie
-  if (!window.ajaxSearchGameUrl) {
-    console.error('window.ajaxSearchGameUrl n\'est pas défini');
-    return;
-  }
+  // Construire l'URL avec fallback si non définie
+  const baseUrl = window.ajaxSearchGameUrl || (window.location.origin + '/admin/ajax/search-game');
   
   try {
-    const url = window.ajaxSearchGameUrl + `?platform=${platform}&query=${encodeURIComponent(query)}`;
+    const url = baseUrl + `?platform=${platform}&query=${encodeURIComponent(query)}`;
     const response = await fetch(url);
     const data = await response.json();
     
