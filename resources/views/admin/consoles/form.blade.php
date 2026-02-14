@@ -422,22 +422,6 @@
             <option value="">— Choisir —</option>
         </select>
         
-        {{-- Bouton ajout logo console (visible seulement pour catégorie Consoles) --}}
-        <div id="console-logo-section" class="mt-3 hidden">
-            <div class="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                <div id="console-logo-thumb" class="w-12 h-12 bg-white rounded border flex items-center justify-center overflow-hidden">
-                    <span class="text-gray-400 text-xl">🎮</span>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-700">Logo de la console</p>
-                    <p class="text-xs text-gray-500">Ajoutez le logo du nom pour la fiche produit</p>
-                </div>
-                <button type="button" onclick="openConsoleLogoModal()" 
-                        class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700">
-                    📷 Ajouter
-                </button>
-            </div>
-        </div>
     </div>
 
     {{-- =====================
@@ -492,6 +476,26 @@
             ℹ️ Cette description sera partagée par tous les articles de ce type. 
             Modifier cette description mettra à jour tous les articles existants.
         </p>
+        
+        {{-- Section images de la console (visible seulement pour catégorie Consoles) --}}
+        <div id="console-logo-section" class="mt-4 hidden">
+            <div class="flex items-center gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div id="console-logo-thumb" class="w-16 h-16 bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+                    <span class="text-gray-400 text-2xl">🎮</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-700">📷 Images de la console</p>
+                    <p class="text-xs text-gray-500">Logo du nom + 3 photos pour la fiche produit</p>
+                </div>
+                <button type="button" onclick="openConsoleLogoModal()" 
+                        class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Ajouter / Modifier
+                </button>
+            </div>
+        </div>
     </div>
 
 </div>
