@@ -1392,11 +1392,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
                     }
                 });
                 
+                // Vérifier que la réponse est du JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Réponse non-JSON reçue:', text.substring(0, 200));
+                    throw new Error('Le serveur a retourné une réponse inattendue. Veuillez réessayer.');
+                }
+                
                 const data = await response.json();
+                
+                if (!response.ok && data.errors) {
+                    const errorMessages = Object.values(data.errors).flat().join('\n');
+                    throw new Error(errorMessages);
+                }
                 
                 if (data.success) {
                     showToast('Logo de l\'éditeur enregistré avec succès', 'success');
