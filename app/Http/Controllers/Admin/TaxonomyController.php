@@ -849,6 +849,21 @@ public function destroyType(ArticleType $type)
         
         $uploadedCount = 0;
         $uploadedUrls = [];
+        
+        // Récupérer la liste des fichiers existants sur R2 pour ce type
+        $existingFiles = [];
+        try {
+            $r2Files = \Storage::disk('r2')->files("taxonomy/{$folder}/");
+            foreach ($r2Files as $filePath) {
+                $filename = basename($filePath);
+                // Vérifier si c'est un fichier du même identifier et type
+                if (preg_match('/^' . preg_quote($identifier, '/') . '-' . preg_quote($type, '/') . '(-\d+)?\.(png|jpg|jpeg)$/i', $filename)) {
+                    $existingFiles[] = $filename;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Impossible de lister les fichiers R2: " . $e->getMessage());
+        }
 
         // Toujours uploader en double : local + R2
         foreach ($request->file('images') as $file) {
@@ -861,23 +876,32 @@ public function destroyType(ArticleType $type)
                 }
                 
                 $filename = "{$identifier}-{$type}.png";
-                $targetPath = "{$basePath}/{$filename}";
+                $r2Path = "taxonomy/{$folder}/{$filename}";
                 
-                // Si fichier existe, incrémenter
-                if (file_exists($targetPath)) {
+                // Vérifier si fichier existe en local OU sur R2, puis incrémenter
+                $fileExistsLocally = file_exists("{$basePath}/{$filename}");
+                $fileExistsOnR2 = in_array($filename, $existingFiles);
+                
+                if ($fileExistsLocally || $fileExistsOnR2) {
                     $counter = 2;
-                    while (file_exists("{$basePath}/{$identifier}-{$type}-{$counter}.png")) {
+                    while (
+                        file_exists("{$basePath}/{$identifier}-{$type}-{$counter}.png") ||
+                        in_array("{$identifier}-{$type}-{$counter}.png", $existingFiles)
+                    ) {
                         $counter++;
                     }
                     $filename = "{$identifier}-{$type}-{$counter}.png";
-                    $targetPath = "{$basePath}/{$filename}";
+                    // Ajouter le nouveau fichier à la liste pour les prochaines itérations
+                    $existingFiles[] = $filename;
                 }
+                
+                $targetPath = "{$basePath}/{$filename}";
+                $r2Path = "taxonomy/{$folder}/{$filename}";
 
                 $file->move($basePath, $filename);
                 
                 // 2. Upload R2 (pour production Railway)
                 try {
-                    $r2Path = "taxonomy/{$folder}/{$filename}";
                     \Storage::disk('r2')->put(
                         $r2Path,
                         file_get_contents($targetPath),
