@@ -5001,25 +5001,25 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('console-logo-modal').classList.add('hidden');
   };
   
-  // Gestion du dropzone
-  const dropzone = document.getElementById('console-logo-dropzone');
+  // Gestion du dropzone console logo
+  const consoleLogoDropzone = document.getElementById('console-logo-dropzone');
   const fileInput = document.getElementById('console-logo-input');
   
-  if (dropzone && fileInput) {
-    dropzone.addEventListener('click', () => fileInput.click());
+  if (consoleLogoDropzone && fileInput) {
+    consoleLogoDropzone.addEventListener('click', () => fileInput.click());
     
-    dropzone.addEventListener('dragover', (e) => {
+    consoleLogoDropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropzone.classList.add('border-indigo-500', 'bg-indigo-50');
+      consoleLogoDropzone.classList.add('border-indigo-500', 'bg-indigo-50');
     });
     
-    dropzone.addEventListener('dragleave', () => {
-      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
+    consoleLogoDropzone.addEventListener('dragleave', () => {
+      consoleLogoDropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
     });
     
-    dropzone.addEventListener('drop', (e) => {
+    consoleLogoDropzone.addEventListener('drop', (e) => {
       e.preventDefault();
-      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
+      consoleLogoDropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
       
       const files = e.dataTransfer.files;
       if (files.length > 0 && files[0].type.startsWith('image/')) {
