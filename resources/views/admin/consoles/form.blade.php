@@ -3462,11 +3462,17 @@ if (platformSelect) {
 // ========================================
 // TAXONOMIE CASCADE
 // ========================================
+console.log('📦 TAXONOMIE: Script atteint ligne 3463');
+
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('📦 TAXONOMIE: DOMContentLoaded déclenché');
+  
   const cat = document.getElementById('article_category_id');
   const brand = document.getElementById('article_brand_id');
   const sub = document.getElementById('article_sub_category_id');
   const type = document.getElementById('article_type_id');
+
+  console.log('📦 TAXONOMIE: Éléments trouvés:', { cat: !!cat, brand: !!brand, sub: !!sub, type: !!type });
 
   if (!cat || !brand || !sub || !type) {
     console.error('❌ Éléments de taxonomie manquants:', { cat, brand, sub, type });
@@ -3678,10 +3684,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  cat.addEventListener('change', e => loadBrands(e.target.value));
+  cat.addEventListener('change', e => {
+    console.log('📦 TAXONOMIE: category change event, value:', e.target.value);
+    loadBrands(e.target.value);
+  });
   brand.addEventListener('change', e => loadSubs(e.target.value));
   sub.addEventListener('change', e => loadTypes(e.target.value));
   type.addEventListener('change', e => loadTypeDescription(e.target.value));
+
+  console.log('📦 TAXONOMIE: Event listeners attachés');
+  console.log('📦 TAXONOMIE: cat.value actuel:', cat.value);
 
   if (cat.value) loadBrands(cat.value);
   
