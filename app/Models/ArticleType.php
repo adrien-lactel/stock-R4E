@@ -32,7 +32,7 @@ class ArticleType extends Model
      * Priorité: ROM ID prefix > SubCategory name
      * Note: Les dossiers R2 utilisent des noms avec espaces (ex: "game boy advance")
      */
-    private function getPlatformFolder()
+    public function getPlatformFolder()
     {
         // Mapping des préfixes ROM ID vers les dossiers R2 (noms avec espaces)
         $romIdPrefixMapping = [
