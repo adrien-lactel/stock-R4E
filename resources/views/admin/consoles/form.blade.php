@@ -5009,9 +5009,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // =====================
-  // MODAL IMAGES CONSOLE (logo + display1-3)
-  // =====================
+})();
+
+// =====================================================
+// MODAL IMAGES CONSOLE (logo + display1-3)
+// Script séparé pour éviter le return précoce de l'IIFE
+// =====================================================
+(function() {
+  console.log('🎮 Initialisation section images console...');
   
   let consoleImageFiles = { logo: null, display1: null, display2: null, display3: null };
   let consoleLogoName = '';
