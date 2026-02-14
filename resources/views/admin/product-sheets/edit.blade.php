@@ -2303,16 +2303,28 @@ document.addEventListener('DOMContentLoaded', function() {
         gameplay: @json($selectedType->screenshot1_url ?? null)
     };
     
+    // Images uploadées pendant cette session (pour les afficher même si R2 est lent)
+    let sessionUploadedImages = [];
+    
     // Charger les images de taxonomie dans la grille
     async function loadTaxonomyImagesGrid(identifier, folder) {
         const gridContainer = document.getElementById('taxonomy-images-grid');
         if (!gridContainer) return;
         
-        // 1. AFFICHAGE IMMÉDIAT des images PHP connues
-        const knownImages = [];
+        // Afficher le chargement
+        gridContainer.innerHTML = `
+            <div class="col-span-2 sm:col-span-4 text-center text-gray-500 py-4">
+                <div class="animate-pulse">⏳ Chargement des images...</div>
+            </div>
+        `;
+        
+        // 1. Collecter les images PHP connues (toujours les inclure)
+        const allImages = [];
+        const seenUrls = new Set();
+        
         Object.entries(knownTaxonomyImages).forEach(([type, url]) => {
-            if (url) {
-                knownImages.push({
+            if (url && !seenUrls.has(url)) {
+                allImages.push({
                     url: url,
                     type: type,
                     full_type: type,
@@ -2320,22 +2332,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     size: 0,
                     source: 'php'
                 });
+                seenUrls.add(url);
             }
         });
         
-        if (knownImages.length > 0) {
-            renderTaxonomyImagesGrid(gridContainer, knownImages, identifier, folder);
-        } else {
-            gridContainer.innerHTML = `
-                <div class="col-span-2 sm:col-span-4 text-center text-gray-400 py-8">
-                    <div class="text-4xl mb-2">📭</div>
-                    <div>Aucune image trouvée pour ce type</div>
-                    <div class="text-sm mt-2">Utilisez le formulaire ci-dessus pour ajouter des images</div>
-                </div>
-            `;
-        }
+        // 2. Ajouter les images uploadées pendant cette session
+        sessionUploadedImages.forEach(img => {
+            if (!seenUrls.has(img.url)) {
+                allImages.push(img);
+                seenUrls.add(img.url);
+            }
+        });
         
-        // 2. ENRICHISSEMENT en arrière-plan depuis R2 (optionnel, pour les images -2, -3, etc)
+        // 3. Charger les images R2 et les fusionner
         try {
             const response = await fetch(`{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`, {
                 headers: {
@@ -2345,19 +2354,34 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                console.warn('⚠️ Réponse non-JSON pour get-images R2 (images PHP affichées)');
-                return;
-            }
-            
-            const data = await response.json();
-            
-            if (data.success && data.images.length > 0) {
-                // Fusionner avec les images R2 (pour avoir les -2, -3, etc.)
-                renderTaxonomyImagesGrid(gridContainer, data.images, identifier, folder);
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                
+                if (data.success && data.images.length > 0) {
+                    // Ajouter les images R2 qui ne sont pas déjà dans la liste
+                    data.images.forEach(img => {
+                        if (!seenUrls.has(img.url)) {
+                            allImages.push(img);
+                            seenUrls.add(img.url);
+                        }
+                    });
+                }
             }
         } catch (e) {
-            console.warn('⚠️ Erreur chargement R2 (images PHP affichées):', e);
+            console.warn('⚠️ Erreur chargement R2:', e);
+        }
+        
+        // 4. Afficher toutes les images
+        if (allImages.length > 0) {
+            renderTaxonomyImagesGrid(gridContainer, allImages, identifier, folder);
+        } else {
+            gridContainer.innerHTML = `
+                <div class="col-span-2 sm:col-span-4 text-center text-gray-400 py-8">
+                    <div class="text-4xl mb-2">📭</div>
+                    <div>Aucune image trouvée pour ce type</div>
+                    <div class="text-sm mt-2">Utilisez le formulaire ci-dessus pour ajouter des images</div>
+                </div>
+            `;
         }
     }
     
@@ -2488,6 +2512,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success) {
+                // Ajouter les URLs retournées à la session pour affichage immédiat
+                if (data.urls && data.urls.length > 0) {
+                    data.urls.forEach(url => {
+                        sessionUploadedImages.push({
+                            url: url,
+                            type: selectedType,
+                            full_type: selectedType,
+                            index: sessionUploadedImages.filter(i => i.type === selectedType).length + 2,
+                            size: 0,
+                            source: 'upload'
+                        });
+                    });
+                }
+                
                 alert('✅ ' + data.message);
                 loadTaxonomyImagesGrid(identifier, folder);
                 document.getElementById('taxonomy-image-file-input').value = '';
