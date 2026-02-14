@@ -5150,25 +5150,33 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    consoleImageFiles[imgType] = file;
-    
-    const preview = dropzone.querySelector('.console-img-preview');
-    const placeholder = dropzone.querySelector('.console-img-placeholder');
-    const status = document.querySelector(`.console-img-status[data-type="${imgType}"]`);
-    
+    // Lire le fichier comme ArrayBuffer pour éviter ERR_UPLOAD_FILE_CHANGED
     const reader = new FileReader();
     reader.onload = (e) => {
-      preview.querySelector('img').src = e.target.result;
-      preview.classList.remove('hidden');
-      placeholder.classList.add('hidden');
-      if (status) status.textContent = '✓ Prêt';
-      status?.classList.remove('text-gray-400');
-      status?.classList.add('text-green-600');
+      // Stocker comme Blob avec le nom original
+      const blob = new Blob([e.target.result], { type: file.type });
+      blob.name = file.name;
+      consoleImageFiles[imgType] = { blob, name: file.name, type: file.type };
       
-      // Activer le bouton si au moins une image est sélectionnée
-      updateUploadButton();
+      // Afficher la preview
+      const previewReader = new FileReader();
+      previewReader.onload = (pe) => {
+        const preview = dropzone.querySelector('.console-img-preview');
+        const placeholder = dropzone.querySelector('.console-img-placeholder');
+        const status = document.querySelector(`.console-img-status[data-type="${imgType}"]`);
+        
+        preview.querySelector('img').src = pe.target.result;
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        if (status) status.textContent = '✓ Prêt';
+        status?.classList.remove('text-gray-400');
+        status?.classList.add('text-green-600');
+        
+        updateUploadButton();
+      };
+      previewReader.readAsDataURL(blob);
     };
-    reader.readAsDataURL(file);
+    reader.readAsArrayBuffer(file);
   }
   
   function updateUploadButton() {
@@ -5193,7 +5201,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let successCount = 0;
     let errorCount = 0;
     
-    for (const [imgType, file] of filesToUpload) {
+    for (const [imgType, fileData] of filesToUpload) {
       const status = document.querySelector(`.console-img-status[data-type="${imgType}"]`);
       if (status) {
         status.textContent = '⏳ Envoi...';
@@ -5202,7 +5210,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       const formData = new FormData();
-      formData.append('images[]', file);
+      // Utiliser le blob stocké avec son nom de fichier
+      formData.append('images[]', fileData.blob, fileData.name);
       formData.append('identifier', consoleLogoName);
       formData.append('folder', 'consoles');
       formData.append('platform', 'Consoles');
