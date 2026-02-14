@@ -154,7 +154,7 @@ class ArticleType extends Model
 
     /**
      * Accessor pour l'URL de la cover image
-     * Priorité: colonne directe > URL R2 générée
+     * Priorité: colonne directe > URL R2 générée > console display1
      */
     public function getCoverImageUrlAttribute()
     {
@@ -162,20 +162,45 @@ class ArticleType extends Model
         if (!empty($this->cover_image) && str_starts_with($this->cover_image, 'http')) {
             return $this->cover_image;
         }
-        return $this->getR2ImageUrl('cover');
+        
+        // Pour les jeux: utiliser R2 avec ROM ID
+        $gameUrl = $this->getR2ImageUrl('cover');
+        if ($gameUrl) {
+            return $gameUrl;
+        }
+        
+        // Pour les consoles: utiliser display1 comme cover
+        if ($this->isConsoleCategory()) {
+            return $this->getConsoleImageUrl('display1');
+        }
+        
+        return null;
     }
 
     /**
      * Accessor pour l'URL du logo
+     * Pour les jeux: ROM ID-logo.png
+     * Pour les consoles: slug-logo.png
      */
     public function getLogoUrlAttribute()
     {
-        return $this->getR2ImageUrl('logo');
+        // Pour les jeux
+        $gameUrl = $this->getR2ImageUrl('logo');
+        if ($gameUrl) {
+            return $gameUrl;
+        }
+        
+        // Pour les consoles
+        if ($this->isConsoleCategory()) {
+            return $this->getConsoleImageUrl('logo');
+        }
+        
+        return null;
     }
 
     /**
      * Accessor pour l'URL du screenshot 1 (gameplay)
-     * Priorité: colonne directe > URL R2 générée
+     * Priorité: colonne directe > URL R2 générée > console display2
      */
     public function getScreenshot1UrlAttribute()
     {
@@ -183,12 +208,24 @@ class ArticleType extends Model
         if (!empty($this->gameplay_image) && str_starts_with($this->gameplay_image, 'http')) {
             return $this->gameplay_image;
         }
-        return $this->getR2ImageUrl('gameplay');
+        
+        // Pour les jeux
+        $gameUrl = $this->getR2ImageUrl('gameplay');
+        if ($gameUrl) {
+            return $gameUrl;
+        }
+        
+        // Pour les consoles: utiliser display2 comme gameplay
+        if ($this->isConsoleCategory()) {
+            return $this->getConsoleImageUrl('display2');
+        }
+        
+        return null;
     }
 
     /**
      * Accessor pour l'URL du screenshot 2 (artwork)
-     * Priorité: colonne directe > URL R2 générée
+     * Priorité: colonne directe > URL R2 générée > console display3
      */
     public function getScreenshot2UrlAttribute()
     {
@@ -196,7 +233,19 @@ class ArticleType extends Model
         if (!empty($this->artwork_image) && str_starts_with($this->artwork_image, 'http')) {
             return $this->artwork_image;
         }
-        return $this->getR2ImageUrl('artwork');
+        
+        // Pour les jeux
+        $gameUrl = $this->getR2ImageUrl('artwork');
+        if ($gameUrl) {
+            return $gameUrl;
+        }
+        
+        // Pour les consoles: utiliser display3 comme artwork
+        if ($this->isConsoleCategory()) {
+            return $this->getConsoleImageUrl('display3');
+        }
+        
+        return null;
     }
 
     /**
@@ -221,5 +270,105 @@ class ArticleType extends Model
     public function consoles()
     {
         return $this->hasMany(Console::class, 'article_type_id');
+    }
+
+    /**
+     * Vérifie si ce type appartient à la catégorie Consoles (ID = 1)
+     */
+    public function isConsoleCategory(): bool
+    {
+        // Charger la sous-catégorie si nécessaire
+        $subCategory = $this->relationLoaded('subCategory') 
+            ? $this->subCategory 
+            : $this->subCategory()->first();
+        
+        if (!$subCategory) {
+            return false;
+        }
+
+        // Charger la marque et sa catégorie
+        $brand = $subCategory->relationLoaded('brand')
+            ? $subCategory->brand
+            : $subCategory->brand()->first();
+        
+        if (!$brand) {
+            return false;
+        }
+
+        $category = $brand->relationLoaded('category')
+            ? $brand->category
+            : $brand->category()->first();
+        
+        // ID 1 = Catégorie "Consoles"
+        return $category && $category->id === 1;
+    }
+
+    /**
+     * Générer le slug/identifier pour les images de console
+     */
+    public function getConsoleSlug(): string
+    {
+        return \Illuminate\Support\Str::slug($this->name);
+    }
+
+    /**
+     * Récupérer l'URL d'une image console depuis R2
+     * Dossier: taxonomy/consoles/{slug}-{type}.png
+     */
+    private function getConsoleImageUrl($type)
+    {
+        $slug = $this->getConsoleSlug();
+        if (!$slug) {
+            return null;
+        }
+
+        $filename = "{$slug}-{$type}.png";
+        
+        // En production : URL directe R2
+        if (app()->environment('production')) {
+            $r2PublicUrl = config('filesystems.disks.r2.url') ?: 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+            return $r2PublicUrl . "/taxonomy/consoles/{$filename}";
+        } else {
+            return route('proxy.taxonomy-image', [
+                'folder' => 'consoles',
+                'filename' => $filename
+            ]);
+        }
+    }
+
+    /**
+     * Accessor pour les images de taxonomie de console
+     * (logo et display1-3 mappés vers cover/artwork/gameplay)
+     */
+    public function getConsoleLogoUrlAttribute()
+    {
+        if (!$this->isConsoleCategory()) {
+            return null;
+        }
+        return $this->getConsoleImageUrl('logo');
+    }
+
+    public function getConsoleDisplay1UrlAttribute()
+    {
+        if (!$this->isConsoleCategory()) {
+            return null;
+        }
+        return $this->getConsoleImageUrl('display1');
+    }
+
+    public function getConsoleDisplay2UrlAttribute()
+    {
+        if (!$this->isConsoleCategory()) {
+            return null;
+        }
+        return $this->getConsoleImageUrl('display2');
+    }
+
+    public function getConsoleDisplay3UrlAttribute()
+    {
+        if (!$this->isConsoleCategory()) {
+            return null;
+        }
+        return $this->getConsoleImageUrl('display3');
     }
 }
