@@ -34,7 +34,7 @@ foreach ($table in $tables) {
     
     $outputFile = Join-Path $exportDir "$table.sql"
     
-    & $mysqlPath -u $dbUser --single-transaction --quick --lock-tables=false $dbName $table > $outputFile
+    & $mysqlPath -u $dbUser --single-transaction --quick --lock-tables=false --default-character-set=utf8mb4 --result-file="$outputFile" $dbName $table
     
     if ($LASTEXITCODE -eq 0) {
         $size = (Get-Item $outputFile).Length / 1MB

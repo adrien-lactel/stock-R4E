@@ -77,11 +77,13 @@ foreach ($table in $tables) {
         "-P", $port,
         "-u", $user,
         "-p$password",
+        "--default-character-set=utf8mb4",
         $database
     )
     
     try {
-        Get-Content $sqlFile | & $mysqlPath @args 2>&1 | Out-Null
+        # Utiliser cmd.exe pour éviter les problèmes d'encodage PowerShell
+        cmd /c "$mysqlPath -h $dbHost -P $port -u $user -p$password --default-character-set=utf8mb4 $database < `"$sqlFile`"" 2>&1 | Out-Null
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  OK" -ForegroundColor Green
