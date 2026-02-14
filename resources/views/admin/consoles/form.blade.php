@@ -305,7 +305,8 @@
 
         <select id="article_brand_id"
                 name="article_brand_id"
-                class="w-full rounded border-gray-300">
+                class="w-full rounded border-gray-300"
+                autocomplete="off">
             <option value="">— Choisir —</option>
         </select>
     </div>
@@ -328,6 +329,7 @@
         <select id="article_sub_category_id"
                 name="article_sub_category_id"
                 class="w-full rounded border-gray-300"
+                autocomplete="off"
                 required>
             <option value="">— Choisir —</option>
         </select>
@@ -351,6 +353,7 @@
         <select id="article_type_id"
                 name="article_type_id"
                 class="w-full rounded border-gray-300"
+                autocomplete="off"
                 required>
             <option value="">— Choisir —</option>
         </select>
@@ -3501,6 +3504,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
+      // Vérifier que catId est un nombre valide
+      if (isNaN(parseInt(catId)) || String(catId).includes('@')) {
+        console.error('❌ loadBrands: ID invalide:', catId);
+        return;
+      }
+      
       // Afficher/masquer les champs selon la catégorie
       const languageField = document.getElementById('language_field');
       const regionField = document.getElementById('region_field');
@@ -3612,6 +3621,11 @@ document.addEventListener('DOMContentLoaded', function() {
   async function loadSubs(brandId) {
     clear(sub); clear(type);
     if (!brandId) return;
+    // Vérifier que brandId est un nombre valide
+    if (isNaN(parseInt(brandId)) || String(brandId).includes('@')) {
+      console.error('❌ loadSubs: ID invalide:', brandId);
+      return;
+    }
     try {
       const url = `{{ url('admin/ajax/sub-categories') }}/${brandId}`;
       const response = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
@@ -3626,6 +3640,11 @@ document.addEventListener('DOMContentLoaded', function() {
   async function loadTypes(subId) {
     clear(type);
     if (!subId) return;
+    // Vérifier que subId est un nombre valide (pas un email ou autre texte)
+    if (isNaN(parseInt(subId)) || String(subId).includes('@')) {
+      console.error('❌ loadTypes: ID invalide:', subId);
+      return;
+    }
     try {
       const url = `{{ url('admin/ajax/types') }}/${subId}`;
       const response = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
