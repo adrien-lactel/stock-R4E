@@ -73,9 +73,12 @@
                         <div class="p-4">
                             <div class="flex items-start justify-between mb-2">
                                 <div>
-                                    <h3 class="font-semibold text-gray-800">{{ $sheet->name }}</h3>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-xs font-mono bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded">#{{ $sheet->id }}</span>
+                                        <h3 class="font-semibold text-gray-800">{{ $sheet->name }}</h3>
+                                    </div>
                                     @if($sheet->articleType?->rom_id)
-                                        <span class="text-xs text-indigo-600 font-mono">ID: {{ $sheet->articleType->rom_id }}</span>
+                                        <span class="text-xs text-indigo-600 font-mono">{{ $sheet->articleType->rom_id }}</span>
                                     @endif
                                 </div>
                                 <div class="flex flex-col items-end gap-1">

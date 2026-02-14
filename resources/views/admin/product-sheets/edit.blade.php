@@ -189,14 +189,25 @@
                                     @endif
                                 </div>
 
-                                <h2 id="preview-name" class="text-2xl font-bold text-gray-800 mb-2">{{ $sheet->name ?? $selectedType->name }}</h2>
+                                <div class="flex items-center gap-2 mb-2">
+                                    @if($sheet->exists)
+                                        <span class="text-xs font-mono bg-gray-200 text-gray-700 px-2 py-0.5 rounded">Fiche #{{ $sheet->id }}</span>
+                                    @endif
+                                    <h2 id="preview-name" class="text-2xl font-bold text-gray-800">{{ $sheet->name ?? $selectedType->name }}</h2>
+                                </div>
                                 
                                 {{-- Informations supplémentaires --}}
                                 @if(isset($associatedConsole))
                                     <div class="space-y-1.5">
+                                        {{-- Numéro d'article --}}
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-semibold text-gray-700">N° Article:</span>
+                                            <span class="text-sm font-mono bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">#{{ $associatedConsole->id }}</span>
+                                        </div>
+                                        
                                         @if($associatedConsole->rom_id)
                                             <div class="flex items-center gap-2">
-                                                <span class="text-sm font-semibold text-gray-700">ID:</span>
+                                                <span class="text-sm font-semibold text-gray-700">ROM ID:</span>
                                                 <span class="text-sm text-gray-600">{{ $associatedConsole->rom_id }}</span>
                                             </div>
                                         @endif
