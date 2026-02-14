@@ -183,6 +183,16 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                             </svg>
                                         </button>
+                                        
+                                        {{-- Bouton d'édition des images de taxonomie --}}
+                                        <button type="button" 
+                                                onclick="openTaxonomyImageEditorModal()"
+                                                class="absolute top-2 right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Gérer les images de la taxonomie">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -1273,6 +1283,458 @@ document.addEventListener('DOMContentLoaded', function() {
         const lightboxImage = document.getElementById('lightbox-image');
         if (lightboxImage) {
             lightboxImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+        }
+    }
+
+    // =====================================================
+    // MODAL D'ÉDITION DES IMAGES DE TAXONOMIE
+    // =====================================================
+    
+    // Variables pour l'édition des images taxonomie
+    let taxonomyModalIdentifier = null;
+    let taxonomyModalFolder = null;
+    let taxonomyModalPlatform = null;
+    
+    window.openTaxonomyImageEditorModal = function() {
+        console.log('🖼️ Ouverture modal édition images taxonomie');
+        
+        // Récupérer les infos depuis PHP
+        const romId = @json($console->rom_id ?? null);
+        const articleTypeName = @json($selectedType->name ?? 'Article');
+        const subCategoryName = @json($selectedSubCategory->name ?? '');
+        const categoryName = @json($selectedCategory->name ?? '');
+        
+        // Déterminer le folder basé sur la catégorie/sous-catégorie
+        let folder = 'other';
+        if (subCategoryName) {
+            folder = subCategoryName.toLowerCase().replace(/\s+/g, '');
+        } else if (categoryName) {
+            folder = categoryName.toLowerCase().replace(/\s+/g, '');
+        }
+        
+        // Identifier = ROM ID ou nom du type slugifié
+        const identifier = romId || articleTypeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        const platform = subCategoryName || categoryName || 'Generic';
+        
+        // Stocker pour les fonctions ultérieures
+        taxonomyModalIdentifier = identifier;
+        taxonomyModalFolder = folder;
+        taxonomyModalPlatform = platform;
+        
+        console.log('📂 Données modal taxonomie:', { identifier, folder, platform, romId });
+        
+        // Créer la modal
+        const modal = document.createElement('div');
+        modal.id = 'taxonomy-image-editor-modal';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto';
+        
+        const modalContent = document.createElement('div');
+        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-4xl w-full my-8';
+        modalContent.style.maxHeight = '90vh';
+        modalContent.style.overflowY = 'auto';
+        
+        // Header
+        const header = document.createElement('div');
+        header.className = 'bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-t-lg flex justify-between items-center sticky top-0 z-10';
+        header.innerHTML = `
+            <h3 class="text-xl font-bold">🖼️ Gestion des images - ${articleTypeName}</h3>
+            <button onclick="closeTaxonomyImageEditorModal()" class="text-white hover:text-gray-200 text-2xl leading-none">&times;</button>
+        `;
+        
+        // Body
+        const body = document.createElement('div');
+        body.className = 'p-6 space-y-6';
+        
+        // Info bar
+        const infoBar = document.createElement('div');
+        infoBar.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4';
+        infoBar.innerHTML = `
+            <div class="text-sm text-gray-700">
+                <strong>Identifiant:</strong> ${identifier} | 
+                <strong>Plateforme:</strong> ${platform} | 
+                <strong>Dossier:</strong> ${folder}
+            </div>
+        `;
+        
+        // Section Upload
+        const uploadSection = document.createElement('div');
+        uploadSection.id = 'taxonomy-upload-section';
+        uploadSection.className = 'border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer';
+        uploadSection.innerHTML = `
+            <div class="text-center">
+                <div class="text-4xl mb-2">📤</div>
+                <h4 class="font-semibold text-gray-700 mb-2">Ajouter des images</h4>
+                <p class="text-sm text-gray-500 mb-3">
+                    <span class="font-semibold">Glissez-déposez vos images ici</span> ou sélectionnez-les
+                </p>
+                
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <label class="text-sm font-medium text-gray-700">Type d'image :</label>
+                    <select id="taxonomy-upload-type-select" class="border border-gray-300 rounded px-3 py-2 text-sm font-medium">
+                        <option value="cover">📖 Cover</option>
+                        <option value="logo">🏷️ Logo</option>
+                        <option value="artwork">🎨 Artwork</option>
+                        <option value="gameplay">🎮 Gameplay</option>
+                    </select>
+                </div>
+                
+                <input type="file" id="taxonomy-image-file-input" accept="image/*" multiple class="hidden">
+                <button type="button" onclick="document.getElementById('taxonomy-image-file-input').click()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
+                    📂 Parcourir
+                </button>
+            </div>
+        `;
+        
+        // Section Images existantes
+        const existingSection = document.createElement('div');
+        existingSection.className = 'space-y-4';
+        existingSection.innerHTML = `
+            <h4 class="font-semibold text-gray-700">Images existantes</h4>
+            <div id="taxonomy-images-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="col-span-2 sm:col-span-4 text-center text-gray-500">
+                    <div class="animate-pulse">Chargement des images...</div>
+                </div>
+            </div>
+        `;
+        
+        // Assembler la modal
+        body.appendChild(infoBar);
+        body.appendChild(uploadSection);
+        body.appendChild(existingSection);
+        
+        modalContent.appendChild(header);
+        modalContent.appendChild(body);
+        modal.appendChild(modalContent);
+        
+        // Clic en dehors pour fermer
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                closeTaxonomyImageEditorModal();
+            }
+        };
+        
+        document.body.appendChild(modal);
+        
+        // Setup drag & drop
+        setupTaxonomyUploadDragDrop();
+        
+        // Setup file input
+        document.getElementById('taxonomy-image-file-input').onchange = (e) => {
+            const selectedType = document.getElementById('taxonomy-upload-type-select')?.value || 'cover';
+            handleTaxonomyImageUpload(e.target.files, taxonomyModalIdentifier, taxonomyModalFolder, taxonomyModalPlatform, selectedType);
+        };
+        
+        // Charger les images
+        loadTaxonomyImagesGrid(identifier, folder);
+    };
+    
+    function setupTaxonomyUploadDragDrop() {
+        const uploadSection = document.getElementById('taxonomy-upload-section');
+        if (!uploadSection) return;
+        
+        uploadSection.ondragover = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadSection.classList.remove('bg-gray-50', 'border-gray-300');
+            uploadSection.classList.add('border-blue-500', 'bg-blue-100', 'border-4');
+        };
+        
+        uploadSection.ondragleave = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.target === uploadSection) {
+                uploadSection.classList.remove('border-blue-500', 'bg-blue-100', 'border-4');
+                uploadSection.classList.add('bg-gray-50', 'border-gray-300');
+            }
+        };
+        
+        uploadSection.ondrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadSection.classList.remove('border-blue-500', 'bg-blue-100', 'border-4');
+            uploadSection.classList.add('bg-gray-50', 'border-gray-300');
+            
+            const files = e.dataTransfer.files;
+            const selectedType = document.getElementById('taxonomy-upload-type-select')?.value || 'cover';
+            
+            if (files.length > 0) {
+                handleTaxonomyImageUpload(files, taxonomyModalIdentifier, taxonomyModalFolder, taxonomyModalPlatform, selectedType);
+            }
+        };
+        
+        uploadSection.onclick = (e) => {
+            if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION' && e.target.tagName !== 'BUTTON') {
+                document.getElementById('taxonomy-image-file-input').click();
+            }
+        };
+    }
+    
+    window.closeTaxonomyImageEditorModal = function() {
+        const modal = document.getElementById('taxonomy-image-editor-modal');
+        if (modal) {
+            modal.remove();
+            // Recharger la page pour afficher les nouvelles images
+            window.location.reload();
+        }
+    };
+    
+    // Charger les images de taxonomie dans la grille
+    async function loadTaxonomyImagesGrid(identifier, folder) {
+        const gridContainer = document.getElementById('taxonomy-images-grid');
+        if (!gridContainer) return;
+        
+        try {
+            const response = await fetch(`{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`);
+            const data = await response.json();
+            
+            if (data.success && data.images.length > 0) {
+                gridContainer.innerHTML = '';
+                
+                const timestamp = Date.now();
+                
+                data.images.forEach(image => {
+                    const imageCard = document.createElement('div');
+                    imageCard.className = 'border-2 border-gray-200 rounded-lg p-3 bg-white hover:border-blue-400 transition-colors';
+                    
+                    const img = document.createElement('img');
+                    img.src = `${image.url}?t=${timestamp}`;
+                    img.className = 'w-full h-40 object-cover rounded mb-2 cursor-pointer';
+                    img.onclick = () => window.openImageLightbox(image.url);
+                    img.onerror = function() {
+                        this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23999" text-anchor="middle" dy=".3em"%3EErreur%3C/text%3E%3C/svg%3E';
+                    };
+                    
+                    // Label avec dropdown de changement de catégorie
+                    const labelRow = document.createElement('div');
+                    labelRow.className = 'flex items-center justify-between mb-2';
+                    
+                    const select = document.createElement('select');
+                    select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
+                    select.innerHTML = `
+                        <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
+                        <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
+                        <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
+                        <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
+                    `;
+                    select.onchange = () => renameTaxonomyImage(identifier, folder, image.full_type, select.value);
+                    
+                    labelRow.appendChild(select);
+                    
+                    // Badge d'index si > 1
+                    if (image.index > 1) {
+                        const badge = document.createElement('span');
+                        badge.className = 'text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold ml-2';
+                        badge.textContent = '#' + image.index;
+                        labelRow.appendChild(badge);
+                    }
+                    
+                    // Bouton suppression
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'text-red-600 hover:text-red-800 text-xl leading-none ml-2';
+                    deleteBtn.innerHTML = '🗑️';
+                    deleteBtn.title = 'Supprimer cette image';
+                    deleteBtn.onclick = () => deleteTaxonomyImage(identifier, folder, image.full_type);
+                    
+                    labelRow.appendChild(deleteBtn);
+                    
+                    // Taille du fichier
+                    const sizeInfo = document.createElement('div');
+                    sizeInfo.className = 'text-xs text-gray-500 text-center mt-1';
+                    const sizeKb = (image.size / 1024).toFixed(1);
+                    sizeInfo.textContent = `${sizeKb} Ko`;
+                    
+                    // Assembler
+                    imageCard.appendChild(img);
+                    imageCard.appendChild(labelRow);
+                    
+                    // Bouton "Définir comme principale" pour les images indexées
+                    if (image.index > 1) {
+                        const setPrimaryBtn = document.createElement('button');
+                        setPrimaryBtn.type = 'button';
+                        setPrimaryBtn.className = 'w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
+                        setPrimaryBtn.innerHTML = '⭐ Définir comme principale';
+                        setPrimaryBtn.onclick = () => setAsPrimaryImage(identifier, folder, image.full_type, image.type);
+                        imageCard.appendChild(setPrimaryBtn);
+                    }
+                    
+                    imageCard.appendChild(sizeInfo);
+                    gridContainer.appendChild(imageCard);
+                });
+                
+                // Compteur
+                const countInfo = document.createElement('div');
+                countInfo.className = 'col-span-2 sm:col-span-4 text-center text-sm text-gray-600 mt-2 pt-2 border-t';
+                countInfo.textContent = `Total : ${data.total} image${data.total > 1 ? 's' : ''}`;
+                gridContainer.appendChild(countInfo);
+                
+            } else {
+                gridContainer.innerHTML = `
+                    <div class="col-span-2 sm:col-span-4 text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-2">📭</div>
+                        <div>Aucune image trouvée pour ce type</div>
+                    </div>
+                `;
+            }
+        } catch (e) {
+            console.error('Erreur chargement images:', e);
+            gridContainer.innerHTML = `
+                <div class="col-span-2 sm:col-span-4 text-center text-red-500 py-8">
+                    <div class="text-4xl mb-2">⚠️</div>
+                    <div>Erreur lors du chargement des images</div>
+                </div>
+            `;
+        }
+    }
+    
+    // Upload d'images de taxonomie
+    async function handleTaxonomyImageUpload(files, identifier, folder, platform, selectedType) {
+        if (files.length === 0) return;
+        
+        console.log('📤 Upload de', files.length, 'fichier(s) de type:', selectedType);
+        
+        const formData = new FormData();
+        for (let file of files) {
+            formData.append('images[]', file);
+        }
+        formData.append('identifier', identifier);
+        formData.append('folder', folder);
+        formData.append('platform', platform);
+        formData.append('type', selectedType);
+        
+        try {
+            const response = await fetch('{{ route("admin.taxonomy.upload-image") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('❌ Réponse HTML au lieu de JSON:', text.substring(0, 500));
+                throw new Error('Le serveur a retourné une erreur. Vérifiez la console pour plus de détails.');
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('✅ ' + data.message, 'success');
+                loadTaxonomyImagesGrid(identifier, folder);
+                document.getElementById('taxonomy-image-file-input').value = '';
+            } else {
+                showToast('❌ Erreur: ' + data.message, 'error');
+            }
+        } catch (e) {
+            console.error('Erreur upload:', e);
+            showToast('❌ Erreur lors de l\'upload', 'error');
+        }
+    }
+    
+    // Renommer une image de taxonomie
+    async function renameTaxonomyImage(identifier, folder, oldType, newType) {
+        if (oldType === newType) return;
+        
+        if (!confirm(`Renommer l'image de "${oldType}" vers "${newType}" ?`)) return;
+        
+        try {
+            const response = await fetch('{{ route("admin.taxonomy.rename-image") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    identifier: identifier,
+                    folder: folder,
+                    old_type: oldType,
+                    new_type: newType
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('✅ ' + data.message, 'success');
+                loadTaxonomyImagesGrid(identifier, folder);
+            } else {
+                showToast('❌ Erreur: ' + data.message, 'error');
+            }
+        } catch (e) {
+            console.error('Erreur renommage:', e);
+            showToast('❌ Erreur lors du renommage', 'error');
+        }
+    }
+    
+    // Supprimer une image de taxonomie
+    async function deleteTaxonomyImage(identifier, folder, type) {
+        if (!confirm(`Supprimer définitivement l'image "${type}" ?`)) return;
+        
+        try {
+            const response = await fetch('{{ route("admin.taxonomy.delete-image") }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    identifier: identifier,
+                    folder: folder,
+                    type: type
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('✅ ' + data.message, 'success');
+                loadTaxonomyImagesGrid(identifier, folder);
+            } else {
+                showToast('❌ Erreur: ' + data.message, 'error');
+            }
+        } catch (e) {
+            console.error('Erreur suppression:', e);
+            showToast('❌ Erreur lors de la suppression', 'error');
+        }
+    }
+    
+    // Définir une image comme principale
+    async function setAsPrimaryImage(identifier, folder, currentFullType, baseType) {
+        if (!confirm(`Définir "${currentFullType}" comme image principale "${baseType}" ?`)) return;
+        
+        try {
+            const response = await fetch('{{ route("admin.taxonomy.set-primary-image") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    identifier: identifier,
+                    folder: folder,
+                    current_type: currentFullType,
+                    base_type: baseType
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('✅ ' + data.message, 'success');
+                loadTaxonomyImagesGrid(identifier, folder);
+            } else {
+                showToast('❌ ' + data.message, 'error');
+            }
+        } catch (e) {
+            console.error('Erreur:', e);
+            showToast('❌ Erreur lors de l\'opération', 'error');
         }
     }
 
