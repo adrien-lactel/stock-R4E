@@ -715,14 +715,9 @@
 
             {{-- MODS DISPONIBLES --}}
             <div class="mb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-lg font-semibold text-gray-800">🔧 Mods / Accessoires / Opérations</h2>
-                        <p class="text-sm text-gray-600 mt-1">Cochez les mods que vous souhaitez afficher sur la miniature de cette fiche</p>
-                    </div>
-                    <button type="button" onclick="resetFeaturedMods()" class="px-3 py-1 text-sm rounded bg-red-100 text-red-700 hover:bg-red-200">
-                        🗑️ Réinitialiser
-                    </button>
+                <div class="mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">🔧 Mods / Accessoires / Opérations</h2>
+                    <p class="text-sm text-gray-600 mt-1">Cochez les mods que vous souhaitez afficher sur la miniature de cette fiche</p>
                 </div>
 
                 @php
@@ -1767,28 +1762,6 @@ console.log('✅ Toutes les fonctions de gestion d\'images sont chargées:', {
     deleteArticleImage: typeof window.deleteArticleImage,
     refreshArticleImagesPreview: typeof window.refreshArticleImagesPreview
 });
-
-// Fonction de réinitialisation des mods
-window.resetFeaturedMods = function() {
-    if (!confirm('Réinitialiser tous les mods ? Cette action ne peut pas être annulée.')) {
-        return;
-    }
-    
-    featuredMods = [];
-    document.getElementById('featured_mods_input').value = '[]';
-    
-    // Décocher toutes les cases
-    document.querySelectorAll('.mod-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    
-    // Mettre à jour l'affichage des icônes
-    if (typeof window.updateModsIconsDisplay === 'function') {
-        window.updateModsIconsDisplay();
-    }
-    
-    alert('Les mods ont été réinitialisés. Cliquez sur "💾 Mettre à jour" pour sauvegarder.');
-}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialiser le champ hidden avec les critères existants
