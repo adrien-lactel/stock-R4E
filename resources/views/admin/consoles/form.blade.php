@@ -5066,7 +5066,7 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('📦 Console images section initialized');
   
   // Ouvrir le modal
-  window.openConsoleLogoModal = function() {
+  window.openConsoleLogoModal = async function() {
     const modal = document.getElementById('console-logo-modal');
     const type = document.getElementById('article_type_id');
     const nameDisplay = document.getElementById('console-logo-name');
@@ -5100,6 +5100,40 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('console-logo-upload-btn').disabled = true;
     
     modal.classList.remove('hidden');
+    
+    // Charger les images existantes depuis R2
+    try {
+      const response = await fetch(`{{ route('admin.taxonomy.console-images') }}?identifier=${encodeURIComponent(consoleLogoName)}&folder=consoles`, {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      });
+      const data = await response.json();
+      
+      if (data.success && data.images) {
+        for (const [imgType, imgData] of Object.entries(data.images)) {
+          const dropzone = document.getElementById(`console-img-dropzone-${imgType}`);
+          if (!dropzone) continue;
+          
+          const preview = dropzone.querySelector('.console-img-preview');
+          const placeholder = dropzone.querySelector('.console-img-placeholder');
+          const status = document.querySelector(`.console-img-status[data-type="${imgType}"]`);
+          
+          if (preview && imgData.url) {
+            preview.querySelector('img').src = imgData.url + '?t=' + Date.now(); // Cache buster
+            preview.classList.remove('hidden');
+            placeholder?.classList.add('hidden');
+            if (status) {
+              status.textContent = imgData.filename;
+              status.classList.remove('text-gray-400');
+              status.classList.add('text-blue-600');
+            }
+          }
+        }
+        console.log('✅ Images existantes chargées:', Object.keys(data.images));
+      }
+    } catch (e) {
+      console.warn('Impossible de charger les images existantes:', e);
+    }
   };
   
   // Fermer le modal

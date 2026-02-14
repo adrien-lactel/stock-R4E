@@ -937,6 +937,47 @@ public function destroyType(ArticleType $type)
     }
 
     /* =====================================================
+     | GET EXISTING CONSOLE IMAGES FROM R2
+     ===================================================== */
+    public function getConsoleImages(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string',
+            'folder' => 'required|string',
+        ]);
+
+        $identifier = $request->identifier;
+        $folder = $request->folder;
+        $r2BaseUrl = config('filesystems.disks.r2.url');
+        
+        $imageTypes = ['logo', 'display1', 'display2', 'display3'];
+        $existingImages = [];
+        
+        foreach ($imageTypes as $type) {
+            $filename = "{$identifier}-{$type}.png";
+            $r2Path = "taxonomy/{$folder}/{$filename}";
+            
+            try {
+                if (\Storage::disk('r2')->exists($r2Path)) {
+                    $existingImages[$type] = [
+                        'url' => "{$r2BaseUrl}/{$r2Path}",
+                        'filename' => $filename,
+                        'path' => $r2Path
+                    ];
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Erreur vérification image R2 {$r2Path}: " . $e->getMessage());
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'images' => $existingImages,
+            'identifier' => $identifier
+        ]);
+    }
+
+    /* =====================================================
      | RENAME IMAGE DE TAXONOMIE
      ===================================================== */
     public function renameTaxonomyImage(Request $request)

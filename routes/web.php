@@ -295,6 +295,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::get('/taxonomy/get-images', [TaxonomyController::class, 'getTaxonomyImages'])
             ->name('taxonomy.get-images');
         
+        Route::get('/taxonomy/console-images', [TaxonomyController::class, 'getConsoleImages'])
+            ->name('taxonomy.console-images');
+        
         Route::post('/taxonomy/upload-image', [TaxonomyController::class, 'uploadTaxonomyImage'])
             ->name('taxonomy.upload-image');
         
