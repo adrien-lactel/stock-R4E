@@ -2293,7 +2293,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!gridContainer) return;
         
         try {
-            const response = await fetch(`{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`);
+            const response = await fetch(`{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('❌ Réponse non-JSON reçue pour get-images');
+                throw new Error('Le serveur a retourné une erreur');
+            }
+            
             const data = await response.json();
             
             if (data.success && data.images.length > 0) {

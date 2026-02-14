@@ -689,23 +689,24 @@ public function destroyType(ArticleType $type)
      ===================================================== */
     public function getTaxonomyImages(Request $request)
     {
-        $request->validate([
-            'identifier' => 'required|string',
-            'folder' => 'required|string',
-        ]);
+        try {
+            $request->validate([
+                'identifier' => 'required|string',
+                'folder' => 'required|string',
+            ]);
 
-        $identifier = $request->identifier;
-        $folder = $request->folder;
-        $basePath = public_path("images/taxonomy/{$folder}");
-        $r2Url = config('filesystems.disks.r2.url');
+            $identifier = $request->identifier;
+            $folder = $request->folder;
+            $basePath = public_path("images/taxonomy/{$folder}");
+            $r2Url = config('filesystems.disks.r2.url');
 
-        $images = [];
-        $seenFilenames = []; // Éviter les doublons
+            $images = [];
+            $seenFilenames = []; // Éviter les doublons
 
-        // Mode LOCAL : lire depuis public/images/taxonomy/
-        if (file_exists($basePath)) {
-            $pattern = "{$basePath}/{$identifier}-*.png";
-            $files = glob($pattern);
+            // Mode LOCAL : lire depuis public/images/taxonomy/
+            if (file_exists($basePath)) {
+                $pattern = "{$basePath}/{$identifier}-*.png";
+                $files = glob($pattern);
             
             foreach ($files as $file) {
                 $filename = basename($file);
@@ -827,6 +828,15 @@ public function destroyType(ArticleType $type)
             'images' => $images,
             'total' => count($images)
         ]);
+        } catch (\Exception $e) {
+            \Log::error("Erreur getTaxonomyImages: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'images' => [],
+                'total' => 0,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /* =====================================================
