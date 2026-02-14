@@ -2186,6 +2186,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const subCategoryName = @json($selectedSubCategory->name ?? '');
         const categoryName = @json($selectedCategory->name ?? '');
         
+        // Dossier de taxonomie calculé depuis PHP (utilise le mapping correct)
+        const phpTaxonomyFolder = @json(isset($selectedType) && method_exists($selectedType, 'getPlatformFolder') ? $selectedType->getPlatformFolder() : null);
+        
         // Images déjà connues depuis PHP (pour affichage immédiat)
         const knownImages = {
             cover: @json($selectedType->cover_image_url ?? null),
@@ -2194,12 +2197,34 @@ document.addEventListener('DOMContentLoaded', function() {
             gameplay: @json($selectedType->screenshot1_url ?? null)
         };
         
-        // Déterminer le folder basé sur la catégorie/sous-catégorie
+        // Déterminer le folder - utiliser le mapping PHP si disponible, sinon fallback
         let folder = 'other';
-        if (subCategoryName) {
-            folder = subCategoryName.toLowerCase().replace(/\s+/g, '');
+        if (phpTaxonomyFolder) {
+            folder = phpTaxonomyFolder;
+        } else if (subCategoryName) {
+            // Fallback avec mapping correct (garde les espaces sauf pour "game boy" → "gameboy")
+            const name = subCategoryName.toLowerCase().trim();
+            const folderMapping = {
+                'game boy': 'gameboy',
+                'game boy color': 'game boy color',
+                'game boy advance': 'game boy advance',
+                'wonderswan': 'wonderswan',
+                'wonderswan color': 'wonderswan color',
+                'nes': 'nes',
+                'snes': 'snes',
+                'super nintendo': 'snes',
+                'neo geo': 'neo geo',
+                'playstation': 'playstation',
+                'ps2': 'ps2',
+                'megadrive': 'megadrive',
+                'mega drive': 'megadrive',
+                'pc engine': 'pc engine',
+                'atari': 'atari',
+                'lynx': 'lynx'
+            };
+            folder = folderMapping[name] || name;
         } else if (categoryName) {
-            folder = categoryName.toLowerCase().replace(/\s+/g, '');
+            folder = categoryName.toLowerCase().trim();
         }
         
         // Identifier = ROM ID ou nom du type slugifié
