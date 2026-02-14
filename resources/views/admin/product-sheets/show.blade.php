@@ -278,7 +278,7 @@
                     {{-- Conteneur pour info images (en haut, même taille que taxonomie) --}}
                     <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; height: 76px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
                         <div style="font-size: 14px; color: #111827; font-weight: 700; text-align: center;">
-                            Images gameplay, cover et artwork
+                            {{ $selectedType->isConsoleCategory() ? 'Visuels' : 'Images gameplay, cover et artwork' }}
                         </div>
                     </div>
                     
