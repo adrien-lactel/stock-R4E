@@ -132,6 +132,54 @@
     {{-- TOAST NOTIFICATIONS --}}
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
+    {{-- MODAL UPLOAD LOGO CONSOLE --}}
+    <div id="console-logo-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-800">📷 Logo de la console</h3>
+                <button type="button" onclick="closeConsoleLogoModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">
+                Glissez-déposez ou sélectionnez le logo du nom de cette console. 
+                Il sera sauvegardé dans la taxonomie pour être réutilisé.
+            </p>
+            
+            <div id="console-logo-name" class="text-center font-medium text-indigo-600 mb-4"></div>
+            
+            {{-- Zone de drop --}}
+            <div id="console-logo-dropzone" 
+                 class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                <div id="console-logo-preview" class="hidden mb-4">
+                    <img id="console-logo-preview-img" src="" class="max-h-32 mx-auto rounded">
+                </div>
+                <div id="console-logo-placeholder">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <p class="text-gray-500">Glissez une image ici ou cliquez pour sélectionner</p>
+                    <p class="text-xs text-gray-400 mt-1">PNG, JPG (max 5 MB)</p>
+                </div>
+                <input type="file" id="console-logo-input" accept="image/*" class="hidden">
+            </div>
+            
+            {{-- Boutons --}}
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" onclick="closeConsoleLogoModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                    Ignorer
+                </button>
+                <button type="button" id="console-logo-upload-btn" onclick="uploadConsoleLogo()" 
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    📤 Enregistrer le logo
+                </button>
+            </div>
+        </div>
+    </div>
+
     {{-- FORMULAIRE --}}
     <div class="bg-white shadow rounded-lg p-6">
         <form method="POST"
@@ -306,6 +354,23 @@
                 required>
             <option value="">— Choisir —</option>
         </select>
+        
+        {{-- Bouton ajout logo console (visible seulement pour catégorie Consoles) --}}
+        <div id="console-logo-section" class="mt-3 hidden">
+            <div class="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div id="console-logo-thumb" class="w-12 h-12 bg-white rounded border flex items-center justify-center overflow-hidden">
+                    <span class="text-gray-400 text-xl">🎮</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-700">Logo de la console</p>
+                    <p class="text-xs text-gray-500">Ajoutez le logo du nom pour la fiche produit</p>
+                </div>
+                <button type="button" onclick="openConsoleLogoModal()" 
+                        class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700">
+                    📷 Ajouter
+                </button>
+            </div>
+        </div>
     </div>
 
     {{-- =====================
@@ -3507,7 +3572,13 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('🌐 Fetching brands from URL:', `{{ url('admin/ajax/brands') }}/${catId}`);
       
       const url = `{{ url('admin/ajax/brands') }}/${catId}`;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        credentials: 'same-origin',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'text/html'
+        }
+      });
       
       console.log('📡 Response status:', response.status);
       console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
@@ -3543,7 +3614,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!brandId) return;
     try {
       const url = `{{ url('admin/ajax/sub-categories') }}/${brandId}`;
-      const response = await fetch(url);
+      const response = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       const html = await response.text();
       sub.innerHTML = html;
       if (oldSub) { sub.value = oldSub; loadTypes(oldSub); }
@@ -3557,7 +3628,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!subId) return;
     try {
       const url = `{{ url('admin/ajax/types') }}/${subId}`;
-      const response = await fetch(url);
+      const response = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       const html = await response.text();
       type.innerHTML = html;
       if (oldType) type.value = oldType;
@@ -3578,7 +3649,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     try {
-      const response = await fetch(`{{ url('admin/ajax/type-description') }}/${typeId}`);
+      const response = await fetch(`{{ url('admin/ajax/type-description') }}/${typeId}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } });
       const data = await response.json();
       descTextarea.value = data.description || '';
       descField.style.display = 'block';
@@ -3692,7 +3763,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Charger les images existantes de l'article_type
   async function loadExistingImages(typeId) {
     try {
-      const response = await fetch(`{{ url('admin/ajax/type-description') }}/${typeId}`);
+      const response = await fetch(`{{ url('admin/ajax/type-description') }}/${typeId}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } });
       const data = await response.json();
       
       if (data.images && data.images.length > 0) {
@@ -4838,6 +4909,176 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
+
+  // =====================
+  // MODAL LOGO CONSOLE
+  // =====================
+  
+  let consoleLogoFile = null;
+  let consoleLogoName = '';
+  const CONSOLE_CATEGORY_ID = 1; // ID de la catégorie "Consoles"
+  
+  // Afficher/masquer la section logo selon la catégorie
+  function updateConsoleLogoSection() {
+    const cat = document.getElementById('article_category_id');
+    const logoSection = document.getElementById('console-logo-section');
+    const type = document.getElementById('article_type_id');
+    
+    if (!cat || !logoSection) return;
+    
+    const isConsoleCategory = parseInt(cat.value) === CONSOLE_CATEGORY_ID;
+    const hasType = type && type.value && type.selectedIndex > 0;
+    
+    if (isConsoleCategory && hasType) {
+      logoSection.classList.remove('hidden');
+      // Mettre à jour le nom de la console
+      const typeName = type.options[type.selectedIndex].text;
+      consoleLogoName = typeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    } else {
+      logoSection.classList.add('hidden');
+    }
+  }
+  
+  // Écouter les changements de catégorie et type
+  document.getElementById('article_category_id')?.addEventListener('change', updateConsoleLogoSection);
+  document.getElementById('article_type_id')?.addEventListener('change', updateConsoleLogoSection);
+  
+  // Ouvrir le modal
+  window.openConsoleLogoModal = function() {
+    const modal = document.getElementById('console-logo-modal');
+    const type = document.getElementById('article_type_id');
+    const nameDisplay = document.getElementById('console-logo-name');
+    
+    if (!modal || !type) return;
+    
+    const typeName = type.options[type.selectedIndex]?.text || 'Console';
+    consoleLogoName = typeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    
+    nameDisplay.textContent = `🎮 ${typeName}`;
+    
+    // Reset
+    consoleLogoFile = null;
+    document.getElementById('console-logo-preview').classList.add('hidden');
+    document.getElementById('console-logo-placeholder').classList.remove('hidden');
+    document.getElementById('console-logo-upload-btn').disabled = true;
+    
+    modal.classList.remove('hidden');
+  };
+  
+  // Fermer le modal
+  window.closeConsoleLogoModal = function() {
+    document.getElementById('console-logo-modal').classList.add('hidden');
+  };
+  
+  // Gestion du dropzone
+  const dropzone = document.getElementById('console-logo-dropzone');
+  const fileInput = document.getElementById('console-logo-input');
+  
+  if (dropzone && fileInput) {
+    dropzone.addEventListener('click', () => fileInput.click());
+    
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('border-indigo-500', 'bg-indigo-50');
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].type.startsWith('image/')) {
+        handleConsoleLogoFile(files[0]);
+      }
+    });
+    
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        handleConsoleLogoFile(fileInput.files[0]);
+      }
+    });
+  }
+  
+  function handleConsoleLogoFile(file) {
+    if (file.size > 5 * 1024 * 1024) {
+      alert('❌ L\'image dépasse 5 MB');
+      return;
+    }
+    
+    consoleLogoFile = file;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('console-logo-preview-img').src = e.target.result;
+      document.getElementById('console-logo-preview').classList.remove('hidden');
+      document.getElementById('console-logo-placeholder').classList.add('hidden');
+      document.getElementById('console-logo-upload-btn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+  
+  // Upload du logo
+  window.uploadConsoleLogo = async function() {
+    if (!consoleLogoFile || !consoleLogoName) {
+      alert('❌ Aucun fichier sélectionné');
+      return;
+    }
+    
+    const btn = document.getElementById('console-logo-upload-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Envoi...';
+    
+    const formData = new FormData();
+    formData.append('images[]', consoleLogoFile);
+    formData.append('identifier', consoleLogoName);
+    formData.append('folder', 'consoles');
+    formData.append('platform', 'Consoles');
+    formData.append('type', 'logo');
+    
+    try {
+      const response = await fetch('{{ route("admin.taxonomy.upload-image") }}', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Mettre à jour la thumbnail
+        const thumb = document.getElementById('console-logo-thumb');
+        if (thumb && data.urls && data.urls[0]) {
+          thumb.innerHTML = `<img src="${data.urls[0]}" class="w-full h-full object-contain">`;
+        }
+        
+        closeConsoleLogoModal();
+        alert('✅ Logo enregistré !');
+      } else {
+        throw new Error(data.message || 'Erreur lors de l\'upload');
+      }
+    } catch (error) {
+      console.error('Erreur upload logo:', error);
+      alert('❌ ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📤 Enregistrer le logo';
+    }
+  };
+  
+  // Fermer modal au clic extérieur
+  document.getElementById('console-logo-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'console-logo-modal') {
+      closeConsoleLogoModal();
+    }
+  });
 
 })();
 

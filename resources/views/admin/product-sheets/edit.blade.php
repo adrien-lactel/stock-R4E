@@ -1604,7 +1604,7 @@ window.openArticleImagesModal = function() {
     grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-6"><div class="animate-pulse">⏳ Chargement des photos...</div></div>';
     
     try {
-      const response = await fetch(`${AJAX_ARTICLE_IMAGES_ROUTE}/${window.currentArticleTypeId}`);
+      const response = await fetch(`${AJAX_ARTICLE_IMAGES_ROUTE}/${window.currentArticleTypeId}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       const data = await response.json();
       
       if (data.success && data.images && data.images.length > 0) {
@@ -2906,7 +2906,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             debounceTimer = setTimeout(async () => {
                 try {
-                    const response = await fetch('/admin/ajax/search-publishers?q=' + encodeURIComponent(query));
+                    const response = await fetch('/admin/ajax/search-publishers?q=' + encodeURIComponent(query), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     const data = await response.json();
                     
                     suggestionsDiv.innerHTML = '';
