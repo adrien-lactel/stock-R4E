@@ -406,6 +406,10 @@
 
                     @php
                         $displaySections = $sheet->display_sections ?? [];
+                        // Auto-cocher "Description du produit" si une description est pré-remplie
+                        if (!$sheet->exists && !empty($prefilledData['description'] ?? null) && !in_array('description', $displaySections)) {
+                            $displaySections[] = 'description';
+                        }
                     @endphp
 
                     <div>
@@ -433,7 +437,7 @@
                         </div>
                         <textarea name="description" rows="4"
                                   oninput="updateSectionContent('description', this.value)"
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $sheet->description) }}</textarea>
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $sheet->description ?? ($prefilledData['description'] ?? '')) }}</textarea>
                     </div>
 
                     <div>

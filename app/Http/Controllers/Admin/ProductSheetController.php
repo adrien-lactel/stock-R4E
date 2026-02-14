@@ -169,31 +169,13 @@ class ProductSheetController extends Controller
     {
         $description = '';
         
-        // Nom du jeu ou type d'article
-        if ($console->articleType?->name) {
-            $description .= $console->articleType->name;
+        // Priorité 1: Description du type d'article (remplie dans le formulaire article)
+        if ($console->articleType?->description) {
+            $description = $console->articleType->description;
         }
-        
-        // Informations du jeu vidéo
-        if ($console->rom_id) {
-            $description .= "\n\n**ROM ID:** " . $console->rom_id;
-        }
-        
-        if ($console->year) {
-            $description .= "\n**Année de sortie:** " . $console->year;
-        }
-        
-        if ($console->region) {
-            $description .= "\n**Région:** " . $console->region;
-        }
-        
-        if ($console->completeness) {
-            $description .= "\n**État de complétude:** " . $console->completeness;
-        }
-        
-        // Commentaire produit si disponible
-        if ($console->product_comment) {
-            $description .= "\n\n**Notes:**\n" . $console->product_comment;
+        // Priorité 2: Commentaire produit si disponible
+        elseif ($console->product_comment) {
+            $description = $console->product_comment;
         }
         
         return trim($description);
