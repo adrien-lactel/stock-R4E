@@ -33,10 +33,7 @@
 
         {{-- EN TRANSIT --}}
         @if($shippedShipments->isNotEmpty())
-            <div class="mb-8 bg-white rounded-lg shadow-md border-2 border-blue-300 overflow-hidden"
-                 x-data="{
-                     selected: @js($shippedShipments->pluck('id')->toArray())
-                 }">
+            <div class="mb-8 bg-white rounded-lg shadow-md border-2 border-blue-300 overflow-hidden">
                 <div class="bg-blue-500 text-white p-4">
                     <h2 class="text-2xl font-bold">🚚 En transit ({{ $shippedShipments->count() }} articles)</h2>
                 </div>
@@ -45,8 +42,10 @@
                     @foreach($shippedShipments->groupBy('tracking_number') as $trackingNumber => $group)
                         @php
                             $firstShipment = $group->first();
+                            $groupIds = $group->pluck('id')->toArray();
                         @endphp
-                        <div class="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                        <div class="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg"
+                             x-data="{ selectedGroup: @js($groupIds) }">
                             <div class="flex items-center justify-between mb-4">
                                 <div>
                                     <div class="text-lg font-bold text-blue-900">
@@ -95,9 +94,7 @@
                             <form method="POST" action="{{ route('store.offers.confirm-reception') }}"
                                   @submit="if(!confirm('Confirmer la réception de ces {{ $group->count() }} article(s) ?')) { event.preventDefault(); }">
                                 @csrf
-                                @foreach($group as $shipment)
-                                    <input type="hidden" name="offer_ids[]" value="{{ $shipment->id }}">
-                                @endforeach
+                                <input type="hidden" name="offer_ids" :value="JSON.stringify(selectedGroup)">
                                 <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white text-lg font-bold rounded-lg hover:bg-green-700 transition-colors">
                                     ✓ Confirmer la réception ({{ $group->count() }} articles)
                                 </button>
