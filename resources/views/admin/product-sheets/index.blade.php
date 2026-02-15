@@ -32,12 +32,12 @@
                         @php
                             $displayImage = $sheet->main_image ?: ($sheet->images[0] ?? null);
                         @endphp
-                        <div class="relative">
+                        <div class="relative aspect-[4/3]">
                             @if($displayImage)
                                 <img src="{{ $displayImage }}" alt="{{ $sheet->name }}" 
-                                     class="w-full h-48 object-cover">
+                                     class="w-full h-full object-cover">
                             @else
-                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400">
+                                <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
                                     Aucune image
                                 </div>
                             @endif
