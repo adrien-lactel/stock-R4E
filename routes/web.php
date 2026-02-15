@@ -38,36 +38,6 @@ Route::get('/health', function () {
     }
 })->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-/*
-|--------------------------------------------------------------------------
-| ROUTE TEMPORAIRE - Suppression des magasins
-|--------------------------------------------------------------------------
-*/
-Route::get('/admin/delete-all-stores-confirm/{token}', function ($token) {
-    // Token de sécurité pour éviter les suppressions accidentelles
-    if ($token !== 'delete-stores-2026') {
-        abort(404);
-    }
-    
-    $count = \App\Models\Store::count();
-    
-    if ($count === 0) {
-        return response()->json([
-            'success' => true,
-            'message' => 'Aucun magasin à supprimer.',
-            'count' => 0
-        ]);
-    }
-    
-    \App\Models\Store::query()->delete();
-    
-    return response()->json([
-        'success' => true,
-        'message' => "{$count} magasin(s) supprimé(s) avec succès.",
-        'count' => $count
-    ]);
-});
-
 
 
 /*
