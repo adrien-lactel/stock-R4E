@@ -122,6 +122,13 @@ class DashboardController extends Controller
                         'route' => 'admin.shipments.payment-requests',
                     ],
                     [
+                        'title' => 'Bilan Financier',
+                        'subtitle' => 'Comptabilité',
+                        'description' => 'Ventes par magasin, graphiques, factures et KPIs financiers.',
+                        'icon' => '📊',
+                        'route' => 'admin.financial.index',
+                    ],
+                    [
                         'title' => 'SAV & retours',
                         'subtitle' => 'Support',
                         'description' => 'Valider dossiers SAV, devis et affectations réparateurs.',

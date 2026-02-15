@@ -557,6 +557,15 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
             ->name('shipments.confirm-payment');
 
         /* =====================
+        | BILAN FINANCIER
+        ===================== */
+        Route::get('/financial', [App\Http\Controllers\Admin\FinancialDashboardController::class, 'index'])
+            ->name('financial.index');
+
+        Route::post('/financial/store-invoice', [App\Http\Controllers\Admin\FinancialDashboardController::class, 'storeInvoice'])
+            ->name('financial.store-invoice');
+
+        /* =====================
         | PRIX / MAGASINS - DÉSACTIVÉ
         ===================== */
         // Route::get('/prices', [ConsolePriceController::class, 'index'])
