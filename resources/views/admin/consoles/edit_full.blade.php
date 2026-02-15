@@ -132,20 +132,67 @@
                 </div>
             </div>
 
-            <h2 class="text-lg font-semibold text-gray-800 mt-8">Modifications (Mods & Accessoires)</h2>
-            
-            {{-- Mods actuellement associés + Coût de réparation --}}
-            @if($console->mods->count())
-                @php
-                    $totalMinutes = $console->mods->sum('pivot.work_time_minutes');
-                    $hours = floor($totalMinutes / 60);
-                    $minutes = $totalMinutes % 60;
-                    $coutMods = $console->mods->sum('pivot.price_applied');
-                    $coutMainOeuvre = ($totalMinutes / 60) * 20; // 20€/heure
-                    $coutTotalReparation = $coutMods + $coutMainOeuvre;
-                    $prixAchat = $console->prix_achat ?? 0;
-                    $coutRevient = $prixAchat + $coutTotalReparation;
-                @endphp
+            <h2 class="text-lg font-semibold text-gray-800 mt-8">Logistique & magasin</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div>
+                    <label class="block text-sm font-medium">Lieu de stockage</label>
+                    <input name="lieu_stockage" list="lieux-list" class="w-full rounded border-gray-300" value="{{ old('lieu_stockage', $console->lieu_stockage) }}">
+                    <datalist id="lieux-list">@foreach($lieux as $l)<option value="{{ $l }}">@endforeach</datalist>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium">Magasin</label>
+                    <select name="store_id" class="w-full rounded border-gray-300">
+                        <option value="">— Choisir —</option>
+                        @foreach($stores as $s)
+                            <option value="{{ $s->id }}" @selected(old('store_id', $console->store_id) == $s->id)>{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+
+            </div>
+
+            <h2 class="text-lg font-semibold text-gray-800 mt-8">Commentaires</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div>
+                    <label class="block text-sm font-medium">Commentaire produit</label>
+                    <textarea name="product_comment" rows="4" class="w-full rounded border-gray-300">{{ old('product_comment', $console->product_comment) }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Commentaire réparateur</label>
+                    <textarea name="commentaire_reparateur" rows="4" class="w-full rounded border-gray-300">{{ old('commentaire_reparateur', $console->commentaire_reparateur) }}</textarea>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-sm font-medium">Commentaire admin</label>
+                <textarea name="admin_comment" rows="4" class="w-full rounded border-gray-300">{{ old('admin_comment', $console->admin_comment) }}</textarea>
+            </div>
+
+            <div class="mt-6 flex gap-3">
+                <button class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">💾 Enregistrer</button>
+                <a href="{{ route('admin.consoles.index') }}" class="px-6 py-2 rounded border hover:bg-gray-50">Annuler</a>
+            </div>
+        </form>
+    </div>
+
+    {{-- Section Mods (formulaire séparé) --}}
+    <div class="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold text-gray-800">Modifications (Mods & Accessoires)</h2>
+        
+        {{-- Mods actuellement associés + Coût de réparation --}}
+        @if($console->mods->count())
+            @php
+                $totalMinutes = $console->mods->sum('pivot.work_time_minutes');
+                $hours = floor($totalMinutes / 60);
+                $minutes = $totalMinutes % 60;
+                $coutMods = $console->mods->sum('pivot.price_applied');
+                $coutMainOeuvre = ($totalMinutes / 60) * 20; // 20€/heure
+                $coutTotalReparation = $coutMods + $coutMainOeuvre;
+                $prixAchat = $console->prix_achat ?? 0;
+                $coutRevient = $prixAchat + $coutTotalReparation;
+            @endphp
                 
                 {{-- Bloc coût de réparation + coût de revient --}}
                 <div class="mt-3 mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
@@ -268,50 +315,6 @@
                 <p class="text-xs text-gray-500">💡 Le mod sera ajouté aux mods existants. Pour retirer un mod, cliquez dessus dans la liste ci-dessus.</p>
                 <a href="{{ route('admin.mods.create') }}" target="_blank" class="text-xs text-indigo-600 hover:underline whitespace-nowrap">➕ Créer un nouveau mod</a>
             </div>
-
-            <h2 class="text-lg font-semibold text-gray-800 mt-8">Logistique & magasin</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                <div>
-                    <label class="block text-sm font-medium">Lieu de stockage</label>
-                    <input name="lieu_stockage" list="lieux-list" class="w-full rounded border-gray-300" value="{{ old('lieu_stockage', $console->lieu_stockage) }}">
-                    <datalist id="lieux-list">@foreach($lieux as $l)<option value="{{ $l }}">@endforeach</datalist>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium">Magasin</label>
-                    <select name="store_id" class="w-full rounded border-gray-300">
-                        <option value="">— Choisir —</option>
-                        @foreach($stores as $s)
-                            <option value="{{ $s->id }}" @selected(old('store_id', $console->store_id) == $s->id)>{{ $s->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-
-            </div>
-
-            <h2 class="text-lg font-semibold text-gray-800 mt-8">Commentaires</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div>
-                    <label class="block text-sm font-medium">Commentaire produit</label>
-                    <textarea name="product_comment" rows="4" class="w-full rounded border-gray-300">{{ old('product_comment', $console->product_comment) }}</textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium">Commentaire réparateur</label>
-                    <textarea name="commentaire_reparateur" rows="4" class="w-full rounded border-gray-300">{{ old('commentaire_reparateur', $console->commentaire_reparateur) }}</textarea>
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <label class="block text-sm font-medium">Commentaire admin</label>
-                <textarea name="admin_comment" rows="4" class="w-full rounded border-gray-300">{{ old('admin_comment', $console->admin_comment) }}</textarea>
-            </div>
-
-            <div class="mt-6 flex gap-3">
-                <button class="px-6 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">💾 Enregistrer</button>
-                <a href="{{ route('admin.consoles.index') }}" class="px-6 py-2 rounded border hover:bg-gray-50">Annuler</a>
-            </div>
-        </form>
     </div>
 
 </div>
