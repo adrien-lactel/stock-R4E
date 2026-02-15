@@ -665,6 +665,12 @@ Route::middleware(['auth'])
         Route::post('/offers/{offer}/request', [StoreOfferController::class, 'request'])
             ->name('offers.request');
 
+        Route::post('/offers/{offer}/accept', [StoreOfferController::class, 'accept'])
+            ->name('offer.accept');
+
+        Route::post('/offers/{offer}/reject', [StoreOfferController::class, 'reject'])
+            ->name('offer.reject');
+
         /* =====================
         | HISTORIQUE DES VENTES
         ===================== */

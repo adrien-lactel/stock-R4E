@@ -67,4 +67,53 @@ class StoreOfferController extends Controller
 
         return back()->with('success', 'Demande de lot envoyée !');
     }
+
+    /**
+     * Accepter une offre
+     * POST /store/offers/{offer}/accept
+     */
+    public function accept(ConsoleOffer $offer)
+    {
+        $storeId = Auth::user()->store_id;
+
+        if ($offer->store_id !== $storeId) {
+            abort(403);
+        }
+
+        // Marquer l'offre comme acceptée
+        $offer->update(['status' => 'accepted']);
+
+        // Attacher la console au magasin avec le prix de vente
+        $console = $offer->console;
+        
+        // Si la console n'est pas déjà liée au magasin, l'attacher
+        if (!$console->stores()->where('stores.id', $storeId)->exists()) {
+            $console->stores()->attach($storeId, [
+                'sale_price' => $offer->sale_price,
+            ]);
+        }
+
+        // Mettre à jour le store_id de la console
+        $console->update(['store_id' => $storeId]);
+
+        return back()->with('success', 'Offre acceptée ! L\'article a été ajouté à votre stock.');
+    }
+
+    /**
+     * Refuser une offre
+     * POST /store/offers/{offer}/reject
+     */
+    public function reject(ConsoleOffer $offer)
+    {
+        $storeId = Auth::user()->store_id;
+
+        if ($offer->store_id !== $storeId) {
+            abort(403);
+        }
+
+        // Marquer l'offre comme refusée
+        $offer->update(['status' => 'rejected']);
+
+        return back()->with('success', 'Offre refusée.');
+    }
 }

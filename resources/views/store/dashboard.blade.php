@@ -42,6 +42,86 @@
     @endif
 
     {{-- =====================================================
+         SECTION 0 — OFFRES REÇUES
+    ===================================================== --}}
+    @if($offers && $offers->isNotEmpty())
+    <div class="mb-10">
+        <h2 class="text-2xl font-semibold mb-4">
+            📬 Nouvelles offres reçues
+        </h2>
+
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg rounded-lg overflow-hidden border-2 border-blue-200">
+            <table class="w-full border-collapse">
+                <thead class="bg-blue-100">
+                    <tr>
+                        <th class="p-3 text-left">ID</th>
+                        <th class="p-3 text-left">Article</th>
+                        <th class="p-3 text-right">Prix vente</th>
+                        <th class="p-3 text-right">Prix dépôt-vente</th>
+                        <th class="p-3 text-center">Reçue le</th>
+                        <th class="p-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach($offers as $offer)
+                    <tr class="border-t border-blue-100 bg-white hover:bg-blue-50">
+                        <td class="p-3 font-mono text-sm">#{{ $offer->console->id }}</td>
+                        <td class="p-3">
+                            <div class="text-sm">
+                                <div class="font-semibold text-gray-800">{{ $offer->console->articleCategory?->name ?? 'N/A' }}</div>
+                                <div class="text-blue-600">{{ $offer->console->articleSubCategory?->brand?->name ?? '-' }}</div>
+                                <div class="text-gray-600">{{ $offer->console->articleSubCategory?->name ?? '-' }}</div>
+                                <div class="text-gray-500">{{ $offer->console->articleType?->name ?? '-' }}</div>
+                                @if($offer->console->mods_count > 0)
+                                    <span class="inline-block mt-1 px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs">
+                                        🔧 Modée ({{ $offer->console->mods_count }} mod(s))
+                                    </span>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="p-3 text-right">
+                            @if($offer->sale_price)
+                                <span class="font-semibold text-green-700">{{ number_format($offer->sale_price, 2, ',', ' ') }} €</span>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+                        <td class="p-3 text-right">
+                            @if($offer->consignment_price)
+                                <span class="font-semibold text-blue-700">{{ number_format($offer->consignment_price, 2, ',', ' ') }} €</span>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+                        <td class="p-3 text-center text-sm text-gray-600">
+                            {{ $offer->created_at->format('d/m/Y') }}
+                            <div class="text-xs text-gray-400">{{ $offer->created_at->format('H:i') }}</div>
+                        </td>
+                        <td class="p-3">
+                            <div class="flex gap-2 justify-center">
+                                <form method="POST" action="{{ route('store.offer.accept', $offer) }}">
+                                    @csrf
+                                    <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium">
+                                        ✅ Accepter
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('store.offer.reject', $offer) }}">
+                                    @csrf
+                                    <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 font-medium">
+                                        ❌ Refuser
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    {{-- =====================================================
          SECTION 1 — STOCK VENDABLE
     ===================================================== --}}
     <h2 class="text-2xl font-semibold mb-4">
