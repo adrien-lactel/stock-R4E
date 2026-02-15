@@ -159,7 +159,7 @@
                         @endif
                     </div>
 
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ $selectedType->name }}</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ $sheet->name }}</h2>
                     
                     {{-- Informations supplémentaires --}}
                     @if(isset($associatedConsole))

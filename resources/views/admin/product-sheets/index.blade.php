@@ -131,7 +131,7 @@
                                 <div class="mb-3 space-y-1">
                                     @foreach($sheet->condition_criteria as $criterion => $rating)
                                         @php
-                                            $labels = [
+                                            $defaultLabels = [
                                                 'box_condition' => 'Boîte',
                                                 'manual_condition' => 'Manuel',
                                                 'media_condition' => 'Support',
@@ -139,7 +139,9 @@
                                                 'rarity' => 'Rareté',
                                                 'overall_condition' => 'État général'
                                             ];
-                                            $label = $labels[$criterion] ?? $criterion;
+                                            // Utiliser le label personnalisé si disponible, sinon le label par défaut
+                                            $customLabels = $sheet->condition_criteria_labels ?? [];
+                                            $label = $customLabels[$criterion] ?? ($defaultLabels[$criterion] ?? $criterion);
                                         @endphp
                                         <div class="flex items-center text-xs">
                                             <span class="text-gray-600 w-20 flex-shrink-0">{{ $label }}:</span>
