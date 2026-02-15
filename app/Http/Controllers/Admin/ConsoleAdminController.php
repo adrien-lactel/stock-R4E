@@ -869,12 +869,22 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function addMod(Request $request, Console $console)
     {
-        $validated = $request->validate([
-            'mod_id' => ['required', 'exists:mods,id'],
-            'price_applied' => ['nullable', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:500'],
-            'work_time_minutes' => ['nullable', 'integer', 'min:0'],
-        ]);
+        try {
+            $validated = $request->validate([
+                'mod_id' => ['required', 'exists:mods,id'],
+                'price_applied' => ['nullable', 'numeric', 'min:0'],
+                'notes' => ['nullable', 'string', 'max:500'],
+                'work_time_minutes' => ['nullable', 'integer', 'min:0'],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'error' => 'Erreur de validation',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        }
 
         $mod = Mod::findOrFail($validated['mod_id']);
 

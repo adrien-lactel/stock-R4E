@@ -434,25 +434,55 @@ document.addEventListener('DOMContentLoaded', function() {
         addModForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            console.log('Form submitted');
+            
             const formData = new FormData(addModForm);
             const submitButton = addModForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.innerHTML;
+            
+            // Récupérer le token CSRF
+            const csrfToken = addModForm.querySelector('input[name="_token"]').value;
+            console.log('CSRF Token:', csrfToken);
             
             // Désactiver le bouton pendant l'envoi
             submitButton.disabled = true;
             submitButton.innerHTML = '⏳ Ajout en cours...';
             
+            // Masquer les anciens messages
+            messageDiv.classList.add('hidden');
+            
             try {
+                console.log('Sending request to:', addModForm.action);
+                
                 const response = await fetch(addModForm.action, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: formData
                 });
                 
-                const data = await response.json();
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers.get('content-type'));
+                
+                let data;
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                    console.log('Response data:', data);
+                } else {
+                    // Si ce n'est pas du JSON, c'est probablement une redirection HTML
+                    const text = await response.text();
+                    console.error('Response is not JSON:', text.substring(0, 200));
+                    messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
+                    messageDiv.textContent = 'Erreur: réponse inattendue du serveur. Rechargement...';
+                    messageDiv.classList.remove('hidden');
+                    setTimeout(() => location.reload(), 1500);
+                    return;
+                }
                 
                 if (response.ok && data.success) {
                     // Afficher le message de succès
@@ -463,22 +493,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Réinitialiser le formulaire
                     addModForm.reset();
                     
-                    // Recharger la page après 500ms pour voir les changements
+                    // Recharger uniquement cette page (pas de redirect)
                     setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                        location.reload();
+                    }, 800);
                 } else {
                     // Afficher le message d'erreur
                     messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
-                    messageDiv.textContent = data.error || 'Une erreur est survenue';
+                    messageDiv.textContent = data.error || data.message || 'Une erreur est survenue';
                     messageDiv.classList.remove('hidden');
+                    
+                    // Réactiver le bouton
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
                 }
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('Erreur catch:', error);
                 messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
-                messageDiv.textContent = 'Erreur de communication avec le serveur';
+                messageDiv.textContent = 'Erreur de communication: ' + error.message;
                 messageDiv.classList.remove('hidden');
-            } finally {
+                
                 // Réactiver le bouton
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalButtonText;
