@@ -731,10 +731,11 @@ public function destroyType(ArticleType $type)
                 
                 // Extraire le type depuis le nom de fichier (ex: SNS-MK-cover.png -> cover)
                 if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.png$/i', $filename, $matches)) {
-                    $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork-3", etc.
+                    $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork-3", "display1", etc.
                     
                     // Séparer le type de base et l'index
-                    if (preg_match('/^(cover|artwork|gameplay|logo)(-\d+)?$/i', $fullType, $typeMatches)) {
+                    // Pour display1/2/3, le type complet EST le type de base (pas d'index)
+                    if (preg_match('/^(cover|artwork|gameplay|logo|display1|display2|display3)(-\d+)?$/i', $fullType, $typeMatches)) {
                         $baseType = $typeMatches[1];
                         $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                         
@@ -784,7 +785,8 @@ public function destroyType(ArticleType $type)
                         
                         $fullType = $matches[1];
                         
-                        if (preg_match('/^(cover|artwork|gameplay|logo)(-\d+)?$/i', $fullType, $typeMatches)) {
+                        // Pour display1/2/3, le type complet EST le type de base (pas d'index)
+                        if (preg_match('/^(cover|artwork|gameplay|logo|display1|display2|display3)(-\d+)?$/i', $fullType, $typeMatches)) {
                             $baseType = $typeMatches[1];
                             $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
                             
@@ -829,7 +831,7 @@ public function destroyType(ArticleType $type)
 
         // Trier par type puis par index
         usort($images, function($a, $b) {
-            $typeOrder = ['cover' => 1, 'logo' => 2, 'artwork' => 3, 'gameplay' => 4];
+            $typeOrder = ['cover' => 1, 'logo' => 2, 'artwork' => 3, 'gameplay' => 4, 'display1' => 5, 'display2' => 6, 'display3' => 7];
             $typeCompare = ($typeOrder[$a['type']] ?? 99) - ($typeOrder[$b['type']] ?? 99);
             if ($typeCompare !== 0) return $typeCompare;
             return $a['index'] - $b['index'];
