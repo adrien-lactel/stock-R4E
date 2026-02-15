@@ -292,21 +292,30 @@
                                 @endif
 
                                 {{-- POINTS FORTS (Preview - affichage uniquement des critères remplis) --}}
-                                <div class="mt-3 pt-3 border-t border-gray-200" id="criteria-preview">
+                                @php
+                                    $criteriaDefaults = [
+                                        'box_condition' => 'Boîte',
+                                        'manual_condition' => 'Manuel',
+                                        'media_condition' => 'Support',
+                                        'completeness' => 'Complétude',
+                                        'rarity' => 'Rareté',
+                                        'overall_condition' => 'État général'
+                                    ];
+                                    $criteriaLabels = $prefilledData['condition_criteria_labels'] ?? $criteriaDefaults;
+                                    
+                                    // Vérifier s'il y a des critères pré-remplis
+                                    $prefilledCriteria = $prefilledData['condition_criteria'] ?? [];
+                                    $hasPrefilledCriteria = false;
+                                    foreach(['box_condition', 'manual_condition', 'media_condition', 'completeness', 'rarity', 'overall_condition'] as $key) {
+                                        if (isset($prefilledCriteria[$key]) && $prefilledCriteria[$key] > 0) {
+                                            $hasPrefilledCriteria = true;
+                                            break;
+                                        }
+                                    }
+                                @endphp
+                                <div class="mt-3 pt-3 border-t border-gray-200 {{ $hasPrefilledCriteria ? '' : 'hidden' }}" id="criteria-preview">
                                     <h3 class="text-sm font-semibold text-gray-700 mb-2">⭐ Points forts</h3>
                                     <div class="space-y-2" id="criteria-preview-list">
-                                        @php
-                                            $criteriaDefaults = [
-                                                'box_condition' => 'Boîte',
-                                                'manual_condition' => 'Manuel',
-                                                'media_condition' => 'Support',
-                                                'completeness' => 'Complétude',
-                                                'rarity' => 'Rareté',
-                                                'overall_condition' => 'État général'
-                                            ];
-                                            $criteriaLabels = $prefilledData['condition_criteria_labels'] ?? $criteriaDefaults;
-                                        @endphp
-                                        
                                         @foreach(['box_condition', 'manual_condition', 'media_condition', 'completeness', 'rarity', 'overall_condition'] as $criterionKey)
                                             <div data-preview-criterion="{{ $criterionKey }}" class="hidden">
                                                 <div class="flex items-center justify-between">

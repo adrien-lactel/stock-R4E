@@ -253,37 +253,48 @@
                                         'rarity' => 'Rareté',
                                         'overall_condition' => 'État général'
                                     ];
+                                    
+                                    // Vérifier s'il y a au moins un critère avec une valeur > 0
+                                    $allCriteriaKeys = ['box_condition', 'manual_condition', 'media_condition', 'completeness', 'rarity', 'overall_condition'];
+                                    $hasVisibleCriteria = false;
+                                    foreach($allCriteriaKeys as $key) {
+                                        if (isset($criteria[$key]) && $criteria[$key] > 0) {
+                                            $hasVisibleCriteria = true;
+                                            break;
+                                        }
+                                    }
                                 @endphp
-                                <div id="criteria-display-container" class="mt-4 pt-4 border-t border-gray-200">
-                                    <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Points forts</h3>
-                                    <div id="criteria-display-list" class="space-y-2">
-                                        @php
-                                            $allCriteriaKeys = ['box_condition', 'manual_condition', 'media_condition', 'completeness', 'rarity', 'overall_condition'];
-                                            $defaultLabelsDisplay = [
-                                                'box_condition' => 'Boîte',
-                                                'manual_condition' => 'Manuel',
-                                                'media_condition' => 'Support',
-                                                'completeness' => 'Complétude',
-                                                'rarity' => 'Rareté',
-                                                'overall_condition' => 'État général'
-                                            ];
-                                        @endphp
-                                        @foreach($allCriteriaKeys as $key)
+                                @if($hasVisibleCriteria)
+                                    <div id="criteria-display-container" class="mt-4 pt-4 border-t border-gray-200">
+                                        <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Points forts</h3>
+                                        <div id="criteria-display-list" class="space-y-2">
                                             @php
-                                                $value = $criteria[$key] ?? 0;
-                                                $isVisible = isset($criteria[$key]) && $criteria[$key] > 0;
+                                                $defaultLabelsDisplay = [
+                                                    'box_condition' => 'Boîte',
+                                                    'manual_condition' => 'Manuel',
+                                                    'media_condition' => 'Support',
+                                                    'completeness' => 'Complétude',
+                                                    'rarity' => 'Rareté',
+                                                    'overall_condition' => 'État général'
+                                                ];
                                             @endphp
-                                            <div data-display-criterion="{{ $key }}" class="flex items-center justify-between {{ $isVisible ? '' : 'hidden' }}">
-                                                <span class="criterion-label text-sm text-gray-600">{{ $criteriaLabels[$key] ?? $defaultLabelsDisplay[$key] }}</span>
-                                                <div class="criterion-stars flex gap-0.5">
-                                                    @for($i = 1; $i <= 5; $i++)
-                                                        <span class="text-lg {{ $value >= $i ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
-                                                    @endfor
+                                            @foreach($allCriteriaKeys as $key)
+                                                @php
+                                                    $value = $criteria[$key] ?? 0;
+                                                    $isVisible = isset($criteria[$key]) && $criteria[$key] > 0;
+                                                @endphp
+                                                <div data-display-criterion="{{ $key }}" class="flex items-center justify-between {{ $isVisible ? '' : 'hidden' }}">
+                                                    <span class="criterion-label text-sm text-gray-600">{{ $criteriaLabels[$key] ?? $defaultLabelsDisplay[$key] }}</span>
+                                                    <div class="criterion-stars flex gap-0.5">
+                                                        @for($i = 1; $i <= 5; $i++)
+                                                            <span class="text-lg {{ $value >= $i ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                                                        @endfor
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        @endforeach
+                                            @endforeach
+                                        </div>
                                     </div>
-                                </div>
+                                @endif
 
                                 {{-- SECTIONS SÉLECTIONNÉES (affichage dynamique) --}}
                                 <div id="display-sections-container">
