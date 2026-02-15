@@ -131,4 +131,55 @@ class ShipmentController extends Controller
             return back()->with('error', 'Erreur lors de la réception : ' . $e->getMessage());
         }
     }
+
+    /**
+     * Afficher les demandes de paiement pour articles en dépôt-vente vendus
+     */
+    public function paymentRequests()
+    {
+        // Récupérer toutes les offres vendues avec demande de paiement
+        $paymentRequests = ConsoleOffer::with([
+            'console.productSheet',
+            'console.articleType',
+            'store',
+        ])
+            ->where('payment_requested', true)
+            ->orderBy('payment_confirmed')
+            ->orderBy('sold_at', 'desc')
+            ->get();
+
+        // Grouper par statut
+        $pending = $paymentRequests->where('payment_confirmed', false);
+        $confirmed = $paymentRequests->where('payment_confirmed', true);
+
+        return view('admin.shipments.payment-requests', compact('pending', 'confirmed'));
+    }
+
+    /**
+     * Confirmer le paiement d'une ou plusieurs demandes
+     */
+    public function confirmPayment(Request $request)
+    {
+        $request->validate([
+            'offer_ids' => 'required|array',
+            'offer_ids.*' => 'exists:console_offers,id',
+        ]);
+
+        $offerIds = $request->input('offer_ids');
+
+        $updated = ConsoleOffer::whereIn('id', $offerIds)
+            ->where('payment_requested', true)
+            ->where('payment_confirmed', false)
+            ->update([
+                'payment_confirmed' => true,
+                'payment_confirmed_at' => now(),
+            ]);
+
+        $totalAmount = ConsoleOffer::whereIn('id', $offerIds)->sum('payment_request_amount');
+
+        return back()->with('success', 
+            "{$updated} paiement(s) confirmé(s) pour un total de " . 
+            number_format($totalAmount, 2) . " €."
+        );
+    }
 }

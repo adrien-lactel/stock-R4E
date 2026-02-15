@@ -549,6 +549,13 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::post('/shipments/mark-received', [App\Http\Controllers\Admin\ShipmentController::class, 'markAsReceived'])
             ->name('shipments.mark-received');
 
+        // Demandes de paiement dépôt-vente
+        Route::get('/shipments/payment-requests', [App\Http\Controllers\Admin\ShipmentController::class, 'paymentRequests'])
+            ->name('shipments.payment-requests');
+
+        Route::post('/shipments/confirm-payment', [App\Http\Controllers\Admin\ShipmentController::class, 'confirmPayment'])
+            ->name('shipments.confirm-payment');
+
         /* =====================
         | PRIX / MAGASINS - DÉSACTIVÉ
         ===================== */
@@ -702,6 +709,10 @@ Route::middleware(['auth'])
 
         Route::post('/offers/confirm-reception', [StoreOfferController::class, 'confirmReception'])
             ->name('offers.confirm-reception');
+
+        // Vente d'articles en dépôt-vente
+        Route::post('/offers/sell-consignment', [StoreOfferController::class, 'sellConsignment'])
+            ->name('offers.sell-consignment');
 
         /* =====================
         | HISTORIQUE DES VENTES

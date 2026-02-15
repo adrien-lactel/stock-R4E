@@ -101,11 +101,44 @@
                                 📄 Fiche produit
                             </a>
                             
-                            <form method="POST" action="{{ route('store.console.sell', $console) }}">
+                            <button type="button"
+                                    id="sell-btn-{{ $offer->id }}"
+                                    onclick="toggleSellForm({{ $offer->id }})"
+                                    class="w-full bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm font-medium transition-colors">
+                                💰 Article vendu (génère facture)
+                            </button>
+                            
+                            <form id="sell-form-{{ $offer->id }}"
+                                  method="POST"
+                                  action="{{ route('store.offers.sell-consignment') }}"
+                                  class="hidden bg-green-50 border border-green-200 rounded p-3">
                                 @csrf
-                                <button class="w-full bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm font-medium transition-colors">
-                                    💰 Article vendu (génère facture)
-                                </button>
+                                <input type="hidden" name="offer_id" value="{{ $offer->id }}">
+                                
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Prix de vente (€)</label>
+                                <input type="number" 
+                                       name="sale_price" 
+                                       step="0.01" 
+                                       min="0" 
+                                       required
+                                       value="{{ $offer->consignment_price ?? $offer->sale_price }}"
+                                       class="w-full border rounded p-2 text-sm mb-2">
+                                
+                                <div class="text-xs text-gray-600 mb-3">
+                                    Commission magasin (30%) : <span class="font-semibold">~{{ number_format(($offer->consignment_price ?? $offer->sale_price) * 0.30, 2) }} €</span><br>
+                                    Montant R4E (70%) : <span class="font-semibold">~{{ number_format(($offer->consignment_price ?? $offer->sale_price) * 0.70, 2) }} €</span>
+                                </div>
+                                
+                                <div class="flex gap-2">
+                                    <button type="submit" class="flex-1 bg-green-600 text-white px-3 py-1 rounded text-sm">
+                                        Confirmer vente
+                                    </button>
+                                    <button type="button"
+                                            onclick="cancelSellForm({{ $offer->id }})"
+                                            class="flex-1 bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm">
+                                        Annuler
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -483,6 +516,26 @@ function toggleSavForm(consoleId) {
 function cancelSavForm(consoleId) {
     const form = document.getElementById('sav-form-' + consoleId);
     const btn = document.getElementById('sav-btn-' + consoleId);
+    
+    if (form && btn) {
+        form.classList.add('hidden');
+        btn.classList.remove('hidden');
+    }
+}
+
+function toggleSellForm(offerId) {
+    const form = document.getElementById('sell-form-' + offerId);
+    const btn = document.getElementById('sell-btn-' + offerId);
+    
+    if (form && btn) {
+        form.classList.remove('hidden');
+        btn.classList.add('hidden');
+    }
+}
+
+function cancelSellForm(offerId) {
+    const form = document.getElementById('sell-form-' + offerId);
+    const btn = document.getElementById('sell-btn-' + offerId);
     
     if (form && btn) {
         form.classList.add('hidden');

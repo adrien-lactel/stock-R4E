@@ -115,6 +115,13 @@ class DashboardController extends Controller
                         'route' => 'admin.shipments.index',
                     ],
                     [
+                        'title' => 'Paiements dépôt-vente',
+                        'subtitle' => 'Finances',
+                        'description' => 'Gérer les demandes de paiement pour articles en dépôt-vente vendus.',
+                        'icon' => '💰',
+                        'route' => 'admin.shipments.payment-requests',
+                    ],
+                    [
                         'title' => 'SAV & retours',
                         'subtitle' => 'Support',
                         'description' => 'Valider dossiers SAV, devis et affectations réparateurs.',

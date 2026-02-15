@@ -20,6 +20,11 @@ class ConsoleOffer extends Model
         'tracking_number',
         'carrier',
         'received_at',
+        'sold_at',
+        'payment_requested',
+        'payment_request_amount',
+        'payment_confirmed',
+        'payment_confirmed_at',
     ];
 
     protected $casts = [
@@ -27,6 +32,10 @@ class ConsoleOffer extends Model
         'payment_date' => 'date',
         'shipped_at' => 'datetime',
         'received_at' => 'datetime',
+        'sold_at' => 'datetime',
+        'payment_requested' => 'boolean',
+        'payment_confirmed' => 'boolean',
+        'payment_confirmed_at' => 'datetime',
     ];
 
     public function console(): BelongsTo

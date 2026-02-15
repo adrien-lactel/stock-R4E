@@ -330,4 +330,51 @@ class StoreOfferController extends Controller
             return back()->with('error', 'Erreur lors de la réception : ' . $e->getMessage());
         }
     }
+
+    /**
+     * Vendre un article en dépôt-vente (génère demande de paiement)
+     */
+    public function sellConsignment(Request $request)
+    {
+        $storeId = Auth::user()->store_id;
+        
+        $validated = $request->validate([
+            'offer_id' => ['required', 'exists:console_offers,id'],
+            'sale_price' => ['required', 'numeric', 'min:0'],
+        ]);
+        
+        $offer = ConsoleOffer::findOrFail($validated['offer_id']);
+        
+        // Vérifier que l'offre appartient au magasin
+        if ($offer->store_id !== $storeId) {
+            abort(403, 'Cet article ne vous appartient pas.');
+        }
+        
+        // Vérifier que c'est bien un article en dépôt-vente non vendu
+        if ($offer->payment_received || $offer->sold_at) {
+            return back()->with('error', 'Cet article a déjà été vendu ou n\'est pas en dépôt-vente.');
+        }
+        
+        // Calculer le montant à demander (prix de vente - commission magasin)
+        // Ici on peut définir une commission, par exemple 30% pour le magasin, 70% pour R4E
+        $commissionRate = 0.30; // 30% pour le magasin
+        $storeCommission = $validated['sale_price'] * $commissionRate;
+        $r4eAmount = $validated['sale_price'] - $storeCommission;
+        
+        // Marquer comme vendu et créer demande de paiement
+        $offer->update([
+            'sold_at' => now(),
+            'payment_requested' => true,
+            'payment_request_amount' => $r4eAmount,
+        ]);
+        
+        // Mettre à jour le statut de la console
+        $offer->console->update(['status' => 'vendue']);
+        
+        return back()->with('success', 
+            "Article vendu pour {$validated['sale_price']} €. " .
+            "Demande de paiement de " . number_format($r4eAmount, 2) . " € envoyée à R4E " .
+            "(commission magasin: " . number_format($storeCommission, 2) . " €)."
+        );
+    }
 }
