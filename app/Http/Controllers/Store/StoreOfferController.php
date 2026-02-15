@@ -45,7 +45,20 @@ class StoreOfferController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('store.offers.index', compact('offers', 'validatedOffers', 'store'));
+        // Offres expédiées (en attente de confirmation réception)
+        $shippedOffers = ConsoleOffer::with([
+            'console.articleType',
+            'console.articleCategory',
+            'console.articleSubCategory',
+            'console.mods',
+            'console.productSheet',
+        ])
+            ->where('store_id', $storeId)
+            ->where('status', 'shipped')
+            ->orderBy('shipped_at', 'desc')
+            ->get();
+
+        return view('store.offers.index', compact('offers', 'validatedOffers', 'shippedOffers', 'store'));
     }
 
     /**

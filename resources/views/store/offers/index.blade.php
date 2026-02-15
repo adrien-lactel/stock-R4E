@@ -198,6 +198,88 @@
         </div>
     @endif
 
+    {{-- SECTION ARTICLES EXPÉDIÉS (en attente de confirmation réception) --}}
+    @if(isset($shippedOffers) && $shippedOffers->isNotEmpty())
+        <div class="mb-8 p-4 sm:p-6 bg-blue-50 border-2 border-blue-400 rounded-lg">
+            <h2 class="text-xl sm:text-2xl font-bold text-blue-900 mb-4">
+                🚚 Articles expédiés - En attente de confirmation réception ({{ $shippedOffers->count() }})
+            </h2>
+            
+            <div class="mb-4 p-4 bg-white rounded-lg border border-blue-200">
+                <p class="text-blue-800 mb-2">
+                    ℹ️ Ces articles ont été expédiés par R4E. Rendez-vous dans 
+                    <a href="{{ route('store.offers.tracking') }}" class="font-bold underline hover:text-blue-600">
+                        🚚 Suivi des envois
+                    </a> 
+                    pour confirmer leur réception une fois le colis arrivé.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                @foreach($shippedOffers->groupBy('tracking_number') as $trackingNumber => $group)
+                    @php
+                        $firstOffer = $group->first();
+                    @endphp
+                    
+                    {{-- Afficher l'info du colis en tant que header --}}
+                    <div class="col-span-full p-3 bg-blue-100 border-2 border-blue-300 rounded-lg mb-2">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                                @if($trackingNumber && $trackingNumber !== '')
+                                    <div class="font-bold text-blue-900">📦 Suivi: {{ $trackingNumber }}</div>
+                                    @if($firstOffer->carrier)
+                                        <div class="text-sm text-blue-700">Transporteur: {{ $firstOffer->carrier }}</div>
+                                    @endif
+                                @else
+                                    <div class="font-bold text-blue-900">📦 Colis sans numéro de suivi</div>
+                                @endif
+                            </div>
+                            <div class="text-sm text-blue-700">
+                                Envoyé le {{ $firstOffer->shipped_at?->format('d/m/Y à H:i') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Afficher les articles de ce colis --}}
+                    @foreach($group as $offer)
+                        @php
+                            $console = $offer->console;
+                            $sheet = $console->productSheet ?? null;
+                            $mainImage = $sheet?->main_image ?? null;
+                        @endphp
+                        
+                        <div class="bg-white rounded-lg border-2 border-blue-400 overflow-hidden">
+                            @if($mainImage)
+                                <img src="{{ $mainImage }}" alt="Article" class="w-full h-32 object-contain bg-gray-50">
+                            @else
+                                <div class="w-full h-32 bg-gray-100 flex items-center justify-center">
+                                    <span class="text-gray-400 text-xs">Pas d'image</span>
+                                </div>
+                            @endif
+                            
+                            <a href="{{ route('store.product-sheet', ['store' => auth()->user()->store_id, 'console' => $console->id]) }}" 
+                               class="block p-3 hover:bg-gray-50 transition-colors">
+                                <div class="mb-2">
+                                    <span class="inline-block px-2 py-1 text-xs font-bold bg-blue-100 text-blue-800 rounded">
+                                        🚚 EXPÉDIÉ
+                                    </span>
+                                </div>
+                                
+                                <h4 class="text-sm font-bold text-gray-900 mb-1 line-clamp-2">
+                                    {{ $sheet?->name ?? $console->articleType?->name ?? 'N/A' }}
+                                </h4>
+                                
+                                <div class="text-sm text-gray-600">
+                                    Article #{{ $console->id }}
+                                </div>
+                            </a>
+                        </div>
+                    @endforeach
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- SECTION OFFRES À VALIDER --}}
     <div class="mb-4">
         <h2 class="text-2xl font-bold text-gray-900">
