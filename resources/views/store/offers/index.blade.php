@@ -34,20 +34,22 @@
 }">
 
     {{-- HEADER AVEC TOTAUX --}}
-    <div class="mb-6 flex items-center justify-between gap-4">
-        <h1 class="text-3xl font-bold">📦 Offres disponibles</h1>
-        
-        <div class="flex gap-4">
-            <div class="bg-blue-100 border-2 border-blue-300 rounded-lg px-6 py-3 text-center min-w-[180px]">
-                <div class="text-xs font-semibold text-blue-700 uppercase mb-1">Total Achat</div>
-                <div class="text-2xl font-bold text-blue-900" x-text="totalAchat.toFixed(2) + ' €'"></div>
-                <div class="text-xs text-blue-600 mt-1" x-text="selected.length + ' article(s)'"></div>
-            </div>
+    <div class="mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h1 class="text-2xl sm:text-3xl font-bold">📦 Offres disponibles</h1>
             
-            <div class="bg-green-100 border-2 border-green-300 rounded-lg px-6 py-3 text-center min-w-[180px]">
-                <div class="text-xs font-semibold text-green-700 uppercase mb-1">Total Dépôt</div>
-                <div class="text-2xl font-bold text-green-900" x-text="totalDepot.toFixed(2) + ' €'"></div>
-                <div class="text-xs text-green-600 mt-1" x-text="selected.length + ' article(s)'"></div>
+            <div class="flex flex-wrap gap-2 sm:gap-3">
+                <div class="bg-blue-100 border-2 border-blue-300 rounded-lg px-3 py-2 text-center min-w-[120px]">
+                    <div class="text-xs font-semibold text-blue-700 uppercase">Achat</div>
+                    <div class="text-lg sm:text-xl font-bold text-blue-900" x-text="totalAchat.toFixed(2) + ' €'"></div>
+                    <div class="text-xs text-blue-600" x-text="selected.length + ' art.'"></div>
+                </div>
+                
+                <div class="bg-green-100 border-2 border-green-300 rounded-lg px-3 py-2 text-center min-w-[120px]">
+                    <div class="text-xs font-semibold text-green-700 uppercase">Dépôt</div>
+                    <div class="text-lg sm:text-xl font-bold text-green-900" x-text="totalDepot.toFixed(2) + ' €'"></div>
+                    <div class="text-xs text-green-600" x-text="selected.length + ' art.'"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -103,23 +105,23 @@
             $countDepot = $validatedOffers->where('status', 'validated_consignment')->count();
         @endphp
         
-        <div class="mb-8 p-6 bg-amber-50 border-2 border-amber-300 rounded-lg">
-            <h2 class="text-2xl font-bold text-amber-900 mb-4">
+        <div class="mb-8 p-4 sm:p-6 bg-amber-50 border-2 border-amber-300 rounded-lg">
+            <h2 class="text-xl sm:text-2xl font-bold text-amber-900 mb-4">
                 📮 Articles validés en attente d'expédition ({{ $validatedOffers->count() }})
             </h2>
             
             {{-- TOTAUX ET LIENS DOCUMENTS --}}
-            <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                 {{-- Total Articles Achetés --}}
                 @if($countAchat > 0)
-                    <div class="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                    <div class="p-3 bg-blue-50 border-2 border-blue-300 rounded-lg">
                         <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-bold text-blue-900">🛒 Articles achetés ({{ $countAchat }})</h3>
+                            <h3 class="text-sm sm:text-base font-bold text-blue-900">🛒 Achetés ({{ $countAchat }})</h3>
                         </div>
-                        <div class="text-3xl font-bold text-blue-700 mb-3">
+                        <div class="text-2xl sm:text-3xl font-bold text-blue-700 mb-2">
                             {{ number_format($totalAchat, 2, ',', ' ') }} €
                         </div>
-                        <a href="#" class="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700 transition-colors opacity-50 cursor-not-allowed">
+                        <a href="#" class="inline-block px-3 py-1.5 bg-blue-600 text-white text-xs sm:text-sm font-semibold rounded hover:bg-blue-700 transition-colors opacity-50 cursor-not-allowed">
                             📄 Facture (à générer)
                         </a>
                     </div>
@@ -127,14 +129,14 @@
                 
                 {{-- Total Articles en Dépôt-Vente --}}
                 @if($countDepot > 0)
-                    <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+                    <div class="p-3 bg-green-50 border-2 border-green-300 rounded-lg">
                         <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-bold text-green-900">📦 Articles en dépôt-vente ({{ $countDepot }})</h3>
+                            <h3 class="text-sm sm:text-base font-bold text-green-900">📦 Dépôt-vente ({{ $countDepot }})</h3>
                         </div>
-                        <div class="text-3xl font-bold text-green-700 mb-3">
+                        <div class="text-2xl sm:text-3xl font-bold text-green-700 mb-2">
                             {{ number_format($totalDepot, 2, ',', ' ') }} €
                         </div>
-                        <a href="#" class="inline-block px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded hover:bg-green-700 transition-colors opacity-50 cursor-not-allowed">
+                        <a href="#" class="inline-block px-3 py-1.5 bg-green-600 text-white text-xs sm:text-sm font-semibold rounded hover:bg-green-700 transition-colors opacity-50 cursor-not-allowed">
                             📋 Mise en dépôt (à générer)
                         </a>
                     </div>
@@ -153,7 +155,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 @foreach($validatedOffers as $offer)
                     @php
                         $console = $offer->console;
@@ -208,8 +210,8 @@
             <p class="text-xl">Aucune nouvelle offre disponible pour le moment.</p>
         </div>
     @else
-        {{-- Grille de mini fiches (4 par ligne) --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {{-- Grille de mini fiches (6 par ligne desktop) --}}
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             @foreach($offers as $offer)
                 @php
                     $console = $offer->console;
