@@ -652,6 +652,28 @@
                 </div>
 
                 <input type="hidden" name="condition_criteria" id="condition_criteria_input" value='{{ json_encode($prefilledData["condition_criteria"] ?? []) }}'>
+                                <input type="hidden" name="condition_criteria" id="condition_criteria_input" value='{{ json_encode($prefilledData["condition_criteria"] ?? []) }}'>
+                                <script>
+                                    // Synchronise le champ caché Points forts à chaque changement
+                                    function syncConditionCriteriaInput() {
+                                        document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+                                    }
+                                    document.querySelectorAll('.criterion-toggle, .star-btn, input[name^="condition_criteria_labels"]').forEach(function(el) {
+                                        el.addEventListener('change', syncConditionCriteriaInput);
+                                        el.addEventListener('input', syncConditionCriteriaInput);
+                                    });
+                                </script>
+                                <script>
+                                    // Synchronise le champ caché Points forts à chaque changement
+                                    document.querySelectorAll('.criterion-toggle, .star-btn, input[name^="condition_criteria_labels"]').forEach(function(el) {
+                                        el.addEventListener('change', function() {
+                                            document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+                                        });
+                                        el.addEventListener('input', function() {
+                                            document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+                                        });
+                                    });
+                                </script>
                 <input type="hidden" name="condition_criteria_labels" id="condition_criteria_labels_input" value='{{ json_encode($prefilledData["condition_criteria_labels"] ?? $criteriaDefaults) }}'>
             </div>
 
@@ -983,6 +1005,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mettre à jour les champs hidden avant la soumission du formulaire
     document.querySelector('form').addEventListener('submit', function(e) {
         // Mettre à jour condition_criteria
+        // Mettre à jour condition_criteria (Points forts)
         document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
         
         // Mettre à jour condition_criteria_labels
