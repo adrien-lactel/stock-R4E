@@ -128,30 +128,6 @@
                             @endif
                         </div>
                     </a>
-
-                    {{-- Formulaire d'ajout au panier (non cliquable pour la fiche) --}}
-                    <div class="px-4 pb-4">
-                        <form method="POST" action="{{ route('store.offers.request', $offer) }}" 
-                              onclick="event.stopPropagation();">
-                            @csrf
-                            <div class="flex gap-2 items-center mb-2">
-                                <label class="text-xs font-medium text-gray-700 whitespace-nowrap">Qté :</label>
-                                <input
-                                    type="number"
-                                    name="quantity"
-                                    min="1"
-                                    value="1"
-                                    required
-                                    class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
-                                >
-                            </div>
-                            <button
-                                type="submit"
-                                class="w-full bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 font-medium text-sm transition-colors">
-                                🛒 Ajouter au panier
-                            </button>
-                        </form>
-                    </div>
                 </div>
             @endforeach
         </div>
