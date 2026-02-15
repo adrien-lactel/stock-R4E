@@ -93,10 +93,53 @@
 
     {{-- SECTION OFFRES VALIDÉES (en attente d'expédition) --}}
     @if($validatedOffers->isNotEmpty())
+        @php
+            // Calculer les totaux par type
+            $totalAchat = $validatedOffers->where('status', 'validated_buy')->sum('sale_price');
+            $totalDepot = $validatedOffers->where('status', 'validated_consignment')->sum(function($offer) {
+                return $offer->consignment_price ?? $offer->sale_price;
+            });
+            $countAchat = $validatedOffers->where('status', 'validated_buy')->count();
+            $countDepot = $validatedOffers->where('status', 'validated_consignment')->count();
+        @endphp
+        
         <div class="mb-8 p-6 bg-amber-50 border-2 border-amber-300 rounded-lg">
             <h2 class="text-2xl font-bold text-amber-900 mb-4">
                 📮 Articles validés en attente d'expédition ({{ $validatedOffers->count() }})
             </h2>
+            
+            {{-- TOTAUX ET LIENS DOCUMENTS --}}
+            <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {{-- Total Articles Achetés --}}
+                @if($countAchat > 0)
+                    <div class="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-blue-900">🛒 Articles achetés ({{ $countAchat }})</h3>
+                        </div>
+                        <div class="text-3xl font-bold text-blue-700 mb-3">
+                            {{ number_format($totalAchat, 2, ',', ' ') }} €
+                        </div>
+                        <a href="#" class="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700 transition-colors opacity-50 cursor-not-allowed">
+                            📄 Facture (à générer)
+                        </a>
+                    </div>
+                @endif
+                
+                {{-- Total Articles en Dépôt-Vente --}}
+                @if($countDepot > 0)
+                    <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-green-900">📦 Articles en dépôt-vente ({{ $countDepot }})</h3>
+                        </div>
+                        <div class="text-3xl font-bold text-green-700 mb-3">
+                            {{ number_format($totalDepot, 2, ',', ' ') }} €
+                        </div>
+                        <a href="#" class="inline-block px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded hover:bg-green-700 transition-colors opacity-50 cursor-not-allowed">
+                            📋 Mise en dépôt (à générer)
+                        </a>
+                    </div>
+                @endif
+            </div>
             
             <div class="mb-4 p-4 bg-white rounded-lg border border-amber-200">
                 <h3 class="font-semibold text-amber-900 mb-2">📍 Adresse d'expédition :</h3>
