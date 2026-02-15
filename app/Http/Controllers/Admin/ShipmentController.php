@@ -34,15 +34,30 @@ class ShipmentController extends Controller
     public function markPaymentReceived(Request $request)
     {
         $request->validate([
-            'offer_ids' => 'required|array',
-            'offer_ids.*' => 'exists:console_offers,id',
+            'offer_ids' => 'required|string',
             'payment_date' => 'required|date',
         ]);
 
-        $offerIds = $request->input('offer_ids');
+        // Décoder le JSON envoyé par Alpine.js
+        $offerIds = json_decode($request->input('offer_ids'), true);
+        
+        if (!is_array($offerIds) || empty($offerIds)) {
+            return back()->with('error', 'Aucune offre sélectionnée.');
+        }
+        
+        // Valider que chaque ID existe et est de type validated_buy
+        $validOfferIds = ConsoleOffer::whereIn('id', $offerIds)
+            ->where('status', 'validated_buy')
+            ->pluck('id')
+            ->toArray();
+        
+        if (empty($validOfferIds)) {
+            return back()->with('error', 'Aucune offre d\'achat valide trouvée.');
+        }
+
         $paymentDate = $request->input('payment_date');
 
-        $updated = ConsoleOffer::whereIn('id', $offerIds)
+        $updated = ConsoleOffer::whereIn('id', $validOfferIds)
             ->where('status', 'validated_buy')
             ->update([
                 'payment_received' => true,
@@ -58,13 +73,28 @@ class ShipmentController extends Controller
     public function markAsShipped(Request $request)
     {
         $request->validate([
-            'offer_ids' => 'required|array',
-            'offer_ids.*' => 'exists:console_offers,id',
+            'offer_ids' => 'required|string',
             'tracking_number' => 'nullable|string|max:255',
             'carrier' => 'nullable|string|max:255',
         ]);
 
-        $offerIds = $request->input('offer_ids');
+        // Décoder le JSON envoyé par Alpine.js
+        $offerIds = json_decode($request->input('offer_ids'), true);
+        
+        if (!is_array($offerIds) || empty($offerIds)) {
+            return back()->with('error', 'Aucune offre sélectionnée.');
+        }
+        
+        // Valider que chaque ID existe
+        $validOfferIds = ConsoleOffer::whereIn('id', $offerIds)
+            ->whereIn('status', ['validated_buy', 'validated_consignment'])
+            ->pluck('id')
+            ->toArray();
+        
+        if (empty($validOfferIds)) {
+            return back()->with('error', 'Aucune offre valide trouvée.');
+        }
+
         $trackingNumber = $request->input('tracking_number');
         $carrier = $request->input('carrier');
 
@@ -86,16 +116,30 @@ class ShipmentController extends Controller
     public function markAsReceived(Request $request)
     {
         $request->validate([
-            'offer_ids' => 'required|array',
-            'offer_ids.*' => 'exists:console_offers,id',
+            'offer_ids' => 'required|string',
         ]);
 
-        $offerIds = $request->input('offer_ids');
+        // Décoder le JSON envoyé par Alpine.js
+        $offerIds = json_decode($request->input('offer_ids'), true);
+        
+        if (!is_array($offerIds) || empty($offerIds)) {
+            return back()->with('error', 'Aucune offre sélectionnée.');
+        }
+        
+        // Valider que chaque ID existe et est envoyé
+        $validOfferIds = ConsoleOffer::whereIn('id', $offerIds)
+            ->where('status', 'shipped')
+            ->pluck('id')
+            ->toArray();
+        
+        if (empty($validOfferIds)) {
+            return back()->with('error', 'Aucune offre expédiée valide trouvée.');
+        }
 
         DB::beginTransaction();
         try {
             // Récupérer les offres
-            $offers = ConsoleOffer::whereIn('id', $offerIds)
+            $offers = ConsoleOffer::whereIn('id', $validOfferIds)
                 ->where('status', 'shipped')
                 ->with('console')
                 ->get();
@@ -161,13 +205,28 @@ class ShipmentController extends Controller
     public function confirmPayment(Request $request)
     {
         $request->validate([
-            'offer_ids' => 'required|array',
-            'offer_ids.*' => 'exists:console_offers,id',
+            'offer_ids' => 'required|string',
         ]);
 
-        $offerIds = $request->input('offer_ids');
+        // Décoder le JSON envoyé par Alpine.js
+        $offerIds = json_decode($request->input('offer_ids'), true);
+        
+        if (!is_array($offerIds) || empty($offerIds)) {
+            return back()->with('error', 'Aucune demande de paiement sélectionnée.');
+        }
+        
+        // Valider que chaque ID existe et a une demande de paiement
+        $validOfferIds = ConsoleOffer::whereIn('id', $offerIds)
+            ->where('payment_requested', true)
+            ->where('payment_confirmed', false)
+            ->pluck('id')
+            ->toArray();
+        
+        if (empty($validOfferIds)) {
+            return back()->with('error', 'Aucune demande de paiement valide trouvée.');
+        }
 
-        $updated = ConsoleOffer::whereIn('id', $offerIds)
+        $updated = ConsoleOffer::whereIn('id', $validOfferIds)
             ->where('payment_requested', true)
             ->where('payment_confirmed', false)
             ->update([
@@ -175,7 +234,7 @@ class ShipmentController extends Controller
                 'payment_confirmed_at' => now(),
             ]);
 
-        $totalAmount = ConsoleOffer::whereIn('id', $offerIds)->sum('payment_request_amount');
+        $totalAmount = ConsoleOffer::whereIn('id', $validOfferIds)->sum('payment_request_amount');
 
         return back()->with('success', 
             "{$updated} paiement(s) confirmé(s) pour un total de " . 

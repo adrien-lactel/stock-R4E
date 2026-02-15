@@ -283,16 +283,31 @@ class StoreOfferController extends Controller
         $storeId = Auth::user()->store_id;
         
         $validated = $request->validate([
-            'offer_ids' => ['required', 'array'],
-            'offer_ids.*' => ['exists:console_offers,id'],
+            'offer_ids' => ['required', 'string'],
         ]);
         
-        $offerIds = $validated['offer_ids'];
+        // Décoder le JSON envoyé par Alpine.js
+        $offerIds = json_decode($validated['offer_ids'], true);
+        
+        if (!is_array($offerIds) || empty($offerIds)) {
+            return back()->with('error', 'Aucune offre sélectionnée.');
+        }
+        
+        // Valider que chaque ID existe et appartient au magasin
+        $validOfferIds = ConsoleOffer::whereIn('id', $offerIds)
+            ->where('store_id', $storeId)
+            ->where('status', 'shipped')
+            ->pluck('id')
+            ->toArray();
+        
+        if (empty($validOfferIds)) {
+            return back()->with('error', 'Aucune offre expédiée valide trouvée.');
+        }
         
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             // Récupérer les offres
-            $offers = ConsoleOffer::whereIn('id', $offerIds)
+            $offers = ConsoleOffer::whereIn('id', $validOfferIds)
                 ->where('store_id', $storeId)
                 ->where('status', 'shipped')
                 ->with('console')
