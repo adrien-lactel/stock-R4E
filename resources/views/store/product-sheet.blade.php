@@ -35,6 +35,13 @@
             <div class="space-y-6">
                 {{-- En-tête produit --}}
                 <div class="bg-white rounded-lg shadow-lg p-6">
+                    {{-- Numéro de fiche produit --}}
+                    @if($console->productSheet)
+                        <div class="mb-3 inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-800 border-2 border-blue-300">
+                            📄 Fiche produit #{{ $console->productSheet->id }}
+                        </div>
+                    @endif
+
                     <div class="mb-2 text-sm text-gray-500">
                         {{ $console->articleCategory?->name }} › 
                         {{ $console->articleSubCategory?->name }}

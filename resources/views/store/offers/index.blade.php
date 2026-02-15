@@ -50,6 +50,13 @@
                     <a href="{{ route('store.product-sheet', ['store' => auth()->user()->store_id, 'console' => $console->id]) }}" 
                        class="block p-4 hover:bg-gray-50 transition-colors">
                         
+                        {{-- Numéro de fiche produit --}}
+                        @if($console->productSheet)
+                            <div class="mb-2 inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                                📄 Fiche #{{ $console->productSheet->id }}
+                            </div>
+                        @endif
+
                         {{-- Type de console --}}
                         <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
                             {{ $console->articleType?->name ?? 'N/A' }}
