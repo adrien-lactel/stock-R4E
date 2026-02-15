@@ -1,11 +1,56 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto py-10 px-6">
+<div class="max-w-7xl mx-auto py-10 px-6" x-data="{
+    selected: [],
+    offers: @js($offers->map(function($offer) {
+        return [
+            'id' => $offer->id,
+            'console_id' => $offer->console->id,
+            'sale_price' => $offer->sale_price,
+            'consignment_price' => $offer->consignment_price ?? 0,
+        ];
+    })),
+    get totalAchat() {
+        return this.selected.reduce((sum, id) => {
+            const offer = this.offers.find(o => o.id === id);
+            return sum + (offer ? parseFloat(offer.sale_price) : 0);
+        }, 0);
+    },
+    get totalDepot() {
+        return this.selected.reduce((sum, id) => {
+            const offer = this.offers.find(o => o.id === id);
+            return sum + (offer ? parseFloat(offer.consignment_price) : 0);
+        }, 0);
+    },
+    toggleOffer(offerId) {
+        const index = this.selected.indexOf(offerId);
+        if (index > -1) {
+            this.selected.splice(index, 1);
+        } else {
+            this.selected.push(offerId);
+        }
+    }
+}">
 
-    <h1 class="text-3xl font-bold mb-6">
-        📦 Offres disponibles
-    </h1>
+    {{-- HEADER AVEC TOTAUX --}}
+    <div class="mb-6 flex items-center justify-between gap-4">
+        <h1 class="text-3xl font-bold">📦 Offres disponibles</h1>
+        
+        <div class="flex gap-4">
+            <div class="bg-blue-100 border-2 border-blue-300 rounded-lg px-6 py-3 text-center min-w-[180px]">
+                <div class="text-xs font-semibold text-blue-700 uppercase mb-1">Total Achat</div>
+                <div class="text-2xl font-bold text-blue-900" x-text="totalAchat.toFixed(2) + ' €'"></div>
+                <div class="text-xs text-blue-600 mt-1" x-text="selected.length + ' article(s)'"></div>
+            </div>
+            
+            <div class="bg-green-100 border-2 border-green-300 rounded-lg px-6 py-3 text-center min-w-[180px]">
+                <div class="text-xs font-semibold text-green-700 uppercase mb-1">Total Dépôt</div>
+                <div class="text-2xl font-bold text-green-900" x-text="totalDepot.toFixed(2) + ' €'"></div>
+                <div class="text-xs text-green-600 mt-1" x-text="selected.length + ' article(s)'"></div>
+            </div>
+        </div>
+    </div>
 
     @if(session('success'))
         <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
@@ -31,14 +76,13 @@
                     $console = $offer->console;
                     $hasMods = $console->mods && $console->mods->count() > 0;
                     $valorisation = $console->valorisation;
-                    $prixPropose = $offer->sale_price;
-                    $remise = 0;
-                    if ($valorisation && $valorisation > 0) {
-                        $remise = (($valorisation - $prixPropose) / $valorisation) * 100;
-                    }
+                    $prixVente = $offer->sale_price;
+                    $prixDepot = $offer->consignment_price ?? 0;
                     
                     // Récupérer les images de la ProductSheet
                     $sheet = $console->productSheet ?? null;
+                    $isFavorite = $sheet && isset($sheet->is_favorite) && $sheet->is_favorite;
+                    
                     $articleImages = $sheet && isset($sheet->images) ? $sheet->images : [];
                     if (is_string($articleImages)) {
                         $articleImages = json_decode($articleImages, true) ?? [];
@@ -54,13 +98,39 @@
                     if (count($articleImages) === 0 && $sheet && $sheet->main_image) {
                         $articleImages = [$sheet->main_image];
                     }
+                    
+                    // Mods featured
+                    $displayMods = $sheet && isset($sheet->featured_mods) ? $sheet->featured_mods : [];
                 @endphp
 
-                <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border-2 {{ $hasMods ? 'border-amber-400' : 'border-gray-200' }}">
-                    {{-- En-tête avec badge modé --}}
-                    @if($hasMods)
-                        <div class="bg-amber-400 text-amber-900 px-3 py-1 text-xs font-semibold text-center">
-                            🔧 CONSOLE MODÉE
+                <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-2"
+                     :class="selected.includes({{ $offer->id }}) ? 'border-blue-500 ring-2 ring-blue-300' : '{{ $hasMods ? 'border-amber-400' : 'border-gray-200' }}'">
+                    
+                    {{-- CHECKBOX DE SÉLECTION --}}
+                    <div class="p-2 bg-gray-50 border-b flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" 
+                                   :checked="selected.includes({{ $offer->id }})"
+                                   @change="toggleOffer({{ $offer->id }})"
+                                   class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                            <span class="text-xs font-medium text-gray-700">Sélectionner</span>
+                        </label>
+                        
+                        {{-- Badge modé --}}
+                        @if($hasMods)
+                            <span class="text-xs font-semibold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">
+                                🔧 MODÉE
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- Coup de cœur --}}
+                    @if($isFavorite)
+                        <div class="px-3 py-1.5 bg-red-50 border-b border-red-100 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                            <span class="text-xs font-semibold text-red-700">Coup de cœur R4E</span>
                         </div>
                     @endif
 
@@ -136,7 +206,7 @@
                             </div>
                         </div>
 
-                        {{-- Badges région, complétude, langue --}}
+                        {{-- Badges région, complétude --}}
                         <div class="flex flex-wrap gap-1 mb-3">
                             @if($console->region)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800">
@@ -158,38 +228,40 @@
                             @endif
                         </div>
 
-                        {{-- Mods --}}
-                        @if($hasMods)
+                        {{-- Mods avec ICÔNE À DROITE --}}
+                        @if(count($displayMods) > 0)
                             <div class="mb-3 pb-3 border-b border-gray-200">
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach($console->mods as $mod)
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs border
-                                            @if($mod->is_operation) bg-orange-50 text-orange-700 border-orange-200
-                                            @elseif($mod->is_accessory) bg-purple-50 text-purple-700 border-purple-200
-                                            @else bg-blue-50 text-blue-700 border-blue-200
-                                            @endif">
-                                            {{ Str::limit($mod->name, 15) }}
-                                        </span>
+                                <div class="space-y-1">
+                                    @foreach($displayMods as $mod)
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="font-medium text-gray-700">{{ $mod['name'] ?? 'Mod' }}</span>
+                                            @if(isset($mod['icon']))
+                                                @if(str_starts_with($mod['icon'], 'data:image/'))
+                                                    <img src="{{ $mod['icon'] }}" alt="{{ $mod['name'] ?? 'Mod' }}" class="w-5 h-5" style="image-rendering: pixelated;">
+                                                @else
+                                                    <span class="text-lg">{{ $mod['icon'] }}</span>
+                                                @endif
+                                            @endif
+                                        </div>
                                     @endforeach
                                 </div>
                             </div>
                         @endif
 
-                        {{-- Prix --}}
-                        <div class="mb-3">
-                            <div class="text-2xl font-bold text-green-600 mb-1">
-                                {{ number_format($prixPropose, 2, ',', ' ') }} €
+                        {{-- PRIX : R4E / VENTE / DÉPÔT --}}
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-600">Prix R4E:</span>
+                                <span class="font-bold text-gray-800">{{ number_format($valorisation ?? 0, 2, ',', ' ') }} €</span>
                             </div>
-                            @if($valorisation && $valorisation > 0)
-                                <div class="text-xs text-gray-500 line-through">
-                                    {{ number_format($valorisation, 2, ',', ' ') }} €
-                                </div>
-                                @if($remise > 0)
-                                    <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                        -{{ number_format($remise, 1) }}% 🎉
-                                    </span>
-                                @endif
-                            @endif
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Prix vente:</span>
+                                <span class="text-lg font-bold text-green-600">{{ number_format($prixVente, 2, ',', ' ') }} €</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-600">Prix dépôt:</span>
+                                <span class="font-bold text-blue-600">{{ number_format($prixDepot, 2, ',', ' ') }} €</span>
+                            </div>
                         </div>
                     </a>
                 </div>
