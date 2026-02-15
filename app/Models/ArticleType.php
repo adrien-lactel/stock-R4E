@@ -41,11 +41,14 @@ class ArticleType extends Model
             'AGB' => 'game boy advance',  // Game Boy Advance
             'SNS' => 'snes',              // Super Nintendo
             'NES' => 'nes',               // NES
+            'GG' => 'gamegear',           // Game Gear
+            'T-' => 'megadrive',          // Mega Drive/Genesis (format T-XXXXX)
+            'MK-' => 'megadrive',         // Mega Drive/Genesis (format MK-XXXXX)
         ];
 
         // Priorité 1: détecter depuis le préfixe du ROM ID (plus précis)
         $romId = $this->getEffectiveRomId();
-        if ($romId && preg_match('/^([A-Z]{3})-/', $romId, $matches)) {
+        if ($romId && preg_match('/^([A-Z]{2,3})-?/', $romId, $matches)) {
             $prefix = $matches[1];
             if (isset($romIdPrefixMapping[$prefix])) {
                 return $romIdPrefixMapping[$prefix];

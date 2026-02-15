@@ -1401,6 +1401,20 @@ function guessBrandFromRomId(romId) {
   return null;
 }
 
+// ✅ Extraire le ROM ID du nom du jeu (format: "ROM_ID - Nom du jeu")
+// Compatible avec SHVC-, SNS-, DMG-, CGB-, AGB-, HVC-, NES-, etc.
+function extractRomIdFromName(name) {
+  if (!name) return null;
+  
+  // Pattern pour extraire le ROM ID au début du nom (ex: "SHVC-MW - Super Mario World" -> "SHVC-MW")
+  const match = name.match(/^([A-Z0-9]{2,4}-[A-Z0-9\-]+?)\s*-\s*(.+)$/i);
+  if (match) {
+    return match[1].toUpperCase();
+  }
+  
+  return null;
+}
+
 // ========================================
 // RECHERCHE DE JEUX
 // ========================================
@@ -1428,8 +1442,14 @@ function getLocalGameImage(game, platform) {
       .replace(/\.bin$/i, '')
       .trim();
   } else {
-    // Utiliser le ROM ID ou slug pour autres plateformes
-    identifier = game.rom_id || game.slug;
+    // ⚠️ CORRECTION SNES: Utiliser ROM ID, sinon extraire du nom, sinon fallback sur slug
+    identifier = game.rom_id;
+    if (!identifier && game.name) {
+      identifier = extractRomIdFromName(game.name);
+    }
+    if (!identifier) {
+      identifier = game.slug;
+    }
   }
   
   if (!identifier) return null;
@@ -1487,7 +1507,14 @@ async function getGameImageWithFallback(game, platform) {
       .replace(/\.bin$/i, '')
       .trim();
   } else {
-    identifier = game.rom_id || game.slug;
+    // ⚠️ CORRECTION SNES: Utiliser ROM ID, sinon extraire du nom, sinon fallback sur slug
+    identifier = game.rom_id;
+    if (!identifier && game.name) {
+      identifier = extractRomIdFromName(game.name);
+    }
+    if (!identifier) {
+      identifier = game.slug;
+    }
   }
   
   if (!identifier) return null;
@@ -1776,27 +1803,33 @@ async function loadGameLogo(game, platform) {
       .replace(/\.bin$/i, '')
       .trim();
   } else {
-    // Pour Game Boy et autres, utiliser ROM ID
-    identifier = game.rom_id || game.slug;
+    // ⚠️ CORRECTION SNES: Pour Game Boy et autres, utiliser ROM ID, sinon extraire du nom, sinon slug
+    identifier = game.rom_id;
+    if (!identifier && game.name) {
+      identifier = extractRomIdFromName(game.name);
+    }
+    if (!identifier) {
+      identifier = game.slug;
+    }
     
     // Nettoyer les extensions selon la plateforme
-    if (platform === 'gameboy') {
+    if (identifier && platform === 'gameboy') {
       identifier = identifier
         .replace(/\.gb$/i, '')
         .replace(/\.gbc$/i, '')
         .replace(/\.gba$/i, '')
         .trim();
-    } else if (platform === 'n64') {
+    } else if (identifier && platform === 'n64') {
       identifier = identifier
         .replace(/\.n64$/i, '')
         .replace(/\.z64$/i, '')
         .replace(/\.v64$/i, '')
         .trim();
-    } else if (platform === 'nes') {
+    } else if (identifier && platform === 'nes') {
       identifier = identifier
         .replace(/\.nes$/i, '')
         .trim();
-    } else if (platform === 'snes') {
+    } else if (identifier && platform === 'snes') {
       identifier = identifier
         .replace(/\.sfc$/i, '')
         .replace(/\.smc$/i, '')
@@ -2217,20 +2250,67 @@ window.openTaxonomyImagesForArticle = function() {
   const subCategoryName = @json($console->articleSubCategory->name ?? null);
   const categoryName = @json($console->articleCategory->name ?? null);
   
-  // Utiliser ROM ID pour les jeux vidéo, sinon utiliser le type d'article
-  const identifier = romId || articleTypeName;
+  // ⚠️ CORRECTION SNES: Extraire le ROM ID du nom si la colonne rom_id est vide
+  let identifier = romId;
+  if (!identifier && articleTypeName) {
+    // Essayer d'extraire le ROM ID du nom (format: "SHVC-MW - Super Mario World")
+    identifier = extractRomIdFromName(articleTypeName);
+  }
+  // Fallback sur le nom complet si aucun ROM ID trouvé
+  if (!identifier) {
+    identifier = articleTypeName;
+  }
   
   if (!identifier) {
     alert('❌ Pas d\'identifiant défini pour cet article (ROM ID ou Type requis)');
     return;
   }
   
-  // Déterminer le dossier de stockage
+  // ⚠️ CORRECTION: Mapping correct des sous-catégories vers les dossiers R2
   let folder = '';
   
   if (categoryName && categoryName.includes('Jeux vidéo')) {
-    // Pour les jeux : utiliser la sous-catégorie (plateforme)
-    folder = (subCategoryName || 'gameboy').toLowerCase().replace(/\s+/g, '');
+    // Pour les jeux : mapper la sous-catégorie vers le dossier R2 correct
+    const subCatLower = (subCategoryName || '').toLowerCase();
+    const platformMapping = {
+      'game boy advance': 'game boy advance',
+      'gba': 'game boy advance',
+      'game boy color': 'game boy color',
+      'gbc': 'game boy color',
+      'game boy': 'gameboy',
+      'gameboy': 'gameboy',
+      'super nintendo': 'snes',
+      'snes': 'snes',
+      'super famicom': 'snes',
+      'nintendo 64': 'n64',
+      'n64': 'n64',
+      'nes': 'nes',
+      'famicom': 'nes',
+      'wonder swan': 'wonderswan',
+      'wonderswan': 'wonderswan',
+      'wonder swan color': 'wonderswan color',
+      'wonderswan color': 'wonderswan color',
+      'mega drive': 'megadrive',
+      'megadrive': 'megadrive',
+      'genesis': 'megadrive',
+      'game gear': 'gamegear',
+      'gamegear': 'gamegear',
+      'sega saturn': 'segasaturn',
+      'saturn': 'segasaturn',
+    };
+    
+    // Chercher une correspondance exacte ou partielle
+    folder = platformMapping[subCatLower] || null;
+    if (!folder) {
+      // Fallback: chercher une correspondance partielle
+      for (const [key, value] of Object.entries(platformMapping)) {
+        if (subCatLower.includes(key)) {
+          folder = value;
+          break;
+        }
+      }
+    }
+    folder = folder || 'gameboy'; // Fallback par défaut
   } else if (categoryName) {
     // Pour autres catégories : utiliser la catégorie (consoles, accessoires)
     folder = categoryName.toLowerCase().replace(/\s+/g, '');
@@ -3164,8 +3244,14 @@ window.displayGameResult = async function(game, platform) {
       .replace(/\.bin$/i, '')
       .trim();
   } else {
-    // Utiliser le ROM ID ou slug pour autres plateformes
-    identifier = game.rom_id || game.slug;
+    // ⚠️ CORRECTION SNES: Utiliser ROM ID, sinon extraire du nom, sinon fallback sur slug
+    identifier = game.rom_id;
+    if (!identifier && game.name) {
+      identifier = extractRomIdFromName(game.name);
+    }
+    if (!identifier) {
+      identifier = game.slug;
+    }
   }
   
   // Détecter le dossier selon la plateforme (même logique que getLocalGameImage)
