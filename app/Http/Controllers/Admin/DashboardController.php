@@ -69,18 +69,7 @@ class DashboardController extends Controller
                         'icon' => '🖼️',
                         'route' => 'admin.product-sheets.index',
                     ],
-                    [
-                        'title' => 'Consoles HS',
-                        'subtitle' => 'Pièces détachées',
-                        'description' => 'Consoles désactivées utilisées comme donneurs de pièces.',
-                        'icon' => '🔴',
-                        'route' => 'admin.consoles.disabled',                    ],
-                    [
-                        'title' => 'Images par taxonomie',
-                        'subtitle' => 'Médias',
-                        'description' => 'Centraliser les images communes à une catégorie de produits.',
-                        'icon' => '📸',
-                        'route' => 'admin.product-sheets.images-manager',                    ],                ],
+                ],
             ],
             [
                 'title' => 'Réseau réparateurs',
@@ -91,6 +80,13 @@ class DashboardController extends Controller
                         'description' => 'Suivre les partenaires SAV et leurs charges.',
                         'icon' => '🔧',
                         'route' => 'admin.repairers.index',
+                    ],
+                    [
+                        'title' => 'Consoles HS',
+                        'subtitle' => 'Pièces détachées',
+                        'description' => 'Consoles désactivées utilisées comme donneurs de pièces.',
+                        'icon' => '🔴',
+                        'route' => 'admin.consoles.disabled',
                     ],
                 ],
             ],
