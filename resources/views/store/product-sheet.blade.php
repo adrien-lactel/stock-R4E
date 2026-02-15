@@ -5,26 +5,53 @@
             <a href="{{ route('store.dashboard', $store->id) }}" class="hover:text-indigo-600">← Retour au stock</a>
         </div>
 
+        @php
+            // Utiliser ProductSheet en priorité, sinon ArticleType
+            $sheet = $console->productSheet;
+            $type = $console->articleType;
+            
+            // Images : priorité ProductSheet
+            $mainImage = $sheet?->main_image ?? null;
+            $images = $sheet?->images ?? [];
+            
+            // Textes : priorité ProductSheet
+            $title = $sheet?->name ?? $type?->name ?? 'Article #'.$console->id;
+            $description = $sheet?->description ?? $type?->description ?? null;
+            $marketingDesc = $sheet?->marketing_description ?? null;
+        @endphp
+
         <div class="grid md:grid-cols-2 gap-8">
             {{-- COLONNE GAUCHE - IMAGES --}}
             <div class="space-y-4">
-                {{-- Image de la jaquette --}}
+                {{-- Image principale --}}
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    @if($console->articleType?->cover_image)
-                        <img src="{{ $console->articleType->cover_image }}" 
-                             alt="Jaquette {{ $console->articleType?->name }}" 
+                    @if($mainImage)
+                        <img src="{{ $mainImage }}" 
+                             alt="{{ $title }}" 
+                             class="w-full h-auto object-cover">
+                    @elseif($type?->cover_image)
+                        <img src="{{ $type->cover_image }}" 
+                             alt="{{ $title }}" 
                              class="w-full h-auto object-cover">
                     @else
                         <div class="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                            <span class="text-gray-400 text-lg">📦 Aucune image de jaquette</span>
+                            <span class="text-gray-400 text-lg">📦 Aucune image disponible</span>
                         </div>
                     @endif
                 </div>
 
-                {{-- Image de gameplay --}}
-                @if($console->articleType?->gameplay_image)
+                {{-- Images supplémentaires de la fiche --}}
+                @if($images && count($images) > 0)
+                    @foreach($images as $image)
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <img src="{{ $image }}" 
+                                 alt="{{ $title }}" 
+                                 class="w-full h-auto object-cover">
+                        </div>
+                    @endforeach
+                @elseif($type?->gameplay_image)
                     <div class="bg-white rounded-lg shadow overflow-hidden">
-                        <img src="{{ $console->articleType->gameplay_image }}" 
+                        <img src="{{ $type->gameplay_image }}" 
                              alt="Gameplay" 
                              class="w-full h-auto object-cover">
                     </div>
@@ -36,9 +63,9 @@
                 {{-- En-tête produit --}}
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     {{-- Numéro de fiche produit --}}
-                    @if($console->productSheet)
+                    @if($sheet)
                         <div class="mb-3 inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-800 border-2 border-blue-300">
-                            📄 Fiche produit #{{ $console->productSheet->id }}
+                            📄 Fiche produit #{{ $sheet->id }}
                         </div>
                     @endif
 
@@ -47,7 +74,7 @@
                         {{ $console->articleSubCategory?->name }}
                     </div>
                     <h1 class="text-3xl font-bold text-gray-900 mb-4">
-                        {{ $console->articleType?->name ?? 'Article #'.$console->id }}
+                        {{ $title }}
                     </h1>
 
                     {{-- Prix --}}
@@ -55,9 +82,9 @@
                         <div class="text-4xl font-bold text-indigo-600">
                             {{ $offer?->sale_price ?? $console->pivot?->sale_price ?? 'N/A' }} €
                         </div>
-                        @if($console->articleType?->average_market_price)
+                        @if($type?->average_market_price)
                             <div class="text-sm text-gray-500">
-                                Prix moyen constaté : {{ $console->articleType->average_market_price }} €
+                                Prix moyen constaté : {{ $type->average_market_price }} €
                             </div>
                         @endif
                     </div>
@@ -73,22 +100,52 @@
                     </div>
                 </div>
 
-                {{-- Description --}}
-                @if($console->articleType?->description)
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="text-xl font-semibold mb-3 text-gray-900">📝 Description</h2>
+                {{-- Description marketing --}}
+                @if($marketingDesc)
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg shadow p-6 border-2 border-indigo-200">
+                        <h2 class="text-xl font-semibold mb-3 text-indigo-900">✨ Pourquoi ce produit ?</h2>
                         <div class="text-gray-700 leading-relaxed">
-                            {!! nl2br(e($console->articleType->description)) !!}
+                            {!! nl2br(e($marketingDesc)) !!}
                         </div>
                     </div>
                 @endif
 
-                {{-- Points forts --}}
-                @if($console->articleType?->key_features)
+                {{-- Description --}}
+                @if($description)
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-semibold mb-3 text-gray-900">📝 Description</h2>
+                        <div class="text-gray-700 leading-relaxed">
+                            {!! nl2br(e($description)) !!}
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Spécifications techniques --}}
+                @if($sheet?->technical_specs)
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-semibold mb-3 text-gray-900">⚙️ Spécifications techniques</h2>
+                        <div class="text-gray-700 leading-relaxed">
+                            {!! nl2br(e($sheet->technical_specs)) !!}
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Contenu de la boîte --}}
+                @if($sheet?->included_items)
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-semibold mb-3 text-gray-900">📦 Contenu de la boîte</h2>
+                        <div class="text-gray-700 leading-relaxed">
+                            {!! nl2br(e($sheet->included_items)) !!}
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Points forts (si pas de fiche) --}}
+                @if(!$sheet && $type?->key_features)
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-xl font-semibold mb-3 text-gray-900">⭐ Points forts</h2>
                         <ul class="space-y-2">
-                            @foreach(explode("\n", $console->articleType->key_features) as $feature)
+                            @foreach(explode("\n", $type->key_features) as $feature)
                                 @if(trim($feature))
                                     <li class="flex items-start gap-2">
                                         <span class="text-green-500 mt-1">✓</span>
