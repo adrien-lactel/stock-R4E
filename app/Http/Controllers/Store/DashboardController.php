@@ -98,6 +98,9 @@ class DashboardController extends Controller
             abort(403, 'Accès non autorisé');
         }
 
+        // Initialiser $offer à null
+        $offer = null;
+
         // Charger la console avec ses relations
         // Si la console n'est pas dans le stock, vérifier s'il y a une offre
         $consoleInStock = $store->consoles()
@@ -121,7 +124,7 @@ class DashboardController extends Controller
             $console->load(['articleType', 'articleCategory', 'articleSubCategory', 'mods', 'productSheet']);
         }
 
-        return view('store.product-sheet', compact('store', 'console'));
+        return view('store.product-sheet', compact('store', 'console', 'offer'));
     }
 
     /**

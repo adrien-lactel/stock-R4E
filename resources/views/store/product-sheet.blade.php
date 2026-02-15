@@ -103,7 +103,7 @@
                         <div class="text-4xl font-bold text-indigo-600">
                             @php
                                 $price = 'N/A';
-                                if ($offer && isset($offer->sale_price)) {
+                                if (isset($offer) && $offer && isset($offer->sale_price)) {
                                     $price = $offer->sale_price;
                                 } elseif ($console->pivot && isset($console->pivot->sale_price)) {
                                     $price = $console->pivot->sale_price;
