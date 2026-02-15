@@ -1,11 +1,13 @@
-<x-app-layout>
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        {{-- Breadcrumb --}}
-        <div class="mb-6 text-sm text-gray-600">
-            <a href="{{ route('store.dashboard', $store->id) }}" class="hover:text-indigo-600">← Retour au stock</a>
-        </div>
+@extends('layouts.app')
 
-        @php
+@section('content')
+<div class="max-w-7xl mx-auto px-4 py-8">
+    {{-- Breadcrumb --}}
+    <div class="mb-6 text-sm text-gray-600">
+        <a href="{{ route('store.dashboard', $store->id) }}" class="hover:text-indigo-600">← Retour au stock</a>
+    </div>
+
+    @php
             // Vérifications de sécurité et définition des variables
             $sheet = $console->productSheet ?? null;
             $type = $console->articleType ?? null;
@@ -237,4 +239,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection
