@@ -1255,6 +1255,14 @@ class ProductSheetController extends Controller
         // Réinitialiser les champs propres à un article spécifique
         $duplicate->featured_mods = null;
         
+        // Vérifier que l'article_type_id existe, sinon le mettre à null
+        if ($duplicate->article_type_id) {
+            $typeExists = \App\Models\ArticleType::where('id', $duplicate->article_type_id)->exists();
+            if (!$typeExists) {
+                $duplicate->article_type_id = null;
+            }
+        }
+        
         $duplicate->save();
         
         // Si un console_id est fourni, lier la fiche à l'article
