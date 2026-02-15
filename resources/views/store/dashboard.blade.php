@@ -56,6 +56,24 @@
         </div>
     @endif
 
+    {{-- COMPTEUR FACTURES À PAYER --}}
+    @if($totalOwed > 0)
+        <div class="mb-6 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-lg shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-medium text-amber-800 mb-1">💳 Factures à payer (dépôt-vente vendus)</div>
+                    <div class="text-3xl font-bold text-amber-900">{{ number_format($totalOwed, 2) }} €</div>
+                    <div class="text-xs text-amber-700 mt-1">Montant dû à R4E pour les ventes en dépôt-vente</div>
+                </div>
+                <div class="hidden sm:block">
+                    <svg class="w-16 h-16 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- SECTION 1 — ARTICLES EN DÉPÔT-VENTE --}}
     <h2 class="text-xl sm:text-2xl font-semibold mb-4">
         📦 Articles en dépôt-vente ({{ $consignmentOffers->count() }})

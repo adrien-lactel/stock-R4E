@@ -88,13 +88,22 @@ class DashboardController extends Controller
         ->orderBy('created_at', 'desc')
         ->get();
 
+    // =====================
+    // 💰 MONTANT TOTAL DES FACTURES À PAYER (articles vendus en dépôt-vente)
+    // =====================
+    $totalOwed = \App\Models\ConsoleOffer::where('store_id', $store->id)
+        ->where('payment_requested', true)
+        ->where('payment_confirmed', false)
+        ->sum('payment_request_amount');
+
     return view('store.dashboard', compact(
         'store',
         'consoles',
         'consignmentOffers',
         'purchasedOffers',
         'savConsoles',
-        'externalRepairs'
+        'externalRepairs',
+        'totalOwed'
     ));
 }
 
@@ -406,23 +415,38 @@ class DashboardController extends Controller
      */
     public function sales(Store $store)
     {
-        if (Auth::user()->store_id !== $store->id) {
+        $user = Auth::user();
+        if ($user->role !== 'admin' && $user->store_id !== $store->id) {
             abort(403);
         }
 
-        $sales = Console::with([
+        // Récupérer toutes les ventes du magasin
+        // 1. Ventes directes (consoles avec store_id)
+        $directSales = Console::with([
             'articleType',
             'articleCategory',
             'articleSubCategory',
+            'productSheet',
             'returnRequest',
         ])
             ->where('store_id', $store->id)
             ->where('status', 'vendue')
             ->whereNotNull('sold_at')
+            ->get();
+
+        // 2. Ventes via ConsoleOffer (dépôt-vente et achetés)
+        $offerSales = \App\Models\ConsoleOffer::with([
+            'console.articleType',
+            'console.articleCategory',
+            'console.articleSubCategory',
+            'console.productSheet',
+        ])
+            ->where('store_id', $store->id)
+            ->whereNotNull('sold_at')
             ->orderBy('sold_at', 'desc')
             ->get();
 
-        return view('store.sales.index', compact('store', 'sales'));
+        return view('store.sales.index', compact('store', 'directSales', 'offerSales'));
     }
 
     /**
