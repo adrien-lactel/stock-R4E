@@ -537,9 +537,13 @@
 
             {{-- POINTS FORTS --}}
             <script>
-                // Variable globale pour les critères - s'assurer que c'est toujours un objet
-                var conditionCriteria = @json($sheet->condition_criteria ?? []) || {};
-                console.log('🔍 Points forts initiaux:', conditionCriteria);
+                // Variable globale pour les critères - FORCER un objet (pas un tableau)
+                var conditionCriteria = @json($sheet->condition_criteria ?? []);
+                // Convertir tableau vide [] en objet vide {}
+                if (Array.isArray(conditionCriteria) && conditionCriteria.length === 0) {
+                    conditionCriteria = {};
+                }
+                console.log('🔍 Points forts initiaux:', conditionCriteria, 'Type:', Array.isArray(conditionCriteria) ? 'Array' : 'Object');
                 
                 // Fonction globale pour les étoiles (appelée par onclick)
                 function setRating(criterion, rating) {

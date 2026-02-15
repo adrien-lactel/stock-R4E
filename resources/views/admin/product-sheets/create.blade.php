@@ -812,6 +812,8 @@ document.addEventListener('DOMContentLoaded', function() {
     conditionCriteria = (Array.isArray(loadedCriteria) && loadedCriteria.length === 0) ? {} : loadedCriteria;
     conditionCriteriaLabels = (Array.isArray(loadedLabels) && loadedLabels.length === 0) ? {} : loadedLabels;
     
+    console.log('🔍 Points forts initiaux (create):', conditionCriteria, 'Type:', Array.isArray(conditionCriteria) ? 'Array' : 'Object');
+    
     // S'assurer que conditionCriteriaLabels est un objet
     if (Array.isArray(conditionCriteriaLabels)) {
         conditionCriteriaLabels = {};
@@ -899,6 +901,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.setRating = function(criterion, rating) {
         conditionCriteria[criterion] = rating;
+        console.log('⭐ Critère mis à jour (create):', criterion, '=', rating, '| Tous:', conditionCriteria);
         
         // Activer automatiquement la checkbox du critère
         const checkbox = document.querySelector(`.criterion-toggle[value="${criterion}"]`);
@@ -921,7 +924,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Mettre à jour le champ hidden
-        document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+        const criteriaJson = JSON.stringify(conditionCriteria);
+        document.getElementById('condition_criteria_input').value = criteriaJson;
+        console.log('💾 Champ caché mis à jour (create):', criteriaJson);
         
         // Mettre à jour la preview
         updatePreview();
