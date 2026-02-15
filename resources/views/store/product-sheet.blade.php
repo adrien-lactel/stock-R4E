@@ -6,18 +6,39 @@
         </div>
 
         @php
-            // Utiliser ProductSheet en priorité, sinon ArticleType
-            $sheet = $console->productSheet;
-            $type = $console->articleType;
+            // Vérifications de sécurité et définition des variables
+            $sheet = $console->productSheet ?? null;
+            $type = $console->articleType ?? null;
             
             // Images : priorité ProductSheet
-            $mainImage = $sheet?->main_image ?? null;
-            $images = $sheet?->images ?? [];
+            $mainImage = null;
+            if ($sheet && $sheet->main_image) {
+                $mainImage = $sheet->main_image;
+            } elseif ($type && isset($type->cover_image)) {
+                $mainImage = $type->cover_image;
+            }
+            
+            $images = [];
+            if ($sheet && is_array($sheet->images)) {
+                $images = $sheet->images;
+            }
             
             // Textes : priorité ProductSheet
-            $title = $sheet?->name ?? $type?->name ?? 'Article #'.$console->id;
-            $description = $sheet?->description ?? $type?->description ?? null;
-            $marketingDesc = $sheet?->marketing_description ?? null;
+            $title = 'Article #'.$console->id;
+            if ($sheet && $sheet->name) {
+                $title = $sheet->name;
+            } elseif ($type && isset($type->name)) {
+                $title = $type->name;
+            }
+            
+            $description = null;
+            if ($sheet && $sheet->description) {
+                $description = $sheet->description;
+            } elseif ($type && isset($type->description)) {
+                $description = $type->description;
+            }
+            
+            $marketingDesc = ($sheet && $sheet->marketing_description) ? $sheet->marketing_description : null;
         @endphp
 
         <div class="grid md:grid-cols-2 gap-8">
