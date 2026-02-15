@@ -577,25 +577,24 @@ class ProductSheetController extends Controller
             $request->merge(['tags' => []]);
         }
 
-        $conditionCriteria = $request->input('condition_criteria');
-        if (is_string($conditionCriteria)) {
-            $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
+        // --- Correction robustesse Points forts ---
+        $cc = $request->input('condition_criteria');
+        if (is_string($cc)) {
+            $cc = json_decode($cc, true) ?: [];
         }
-        
-        // S'assurer que condition_criteria n'est pas null
-        if (!$request->has('condition_criteria') || $request->input('condition_criteria') === null) {
-            $request->merge(['condition_criteria' => []]);
+        if (!is_array($cc)) {
+            $cc = [];
         }
+        $request->merge(['condition_criteria' => $cc]);
 
-        $conditionCriteriaLabels = $request->input('condition_criteria_labels');
-        if (is_string($conditionCriteriaLabels)) {
-            $request->merge(['condition_criteria_labels' => json_decode($conditionCriteriaLabels, true) ?: []]);
+        $ccl = $request->input('condition_criteria_labels');
+        if (is_string($ccl)) {
+            $ccl = json_decode($ccl, true) ?: [];
         }
-        
-        // S'assurer que condition_criteria_labels n'est pas null
-        if (!$request->has('condition_criteria_labels') || $request->input('condition_criteria_labels') === null) {
-            $request->merge(['condition_criteria_labels' => []]);
+        if (!is_array($ccl)) {
+            $ccl = [];
         }
+        $request->merge(['condition_criteria_labels' => $ccl]);
 
         $featuredMods = $request->input('featured_mods');
         if (is_string($featuredMods)) {
@@ -786,25 +785,24 @@ class ProductSheetController extends Controller
             $request->merge(['tags' => json_decode($tags, true) ?: []]);
         }
 
-        $conditionCriteria = $request->input('condition_criteria');
-        if (is_string($conditionCriteria)) {
-            $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
+        // --- Correction robustesse Points forts ---
+        $cc = $request->input('condition_criteria');
+        if (is_string($cc)) {
+            $cc = json_decode($cc, true) ?: [];
         }
-        
-        // S'assurer que condition_criteria n'est pas null
-        if (!$request->has('condition_criteria') || $request->input('condition_criteria') === null) {
-            $request->merge(['condition_criteria' => []]);
+        if (!is_array($cc)) {
+            $cc = [];
         }
+        $request->merge(['condition_criteria' => $cc]);
 
-        $conditionCriteriaLabels = $request->input('condition_criteria_labels');
-        if (is_string($conditionCriteriaLabels)) {
-            $request->merge(['condition_criteria_labels' => json_decode($conditionCriteriaLabels, true) ?: []]);
+        $ccl = $request->input('condition_criteria_labels');
+        if (is_string($ccl)) {
+            $ccl = json_decode($ccl, true) ?: [];
         }
-        
-        // S'assurer que condition_criteria_labels n'est pas null
-        if (!$request->has('condition_criteria_labels') || $request->input('condition_criteria_labels') === null) {
-            $request->merge(['condition_criteria_labels' => []]);
+        if (!is_array($ccl)) {
+            $ccl = [];
         }
+        $request->merge(['condition_criteria_labels' => $ccl]);
 
         $featuredMods = $request->input('featured_mods');
         if (is_string($featuredMods)) {
