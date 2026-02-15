@@ -317,7 +317,7 @@
                                 {{-- Conteneur pour info images (en haut, même taille que taxonomie) --}}
                                 <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; height: 76px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
                                     <div style="font-size: 14px; color: #111827; font-weight: 700; text-align: center;">
-                                        {{ $selectedType->isConsoleCategory() ? 'Visuels' : 'Images gameplay, cover et artwork' }}
+                                        {{ ($selectedType->isConsoleCategory() || $selectedType->isCardsCategory() || $selectedType->isAccessoryCategory()) ? 'Visuels' : 'Images gameplay, cover et artwork' }}
                                     </div>
                                 </div>
                                 
@@ -334,7 +334,10 @@
                                     },
                                     get currentImage() { return this.images[this.imageType]; },
                                     get currentLabel() {
-                                        const labels = { cover: 'Cover', artwork: 'Artwork', gameplay: 'Gameplay' };
+                                        const isTaxonomy = {{ ($selectedType->isConsoleCategory() || $selectedType->isCardsCategory() || $selectedType->isAccessoryCategory()) ? 'true' : 'false' }};
+                                        const labels = isTaxonomy 
+                                            ? { cover: 'Visuel 1', artwork: 'Visuel 2', gameplay: 'Visuel 3' }
+                                            : { cover: 'Cover', artwork: 'Artwork', gameplay: 'Gameplay' };
                                         return labels[this.imageType];
                                     },
                                     nextImage() {
