@@ -350,9 +350,9 @@
                             </div>
                         @endif
 
-                        {{-- Type de console --}}
+                        {{-- Titre de la fiche produit --}}
                         <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
-                            {{ $console->articleType?->name ?? 'N/A' }}
+                            {{ $sheet?->name ?? $console->articleType?->name ?? 'N/A' }}
                         </h3>
 
                         {{-- Classification --}}
