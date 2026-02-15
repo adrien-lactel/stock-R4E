@@ -50,7 +50,7 @@
                         <img src="{{ $mainImage }}" 
                              alt="{{ $title }}" 
                              class="w-full h-auto object-cover">
-                    @elseif($type?->cover_image)
+                    @elseif($type && isset($type->cover_image))
                         <img src="{{ $type->cover_image }}" 
                              alt="{{ $title }}" 
                              class="w-full h-auto object-cover">
@@ -70,7 +70,7 @@
                                  class="w-full h-auto object-cover">
                         </div>
                     @endforeach
-                @elseif($type?->gameplay_image)
+                @elseif($type && isset($type->gameplay_image))
                     <div class="bg-white rounded-lg shadow overflow-hidden">
                         <img src="{{ $type->gameplay_image }}" 
                              alt="Gameplay" 
@@ -91,8 +91,8 @@
                     @endif
 
                     <div class="mb-2 text-sm text-gray-500">
-                        {{ $console->articleCategory?->name }} › 
-                        {{ $console->articleSubCategory?->name }}
+                        {{ $console->articleCategory ? $console->articleCategory->name : '' }} › 
+                        {{ $console->articleSubCategory ? $console->articleSubCategory->name : '' }}
                     </div>
                     <h1 class="text-3xl font-bold text-gray-900 mb-4">
                         {{ $title }}
@@ -101,9 +101,17 @@
                     {{-- Prix --}}
                     <div class="flex items-baseline gap-4 mb-6">
                         <div class="text-4xl font-bold text-indigo-600">
-                            {{ $offer?->sale_price ?? $console->pivot?->sale_price ?? 'N/A' }} €
+                            @php
+                                $price = 'N/A';
+                                if ($offer && isset($offer->sale_price)) {
+                                    $price = $offer->sale_price;
+                                } elseif ($console->pivot && isset($console->pivot->sale_price)) {
+                                    $price = $console->pivot->sale_price;
+                                }
+                            @endphp
+                            {{ $price }} €
                         </div>
-                        @if($type?->average_market_price)
+                        @if($type && isset($type->average_market_price))
                             <div class="text-sm text-gray-500">
                                 Prix moyen constaté : {{ $type->average_market_price }} €
                             </div>
@@ -142,7 +150,7 @@
                 @endif
 
                 {{-- Spécifications techniques --}}
-                @if($sheet?->technical_specs)
+                @if($sheet && isset($sheet->technical_specs))
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-xl font-semibold mb-3 text-gray-900">⚙️ Spécifications techniques</h2>
                         <div class="text-gray-700 leading-relaxed">
@@ -152,7 +160,7 @@
                 @endif
 
                 {{-- Contenu de la boîte --}}
-                @if($sheet?->included_items)
+                @if($sheet && isset($sheet->included_items))
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-xl font-semibold mb-3 text-gray-900">📦 Contenu de la boîte</h2>
                         <div class="text-gray-700 leading-relaxed">
@@ -162,7 +170,7 @@
                 @endif
 
                 {{-- Points forts (si pas de fiche) --}}
-                @if(!$sheet && $type?->key_features)
+                @if(!$sheet && $type && isset($type->key_features))
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-xl font-semibold mb-3 text-gray-900">⭐ Points forts</h2>
                         <ul class="space-y-2">
