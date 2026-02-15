@@ -17,6 +17,26 @@ class Publisher extends Model
     protected $appends = ['logo_url'];
 
     /**
+     * Boot du modèle - génération automatique du slug
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($publisher) {
+            if (empty($publisher->slug) && !empty($publisher->name)) {
+                $publisher->slug = Str::slug($publisher->name);
+            }
+        });
+
+        static::updating(function ($publisher) {
+            if (empty($publisher->slug) && !empty($publisher->name)) {
+                $publisher->slug = Str::slug($publisher->name);
+            }
+        });
+    }
+
+    /**
      * Get the full logo URL - direct R2 for speed
      */
     public function getLogoUrlAttribute()
