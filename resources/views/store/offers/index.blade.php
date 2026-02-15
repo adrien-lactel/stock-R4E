@@ -167,28 +167,31 @@
                         $price = $offer->status === 'validated_buy' ? $offer->sale_price : ($offer->consignment_price ?? $offer->sale_price);
                     @endphp
                     
-                    <div class="bg-white rounded-lg border-2 border-{{ $statusColor }}-400 p-3">
+                    <div class="bg-white rounded-lg border-2 border-{{ $statusColor }}-400 overflow-hidden">
                         @if($mainImage)
-                            <img src="{{ $mainImage }}" alt="Article" class="w-full h-32 object-contain mb-2 rounded">
+                            <img src="{{ $mainImage }}" alt="Article" class="w-full h-32 object-contain bg-gray-50">
                         @else
-                            <div class="w-full h-32 bg-gray-100 flex items-center justify-center mb-2 rounded">
+                            <div class="w-full h-32 bg-gray-100 flex items-center justify-center">
                                 <span class="text-gray-400 text-xs">Pas d'image</span>
                             </div>
                         @endif
                         
-                        <div class="mb-2">
-                            <span class="inline-block px-2 py-1 text-xs font-bold bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 rounded">
-                                ✓ {{ $statusLabel }}
-                            </span>
-                        </div>
-                        
-                        <h4 class="text-sm font-bold text-gray-900 mb-1 line-clamp-2">
-                            {{ $console->articleType?->name ?? 'N/A' }}
-                        </h4>
-                        
-                        <div class="text-lg font-bold text-{{ $statusColor }}-600">
-                            {{ number_format($price, 2, ',', ' ') }} €
-                        </div>
+                        <a href="{{ route('store.product-sheet', ['store' => auth()->user()->store_id, 'console' => $console->id]) }}" 
+                           class="block p-3 hover:bg-gray-50 transition-colors">
+                            <div class="mb-2">
+                                <span class="inline-block px-2 py-1 text-xs font-bold bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 rounded">
+                                    ✓ {{ $statusLabel }}
+                                </span>
+                            </div>
+                            
+                            <h4 class="text-sm font-bold text-gray-900 mb-1 line-clamp-2">
+                                {{ $sheet?->name ?? $console->articleType?->name ?? 'N/A' }}
+                            </h4>
+                            
+                            <div class="text-lg font-bold text-{{ $statusColor }}-600">
+                                {{ number_format($price, 2, ',', ' ') }} €
+                            </div>
+                        </a>
                     </div>
                 @endforeach
             </div>
