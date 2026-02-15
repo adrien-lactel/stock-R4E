@@ -7,7 +7,7 @@ use App\Models\Store;
 
 class DeleteAllStores extends Command
 {
-    protected $signature = 'stores:delete-all';
+    protected $signature = 'stores:delete-all {--force : Force la suppression sans confirmation}';
     protected $description = 'Supprimer tous les magasins de la base de données';
 
     public function handle()
@@ -19,7 +19,9 @@ class DeleteAllStores extends Command
             return 0;
         }
 
-        if ($this->confirm("⚠️  Êtes-vous sûr de vouloir supprimer les {$count} magasin(s) ?", false)) {
+        $force = $this->option('force');
+
+        if ($force || $this->confirm("⚠️  Êtes-vous sûr de vouloir supprimer les {$count} magasin(s) ?", false)) {
             Store::query()->delete();
             $this->info("✅ {$count} magasin(s) supprimé(s) avec succès.");
             return 0;
