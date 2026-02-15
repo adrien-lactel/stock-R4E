@@ -539,10 +539,12 @@
             <script>
                 // Variable globale pour les critères - s'assurer que c'est toujours un objet
                 var conditionCriteria = @json($sheet->condition_criteria ?? []) || {};
+                console.log('🔍 Points forts initiaux:', conditionCriteria);
                 
                 // Fonction globale pour les étoiles (appelée par onclick)
                 function setRating(criterion, rating) {
                     conditionCriteria[criterion] = rating;
+                    console.log('⭐ Critère mis à jour:', criterion, '=', rating, '| Tous:', conditionCriteria);
                     
                     // Mettre à jour l'affichage des étoiles dans le formulaire
                     var container = document.querySelector('[data-criterion="' + criterion + '"]');
@@ -564,6 +566,7 @@
                     var hiddenInput = document.getElementById('condition_criteria_input');
                     if (hiddenInput) {
                         hiddenInput.value = JSON.stringify(conditionCriteria);
+                        console.log('💾 Champ caché mis à jour:', hiddenInput.value);
                     }
                     
                     // Mettre à jour l'affichage des étoiles dans la colonne du milieu
@@ -2032,7 +2035,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mettre à jour les champs hidden avant la soumission du formulaire
     document.querySelector('form').addEventListener('submit', function(e) {
         // Mettre à jour condition_criteria (Points forts)
-        document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+        const criteriaJson = JSON.stringify(conditionCriteria);
+        document.getElementById('condition_criteria_input').value = criteriaJson;
+        console.log('📤 Soumission formulaire - Points forts:', conditionCriteria);
+        console.log('📤 Champ caché condition_criteria:', criteriaJson);
+        
         // Mettre à jour tags
         const tagsInput = document.getElementById('tags_input');
         if (tagsInput) {

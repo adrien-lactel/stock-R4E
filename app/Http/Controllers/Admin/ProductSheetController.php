@@ -546,6 +546,12 @@ class ProductSheetController extends Controller
      ===================================================== */
     public function store(Request $request)
     {
+        // DEBUG: Log les données reçues
+        \Log::info('🔍 ProductSheet Store - condition_criteria reçu:', [
+            'raw' => $request->input('condition_criteria'),
+            'type' => gettype($request->input('condition_criteria')),
+        ]);
+        
         // Décoder les champs JSON si nécessaire
         $images = $request->input('images');
         if (is_string($images)) {
@@ -630,6 +636,12 @@ class ProductSheetController extends Controller
         $data['condition_criteria'] = $request->input('condition_criteria') ?? [];
         $data['condition_criteria_labels'] = $request->input('condition_criteria_labels') ?? [];
 
+        // DEBUG: Log les données avant sauvegarde
+        \Log::info('💾 ProductSheet Store - Données à sauvegarder:', [
+            'condition_criteria' => $data['condition_criteria'],
+            'condition_criteria_labels' => $data['condition_criteria_labels'],
+        ]);
+
         $sheet = ProductSheet::create($data);
 
         // Si un console_id est fourni, lier la fiche à l'article
@@ -680,6 +692,13 @@ class ProductSheetController extends Controller
      ===================================================== */
     public function edit(ProductSheet $productSheet)
     {
+        // DEBUG: Log les données chargées
+        \Log::info('📖 ProductSheet Edit - Données chargées:', [
+            'id' => $productSheet->id,
+            'condition_criteria' => $productSheet->condition_criteria,
+            'condition_criteria_labels' => $productSheet->condition_criteria_labels,
+        ]);
+        
         $categories = ArticleCategory::with('subCategories.types')->orderBy('name')->get();
         $selectedType = null;
         $selectedSubCategory = null;
@@ -758,6 +777,12 @@ class ProductSheetController extends Controller
      ===================================================== */
     public function update(Request $request, ProductSheet $productSheet)
     {
+        // DEBUG: Log les données reçues
+        \Log::info('🔍 ProductSheet Update - condition_criteria reçu:', [
+            'raw' => $request->input('condition_criteria'),
+            'type' => gettype($request->input('condition_criteria')),
+        ]);
+        
         // Décoder les champs JSON si nécessaire
         $images = $request->input('images');
         if (is_string($images)) {
@@ -837,6 +862,12 @@ class ProductSheetController extends Controller
         // Forcer les valeurs condition_criteria depuis le request après validation
         $data['condition_criteria'] = $request->input('condition_criteria') ?? [];
         $data['condition_criteria_labels'] = $request->input('condition_criteria_labels') ?? [];
+
+        // DEBUG: Log les données avant sauvegarde
+        \Log::info('💾 ProductSheet Update - Données à sauvegarder:', [
+            'condition_criteria' => $data['condition_criteria'],
+            'condition_criteria_labels' => $data['condition_criteria_labels'],
+        ]);
 
         $productSheet->update($data);
 
