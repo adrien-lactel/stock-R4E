@@ -55,7 +55,6 @@
                             Dashboard admin
                         </x-nav-link>
                     @endif
-                        </x-nav-link> --}}
 
                     @endif
                     @endauth
