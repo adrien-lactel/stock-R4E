@@ -382,12 +382,12 @@
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Sous-catégorie *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#subcategories"
-               target="_blank"
-               class="text-indigo-600 hover:underline text-sm"
-               title="Ajouter / éditer une sous-catégorie">
-                +
-            </a>
+            <button type="button"
+                    onclick="openAddSubCategoryModal()"
+                    class="text-indigo-600 hover:underline text-sm font-bold"
+                    title="Ajouter une sous-catégorie">
+                + Nouvelle sous-catégorie
+            </button>
         </div>
 
         <select id="article_sub_category_id"
@@ -406,12 +406,12 @@
         <div class="flex items-center justify-between mb-1">
             <label class="block text-sm font-medium">Type *</label>
 
-            <a href="{{ route('admin.taxonomy.index') }}#types"
-               target="_blank"
-               class="text-indigo-600 hover:underline text-sm"
-               title="Ajouter / éditer un type">
-                +
-            </a>
+            <button type="button"
+                    onclick="openAddTypeModal()"
+                    class="text-indigo-600 hover:underline text-sm font-bold"
+                    title="Ajouter un type">
+                + Nouveau type
+            </button>
         </div>
 
         <select id="article_type_id"
@@ -5312,6 +5312,204 @@ document.addEventListener('DOMContentLoaded', function() {
 
 })();
 
+</script>
+
+{{-- MODAL: Ajouter une sous-catégorie --}}
+<div id="addSubCategoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Ajouter une sous-catégorie</h3>
+        
+        <form id="addSubCategoryForm" onsubmit="handleAddSubCategory(event)">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nom de la sous-catégorie *</label>
+                <input type="text" id="newSubCategoryName" name="name" required
+                       class="w-full rounded border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Ex: Game Boy Color">
+            </div>
+            
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeAddSubCategoryModal()"
+                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50">
+                    Annuler
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                    Ajouter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- MODAL: Ajouter un type --}}
+<div id="addTypeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Ajouter un type</h3>
+        
+        <form id="addTypeForm" onsubmit="handleAddType(event)">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nom du type *</label>
+                <input type="text" id="newTypeName" name="name" required
+                       class="w-full rounded border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Ex: Tetris">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Éditeur (optionnel)</label>
+                <input type="text" id="newTypePublisher" name="publisher"
+                       class="w-full rounded border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                       placeholder="Ex: Nintendo">
+            </div>
+            
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeAddTypeModal()"
+                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50">
+                    Annuler
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                    Ajouter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Gestion modal sous-catégorie
+function openAddSubCategoryModal() {
+    const brandId = document.getElementById('article_brand_id').value;
+    if (!brandId) {
+        alert('Veuillez d\'abord sélectionner une marque');
+        return;
+    }
+    document.getElementById('addSubCategoryModal').classList.remove('hidden');
+    document.getElementById('newSubCategoryName').focus();
+}
+
+function closeAddSubCategoryModal() {
+    document.getElementById('addSubCategoryModal').classList.add('hidden');
+    document.getElementById('addSubCategoryForm').reset();
+}
+
+async function handleAddSubCategory(event) {
+    event.preventDefault();
+    const brandId = document.getElementById('article_brand_id').value;
+    const name = document.getElementById('newSubCategoryName').value;
+    
+    try {
+        const response = await fetch('{{ route('admin.taxonomy.sub-category.store') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                article_brand_id: brandId,
+                name: name
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Ajouter la nouvelle sous-catégorie au select
+            const select = document.getElementById('article_sub_category_id');
+            const option = document.createElement('option');
+            option.value = data.subCategory.id;
+            option.textContent = data.subCategory.name;
+            select.appendChild(option);
+            select.value = data.subCategory.id;
+            
+            // Déclencher l'événement de changement pour rafraîchir les types
+            select.dispatchEvent(new Event('change'));
+            
+            closeAddSubCategoryModal();
+            alert('Sous-catégorie ajoutée avec succès !');
+        } else {
+            alert('Erreur lors de l\'ajout de la sous-catégorie');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'ajout de la sous-catégorie');
+    }
+}
+
+// Gestion modal type
+function openAddTypeModal() {
+    const subCategoryId = document.getElementById('article_sub_category_id').value;
+    if (!subCategoryId) {
+        alert('Veuillez d\'abord sélectionner une sous-catégorie');
+        return;
+    }
+    document.getElementById('addTypeModal').classList.remove('hidden');
+    document.getElementById('newTypeName').focus();
+}
+
+function closeAddTypeModal() {
+    document.getElementById('addTypeModal').classList.add('hidden');
+    document.getElementById('addTypeForm').reset();
+}
+
+async function handleAddType(event) {
+    event.preventDefault();
+    const subCategoryId = document.getElementById('article_sub_category_id').value;
+    const name = document.getElementById('newTypeName').value;
+    const publisher = document.getElementById('newTypePublisher').value;
+    
+    try {
+        const response = await fetch('{{ route('admin.taxonomy.type.store') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                article_sub_category_id: subCategoryId,
+                name: name,
+                publisher: publisher
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Ajouter le nouveau type au select
+            const select = document.getElementById('article_type_id');
+            const option = document.createElement('option');
+            option.value = data.type.id;
+            option.textContent = data.type.name;
+            select.appendChild(option);
+            select.value = data.type.id;
+            
+            // Déclencher l'événement de changement
+            select.dispatchEvent(new Event('change'));
+            
+            closeAddTypeModal();
+            alert('Type ajouté avec succès !');
+        } else {
+            alert('Erreur lors de l\'ajout du type');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'ajout du type');
+    }
+}
+
+// Fermer les modals au clic extérieur
+document.getElementById('addSubCategoryModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'addSubCategoryModal') {
+        closeAddSubCategoryModal();
+    }
+});
+
+document.getElementById('addTypeModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'addTypeModal') {
+        closeAddTypeModal();
+    }
+});
 </script>
 
 {{-- Script externe pour l'autocomplétion des jeux --}}

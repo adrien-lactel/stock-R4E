@@ -58,11 +58,23 @@ class TaxonomyController extends Controller
         // Récupérer la catégorie à partir de la marque
         $brand = ArticleBrand::findOrFail($request->article_brand_id);
 
-        ArticleSubCategory::firstOrCreate([
+        $subCategory = ArticleSubCategory::firstOrCreate([
             'article_category_id' => $brand->article_category_id,
             'article_brand_id' => $request->article_brand_id,
             'name' => $request->name,
         ]);
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Sous-catégorie ajoutée',
+                'subCategory' => [
+                    'id' => $subCategory->id,
+                    'name' => $subCategory->name,
+                    'brand_id' => $subCategory->article_brand_id
+                ]
+            ]);
+        }
 
         return back()->with('success', 'Sous-catégorie ajoutée');
     }
