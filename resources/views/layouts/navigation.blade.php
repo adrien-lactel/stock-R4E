@@ -38,15 +38,23 @@
                             $savPendingCount = \App\Models\ConsoleReturn::whereIn('status', ['pending', 'accepted', 'sent_to_repairer'])
                                 ->where('acknowledged', false)
                                 ->count();
-                        @endphp
+                        
+                        // Détecter si admin est dans une vue magasin
+                        $currentStore = null;
+                        if (request()->route('store')) {
+                            $currentStore = request()->route('store');
+                        }
+                    @endphp
 
+                    @if($currentStore)
+                        <x-nav-link :href="route('store.dashboard', $currentStore)" :active="request()->routeIs('store.dashboard')">
+                            🏪 Dashboard magasin
+                        </x-nav-link>
+                    @else
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                             Dashboard admin
                         </x-nav-link>
-
-                        {{-- DÉSACTIVÉ - Vue prix console retirée --}}
-                        {{-- <x-nav-link :href="route('admin.prices.index')" :active="request()->routeIs('admin.prices.*')">
-                            💰 Prix consoles
+                    @endif
                         </x-nav-link> --}}
 
                     @endif
@@ -163,11 +171,23 @@
                     $savPendingCount = \App\Models\ConsoleReturn::whereIn('status', ['pending', 'accepted', 'sent_to_repairer'])
                         ->where('acknowledged', false)
                         ->count();
+                    
+                    // Détecter si admin est dans une vue magasin
+                    $currentStore = null;
+                    if (request()->route('store')) {
+                        $currentStore = request()->route('store');
+                    }
                 @endphp
 
-                <x-responsive-nav-link :href="route('admin.dashboard')">
-                    Dashboard admin
-                </x-responsive-nav-link>
+                @if($currentStore)
+                    <x-responsive-nav-link :href="route('store.dashboard', $currentStore)">
+                        🏪 Dashboard magasin
+                    </x-responsive-nav-link>
+                @else
+                    <x-responsive-nav-link :href="route('admin.dashboard')">
+                        Dashboard admin
+                    </x-responsive-nav-link>
+                @endif
 
                 {{-- DÉSACTIVÉ - Vue prix console retirée --}}
                 {{-- <x-responsive-nav-link :href="route('admin.prices.index')">
