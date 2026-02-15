@@ -137,9 +137,9 @@
                                 <div x-data="{
                                     imageType: 'cover',
                                     images: {
-                                        cover: {{ $selectedType->cover_image_url ? "'" . $selectedType->cover_image_url . "'" : 'null' }},
-                                        artwork: {{ $selectedType->screenshot2_url ? "'" . $selectedType->screenshot2_url . "'" : 'null' }},
-                                        gameplay: {{ $selectedType->screenshot1_url ? "'" . $selectedType->screenshot1_url . "'" : 'null' }}
+                                        cover: @json($selectedType->cover_image_url),
+                                        artwork: @json($selectedType->screenshot2_url),
+                                        gameplay: @json($selectedType->screenshot1_url)
                                     },
                                     get currentImage() { return this.images[this.imageType]; },
                                     get currentLabel() {
@@ -1543,24 +1543,38 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!gridContainer) return;
         
         try {
-            const response = await fetch(`{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`);
+            const apiUrl = `{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`;
+            console.log('📡 Chargement images depuis:', apiUrl);
+            
+            const response = await fetch(apiUrl);
             const data = await response.json();
+            
+            console.log('📦 Réponse API:', data);
             
             if (data.success && data.images.length > 0) {
                 gridContainer.innerHTML = '';
                 
                 const timestamp = Date.now();
                 
-                data.images.forEach(image => {
+                data.images.forEach((image, index) => {
+                    console.log(`🖼️ Image ${index + 1}:`, image);
+                    
                     const imageCard = document.createElement('div');
                     imageCard.className = 'border-2 border-gray-200 rounded-lg p-3 bg-white hover:border-blue-400 transition-colors';
                     
                     const img = document.createElement('img');
-                    img.src = `${image.url}?t=${timestamp}`;
+                    const imageUrl = `${image.url}?t=${timestamp}`;
+                    console.log(`  → URL finale: ${imageUrl}`);
+                    
+                    img.src = imageUrl;
                     img.className = 'w-full h-40 object-cover rounded mb-2 cursor-pointer';
                     img.onclick = () => window.openImageLightbox(image.url);
                     img.onerror = function() {
+                        console.error(`❌ Erreur chargement image: ${imageUrl}`);
                         this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23999" text-anchor="middle" dy=".3em"%3EErreur%3C/text%3E%3C/svg%3E';
+                    };
+                    img.onload = function() {
+                        console.log(`✅ Image chargée: ${image.filename}`);
                     };
                     
                     // Label avec dropdown de changement de catégorie
