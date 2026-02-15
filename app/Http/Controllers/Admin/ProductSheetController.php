@@ -581,10 +581,20 @@ class ProductSheetController extends Controller
         if (is_string($conditionCriteria)) {
             $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
         }
+        
+        // S'assurer que condition_criteria n'est pas null
+        if (!$request->has('condition_criteria') || $request->input('condition_criteria') === null) {
+            $request->merge(['condition_criteria' => []]);
+        }
 
         $conditionCriteriaLabels = $request->input('condition_criteria_labels');
         if (is_string($conditionCriteriaLabels)) {
             $request->merge(['condition_criteria_labels' => json_decode($conditionCriteriaLabels, true) ?: []]);
+        }
+        
+        // S'assurer que condition_criteria_labels n'est pas null
+        if (!$request->has('condition_criteria_labels') || $request->input('condition_criteria_labels') === null) {
+            $request->merge(['condition_criteria_labels' => []]);
         }
 
         $featuredMods = $request->input('featured_mods');
@@ -616,6 +626,10 @@ class ProductSheetController extends Controller
         
         // Gérer la checkbox is_favorite (non envoyée si non cochée)
         $data['is_favorite'] = $request->has('is_favorite');
+        
+        // Forcer les valeurs condition_criteria depuis le request après validation
+        $data['condition_criteria'] = $request->input('condition_criteria') ?? [];
+        $data['condition_criteria_labels'] = $request->input('condition_criteria_labels') ?? [];
 
         $sheet = ProductSheet::create($data);
 
@@ -776,10 +790,20 @@ class ProductSheetController extends Controller
         if (is_string($conditionCriteria)) {
             $request->merge(['condition_criteria' => json_decode($conditionCriteria, true) ?: []]);
         }
+        
+        // S'assurer que condition_criteria n'est pas null
+        if (!$request->has('condition_criteria') || $request->input('condition_criteria') === null) {
+            $request->merge(['condition_criteria' => []]);
+        }
 
         $conditionCriteriaLabels = $request->input('condition_criteria_labels');
         if (is_string($conditionCriteriaLabels)) {
             $request->merge(['condition_criteria_labels' => json_decode($conditionCriteriaLabels, true) ?: []]);
+        }
+        
+        // S'assurer que condition_criteria_labels n'est pas null
+        if (!$request->has('condition_criteria_labels') || $request->input('condition_criteria_labels') === null) {
+            $request->merge(['condition_criteria_labels' => []]);
         }
 
         $featuredMods = $request->input('featured_mods');
@@ -811,6 +835,10 @@ class ProductSheetController extends Controller
         
         // Gérer la checkbox is_favorite (non envoyée si non cochée)
         $data['is_favorite'] = $request->has('is_favorite');
+        
+        // Forcer les valeurs condition_criteria depuis le request après validation
+        $data['condition_criteria'] = $request->input('condition_criteria') ?? [];
+        $data['condition_criteria_labels'] = $request->input('condition_criteria_labels') ?? [];
 
         $productSheet->update($data);
 
