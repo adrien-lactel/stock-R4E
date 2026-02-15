@@ -117,4 +117,136 @@ class StoreOfferController extends Controller
 
         return back()->with('success', 'Offre refusée.');
     }
+
+    /**
+     * Acheter en masse les offres sélectionnées
+     * POST /store/offers/bulk-buy
+     */
+    public function bulkBuy(Request $request)
+    {
+        $storeId = Auth::user()->store_id;
+        
+        $validated = $request->validate([
+            'offer_ids' => ['required', 'json'],
+        ]);
+        
+        $offerIds = json_decode($validated['offer_ids'], true);
+        
+        if (empty($offerIds)) {
+            return back()->with('error', 'Aucun article sélectionné.');
+        }
+        
+        $offers = ConsoleOffer::with('console')->whereIn('id', $offerIds)
+            ->where('store_id', $storeId)
+            ->where('status', 'proposed')
+            ->get();
+        
+        if ($offers->isEmpty()) {
+            return back()->with('error', 'Aucune offre valide à traiter.');
+        }
+        
+        $count = 0;
+        $total = 0;
+        
+        foreach ($offers as $offer) {
+            // Accepter l'offre
+            $offer->update(['status' => 'accepted']);
+            
+            // Attacher la console au magasin (ACHAT)
+            $console = $offer->console;
+            
+            if (!$console->stores()->where('stores.id', $storeId)->exists()) {
+                $console->stores()->attach($storeId, [
+                    'sale_price' => $offer->sale_price,
+                ]);
+            }
+            
+            $console->update(['store_id' => $storeId]);
+            
+            $count++;
+            $total += $offer->sale_price ?? 0;
+        }
+        
+        return redirect()->route('store.dashboard', $storeId)
+            ->with('success', "$count article(s) acheté(s) pour " . number_format($total, 2) . " € !");
+    }
+
+    /**
+     * Prendre en dépôt-vente les offres sélectionnées
+     * POST /store/offers/bulk-consignment
+     */
+    public function bulkConsignment(Request $request)
+    {
+        $storeId = Auth::user()->store_id;
+        
+        $validated = $request->validate([
+            'offer_ids' => ['required', 'json'],
+        ]);
+        
+        $offerIds = json_decode($validated['offer_ids'], true);
+        
+        if (empty($offerIds)) {
+            return back()->with('error', 'Aucun article sélectionné.');
+        }
+        
+        $offers = ConsoleOffer::with('console')->whereIn('id', $offerIds)
+            ->where('store_id', $storeId)
+            ->where('status', 'proposed')
+            ->get();
+        
+        if ($offers->isEmpty()) {
+            return back()->with('error', 'Aucune offre valide à traiter.');
+        }
+        
+        $count = 0;
+        $total = 0;
+        
+        foreach ($offers as $offer) {
+            // Accepter l'offre en dépôt-vente
+            $offer->update(['status' => 'accepted_consignment']);
+            
+            // Attacher la console au magasin (DÉPÔT-VENTE)
+            $console = $offer->console;
+            
+            if (!$console->stores()->where('stores.id', $storeId)->exists()) {
+                $console->stores()->attach($storeId, [
+                    'sale_price' => $offer->consignment_price ?? $offer->sale_price,
+                ]);
+            }
+            
+            $console->update(['store_id' => $storeId]);
+            
+            $count++;
+            $total += $offer->consignment_price ?? $offer->sale_price ?? 0;
+        }
+        
+        return redirect()->route('store.dashboard', $storeId)
+            ->with('success', "$count article(s) pris en dépôt-vente pour " . number_format($total, 2) . " € !");
+    }
+
+    /**
+     * Refuser en masse les offres sélectionnées
+     * POST /store/offers/bulk-reject
+     */
+    public function bulkReject(Request $request)
+    {
+        $storeId = Auth::user()->store_id;
+        
+        $validated = $request->validate([
+            'offer_ids' => ['required', 'json'],
+        ]);
+        
+        $offerIds = json_decode($validated['offer_ids'], true);
+        
+        if (empty($offerIds)) {
+            return back()->with('error', 'Aucun article sélectionné.');
+        }
+        
+        $count = ConsoleOffer::whereIn('id', $offerIds)
+            ->where('store_id', $storeId)
+            ->where('status', 'proposed')
+            ->update(['status' => 'rejected']);
+        
+        return back()->with('success', "$count article(s) refusé(s).");
+    }
 }

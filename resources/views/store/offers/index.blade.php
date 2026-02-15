@@ -52,6 +52,33 @@
         </div>
     </div>
 
+    {{-- BOUTONS D'ACTION --}}
+    <div class="mb-6 flex gap-3 justify-center" x-show="selected.length > 0" x-cloak>
+        <form method="POST" action="{{ route('store.offers.bulk-buy') }}" @submit="if(!confirm('Acheter ' + selected.length + ' article(s) pour un total de ' + totalAchat.toFixed(2) + ' € ?')) { $event.preventDefault(); }">
+            @csrf
+            <input type="hidden" name="offer_ids" :value="JSON.stringify(selected)">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-all">
+                🛒 Acheter les articles sélectionnés
+            </button>
+        </form>
+        
+        <form method="POST" action="{{ route('store.offers.bulk-consignment') }}" @submit="if(!confirm('Prendre en dépôt-vente ' + selected.length + ' article(s) pour un total de ' + totalDepot.toFixed(2) + ' € ?')) { $event.preventDefault(); }">
+            @csrf
+            <input type="hidden" name="offer_ids" :value="JSON.stringify(selected)">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-all">
+                📦 Prendre en dépôt-vente
+            </button>
+        </form>
+        
+        <form method="POST" action="{{ route('store.offers.bulk-reject') }}" @submit="if(!confirm('Refuser ' + selected.length + ' article(s) ?')) { $event.preventDefault(); }">
+            @csrf
+            <input type="hidden" name="offer_ids" :value="JSON.stringify(selected)">
+            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded-lg shadow-lg transition-all">
+                ❌ Refuser les articles
+            </button>
+        </form>
+    </div>
+
     @if(session('success'))
         <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
             {{ session('success') }}
@@ -151,6 +178,24 @@
                                  alt="Image article" 
                                  class="w-full h-48 object-contain">
                             
+                            {{-- MODS OVERLAY (texte à gauche, logo à droite, centré verticalement à droite) --}}
+                            @if(count($displayMods) > 0)
+                                <div class="absolute top-0 right-0 bottom-0 flex flex-col justify-center items-end pr-2 gap-1 pointer-events-none">
+                                    @foreach($displayMods as $mod)
+                                        <div class="flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 max-w-[90%]">
+                                            <span class="text-white text-xs font-medium truncate">{{ $mod['name'] ?? 'Mod' }}</span>
+                                            @if(isset($mod['icon']))
+                                                @if(str_starts_with($mod['icon'], 'data:image/'))
+                                                    <img src="{{ $mod['icon'] }}" alt="{{ $mod['name'] ?? 'Mod' }}" class="w-5 h-5 flex-shrink-0" style="image-rendering: pixelated;">
+                                                @else
+                                                    <span class="text-lg flex-shrink-0">{{ $mod['icon'] }}</span>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            
                             {{-- Boutons de navigation --}}
                             @if(count($articleImages) > 1)
                                 <button @click.stop="prev()" type="button" class="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -227,26 +272,6 @@
                                 </span>
                             @endif
                         </div>
-
-                        {{-- Mods avec ICÔNE À DROITE --}}
-                        @if(count($displayMods) > 0)
-                            <div class="mb-3 pb-3 border-b border-gray-200">
-                                <div class="space-y-1">
-                                    @foreach($displayMods as $mod)
-                                        <div class="flex items-center justify-between text-xs">
-                                            <span class="font-medium text-gray-700">{{ $mod['name'] ?? 'Mod' }}</span>
-                                            @if(isset($mod['icon']))
-                                                @if(str_starts_with($mod['icon'], 'data:image/'))
-                                                    <img src="{{ $mod['icon'] }}" alt="{{ $mod['name'] ?? 'Mod' }}" class="w-5 h-5" style="image-rendering: pixelated;">
-                                                @else
-                                                    <span class="text-lg">{{ $mod['icon'] }}</span>
-                                                @endif
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
 
                         {{-- PRIX : R4E / VENTE / DÉPÔT --}}
                         <div class="space-y-2">

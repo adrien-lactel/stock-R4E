@@ -671,6 +671,16 @@ Route::middleware(['auth'])
         Route::post('/offers/{offer}/reject', [StoreOfferController::class, 'reject'])
             ->name('offer.reject');
 
+        // Actions en masse sur les offres
+        Route::post('/offers/bulk-buy', [StoreOfferController::class, 'bulkBuy'])
+            ->name('offers.bulk-buy');
+
+        Route::post('/offers/bulk-consignment', [StoreOfferController::class, 'bulkConsignment'])
+            ->name('offers.bulk-consignment');
+
+        Route::post('/offers/bulk-reject', [StoreOfferController::class, 'bulkReject'])
+            ->name('offers.bulk-reject');
+
         /* =====================
         | HISTORIQUE DES VENTES
         ===================== */
