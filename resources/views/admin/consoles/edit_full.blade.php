@@ -202,9 +202,10 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('admin.consoles.add-mod', $console) }}" class="mt-3 max-w-md">
+            <form id="add-mod-form" method="POST" action="{{ route('admin.consoles.add-mod', $console) }}" class="mt-3 max-w-md">
                 @csrf
                 <div class="p-4 border rounded-lg bg-white">
+                    <div id="mod-form-message" class="hidden mb-3 p-2 rounded text-sm"></div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">➕ Ajouter un Mod / Opération</label>
                     <select name="mod_id" class="w-full rounded border-gray-300 text-sm" required>
                         <option value="">— Aucun —</option>
@@ -424,6 +425,66 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-
+// Gestion AJAX pour l'ajout de mod
+document.addEventListener('DOMContentLoaded', function() {
+    const addModForm = document.getElementById('add-mod-form');
+    const messageDiv = document.getElementById('mod-form-message');
+    
+    if (addModForm) {
+        addModForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(addModForm);
+            const submitButton = addModForm.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            
+            // Désactiver le bouton pendant l'envoi
+            submitButton.disabled = true;
+            submitButton.innerHTML = '⏳ Ajout en cours...';
+            
+            try {
+                const response = await fetch(addModForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Afficher le message de succès
+                    messageDiv.className = 'mb-3 p-2 rounded text-sm bg-green-100 text-green-800 border border-green-300';
+                    messageDiv.textContent = data.message;
+                    messageDiv.classList.remove('hidden');
+                    
+                    // Réinitialiser le formulaire
+                    addModForm.reset();
+                    
+                    // Recharger la page après 500ms pour voir les changements
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    // Afficher le message d'erreur
+                    messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
+                    messageDiv.textContent = data.error || 'Une erreur est survenue';
+                    messageDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
+                messageDiv.textContent = 'Erreur de communication avec le serveur';
+                messageDiv.classList.remove('hidden');
+            } finally {
+                // Réactiver le bouton
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
+            }
+        });
+    }
+});
 </script>
 @endsection

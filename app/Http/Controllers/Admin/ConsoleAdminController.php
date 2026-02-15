@@ -880,6 +880,9 @@ class ConsoleAdminController extends Controller
 
         // Vérifier si le mod n'est pas déjà associé
         if ($console->mods()->where('mod_id', $mod->id)->exists()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Ce mod est déjà associé à cet article.'], 400);
+            }
             return back()->with('error', 'Ce mod est déjà associé à cet article.');
         }
 
@@ -888,6 +891,16 @@ class ConsoleAdminController extends Controller
             'notes' => $validated['notes'] ?? null,
             'work_time_minutes' => $validated['work_time_minutes'] ?? null,
         ]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            // Recharger la relation mods
+            $console->load('mods');
+            return response()->json([
+                'success' => true,
+                'message' => "Mod \"{$mod->name}\" ajouté à l'article #{$console->id}.",
+                'mods' => $console->mods
+            ]);
+        }
 
         return back()->with('success', "Mod \"{$mod->name}\" ajouté à l'article #{$console->id}.");
     }
