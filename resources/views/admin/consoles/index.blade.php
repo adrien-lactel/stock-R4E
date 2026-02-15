@@ -324,6 +324,19 @@
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif
+                            
+                            @if($console->offers && $console->offers->count() > 0)
+                                <div class="mt-2 space-y-1">
+                                    <div class="text-xs font-semibold text-emerald-700 mb-1">📤 Offres envoyées:</div>
+                                    @foreach($console->offers as $offer)
+                                        <div class="inline-flex items-center px-2 py-1 rounded text-xs bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                            <span class="font-medium">{{ $offer->store->name }}</span>
+                                            <span class="mx-1 text-emerald-400">•</span>
+                                            <span class="text-gray-600">{{ $offer->created_at->format('d/m/Y') }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold

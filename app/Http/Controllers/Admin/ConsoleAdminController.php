@@ -170,6 +170,7 @@ class ConsoleAdminController extends Controller
                 'repairer',
                 'mods', // Pour calculer le coût de réparation
                 'productSheet', // Fiche produit liée
+                'offers.store', // Offres envoyées aux magasins
             ])
             ->withCount(['stores', 'mods'])
             ->where('status', '!=', 'disabled') // Exclure les consoles disabled
