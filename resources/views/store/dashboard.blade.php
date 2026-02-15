@@ -56,40 +56,100 @@
         </div>
     @endif
 
-    {{-- SECTION 1 — STOCK VENDABLE --}}
+    {{-- SECTION 1 — ARTICLES EN DÉPÔT-VENTE --}}
     <h2 class="text-xl sm:text-2xl font-semibold mb-4">
-        📦 Articles disponibles ({{ $consoles->count() }})
+        📦 Articles en dépôt-vente ({{ $consignmentOffers->count() }})
     </h2>
 
-    @if($consoles->isEmpty())
+    @if($consignmentOffers->isEmpty())
         <div class="bg-white shadow-md rounded-lg p-8 text-center text-gray-500 mb-10">
-            Aucune console disponible
+            Aucun article en dépôt-vente
         </div>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-            @foreach($consoles as $console)
-                <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
+            @foreach($consignmentOffers as $offer)
+                @php
+                    $console = $offer->console;
+                    $sheet = $console->productSheet;
+                @endphp
+                <div class="bg-white shadow-md rounded-lg overflow-hidden border-2 border-green-200 hover:shadow-lg transition-shadow">
                     {{-- En-tête de la carte --}}
-                    <div class="bg-gray-50 border-b border-gray-200 px-4 py-3">
+                    <div class="bg-green-50 border-b border-green-200 px-4 py-3">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-mono text-gray-600">#{{ $console->id }}</span>
-                            <span class="text-lg font-bold text-indigo-600">
-                                {{ $console->pivot?->sale_price ?? 'N/A' }} €
-                            </span>
+                            <div class="text-right">
+                                <div class="text-xs text-green-700 font-semibold">DÉPÔT-VENTE</div>
+                                <div class="text-lg font-bold text-green-600">
+                                    {{ $offer->consignment_price ?? $offer->sale_price }} €
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     {{-- Corps de la carte --}}
                     <div class="p-4">
                         <div class="mb-4">
-                            <div class="font-semibold text-gray-900 text-sm">{{ $console->articleCategory?->name ?? 'N/A' }}</div>
-                            <div class="text-xs text-gray-600">{{ $console->articleSubCategory?->name ?? '-' }}</div>
-                            <div class="text-xs text-gray-500">{{ $console->articleType?->name ?? '-' }}</div>
+                            <div class="font-semibold text-gray-900 text-sm">{{ $sheet?->name ?? $console->articleType?->name ?? 'N/A' }}</div>
+                            <div class="text-xs text-gray-600">{{ $console->articleCategory?->name ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">{{ $console->articleSubCategory?->name ?? '-' }}</div>
                         </div>
                         
-                        <div class="mb-4 text-sm">
-                            <span class="text-gray-600">Valeur réelle:</span>
-                            <span class="font-semibold">{{ $console->real_value }} €</span>
+                        {{-- Actions --}}
+                        <div class="space-y-2">
+                            <a href="{{ route('store.product-sheet', ['store' => $store->id, 'console' => $console->id]) }}" 
+                               class="block w-full bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 text-center text-sm font-medium transition-colors">
+                                📄 Fiche produit
+                            </a>
+                            
+                            <form method="POST" action="{{ route('store.console.sell', $console) }}">
+                                @csrf
+                                <button class="w-full bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm font-medium transition-colors">
+                                    💰 Article vendu (génère facture)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
+    {{-- SECTION 2 — ARTICLES ACHETÉS --}}
+    <h2 class="text-xl sm:text-2xl font-semibold mb-4">
+        🛒 Articles achetés ({{ $purchasedOffers->count() }})
+    </h2>
+
+    @if($purchasedOffers->isEmpty())
+        <div class="bg-white shadow-md rounded-lg p-8 text-center text-gray-500 mb-10">
+            Aucun article acheté
+        </div>
+    @else
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+            @foreach($purchasedOffers as $offer)
+                @php
+                    $console = $offer->console;
+                    $sheet = $console->productSheet;
+                @endphp
+                <div class="bg-white shadow-md rounded-lg overflow-hidden border-2 border-blue-200 hover:shadow-lg transition-shadow">
+                    {{-- En-tête de la carte --}}
+                    <div class="bg-blue-50 border-b border-blue-200 px-4 py-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono text-gray-600">#{{ $console->id }}</span>
+                            <div class="text-right">
+                                <div class="text-xs text-blue-700 font-semibold">ACHETÉ</div>
+                                <div class="text-lg font-bold text-blue-600">
+                                    {{ $offer->sale_price }} €
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{-- Corps de la carte --}}
+                    <div class="p-4">
+                        <div class="mb-4">
+                            <div class="font-semibold text-gray-900 text-sm">{{ $sheet?->name ?? $console->articleType?->name ?? 'N/A' }}</div>
+                            <div class="text-xs text-gray-600">{{ $console->articleCategory?->name ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">{{ $console->articleSubCategory?->name ?? '-' }}</div>
                         </div>
                         
                         {{-- Actions --}}
@@ -142,7 +202,7 @@
         </div>
     @endif
 
-    {{-- SECTION 2 — SAV & RÉPARATIONS EN COURS --}}
+    {{-- SECTION 3 — SAV & RÉPARATIONS EN COURS --}}
     <h2 class="text-xl sm:text-2xl font-semibold mb-4">
         🛠️ SAV & réparations en cours ({{ $savConsoles->count() }})
     </h2>

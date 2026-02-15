@@ -29,7 +29,35 @@ class DashboardController extends Controller
     }
 
     // =====================
-    // STOCK VENDABLE
+    // ARTICLES EN DÉPÔT-VENTE (payment_received = false, status = received)
+    // =====================
+    $consignmentOffers = \App\Models\ConsoleOffer::with([
+            'console.articleType',
+            'console.articleCategory',
+            'console.articleSubCategory',
+            'console.productSheet',
+        ])
+        ->where('store_id', $store->id)
+        ->where('status', 'received')
+        ->where('payment_received', false)
+        ->get();
+
+    // =====================
+    // ARTICLES ACHETÉS (payment_received = true, status = received)
+    // =====================
+    $purchasedOffers = \App\Models\ConsoleOffer::with([
+            'console.articleType',
+            'console.articleCategory',
+            'console.articleSubCategory',
+            'console.productSheet',
+        ])
+        ->where('store_id', $store->id)
+        ->where('status', 'received')
+        ->where('payment_received', true)
+        ->get();
+
+    // =====================
+    // STOCK VENDABLE (ancienne logique - pour compatibilité)
     // =====================
     $consoles = $store->consoles()
         ->with(['articleType', 'articleCategory', 'articleSubCategory', 'repairer'])
@@ -63,6 +91,8 @@ class DashboardController extends Controller
     return view('store.dashboard', compact(
         'store',
         'consoles',
+        'consignmentOffers',
+        'purchasedOffers',
         'savConsoles',
         'externalRepairs'
     ));
