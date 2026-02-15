@@ -36,6 +36,24 @@
                     if ($valorisation && $valorisation > 0) {
                         $remise = (($valorisation - $prixPropose) / $valorisation) * 100;
                     }
+                    
+                    // Récupérer les images de la ProductSheet
+                    $sheet = $console->productSheet ?? null;
+                    $articleImages = $sheet && isset($sheet->images) ? $sheet->images : [];
+                    if (is_string($articleImages)) {
+                        $articleImages = json_decode($articleImages, true) ?? [];
+                    }
+                    // Normaliser les images: extraire les URLs
+                    $articleImages = array_filter(array_map(function($img) {
+                        if (is_string($img) && str_starts_with($img, 'http')) return $img;
+                        if (is_array($img) && isset($img['url']) && str_starts_with($img['url'], 'http')) return $img['url'];
+                        return null;
+                    }, $articleImages));
+                    
+                    // Si pas d'images dans ProductSheet, ajouter main_image
+                    if (count($articleImages) === 0 && $sheet && $sheet->main_image) {
+                        $articleImages = [$sheet->main_image];
+                    }
                 @endphp
 
                 <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border-2 {{ $hasMods ? 'border-amber-400' : 'border-gray-200' }}">
@@ -43,6 +61,52 @@
                     @if($hasMods)
                         <div class="bg-amber-400 text-amber-900 px-3 py-1 text-xs font-semibold text-center">
                             🔧 CONSOLE MODÉE
+                        </div>
+                    @endif
+
+                    {{-- Slideshow des images --}}
+                    @if(count($articleImages) > 0)
+                        <div x-data="{
+                            currentIndex: 0,
+                            images: @js($articleImages),
+                            get currentImage() { return this.images[this.currentIndex]; },
+                            next() {
+                                this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                            },
+                            prev() {
+                                this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                            }
+                        }" class="relative group bg-gray-100">
+                            <img :src="currentImage" 
+                                 alt="Image article" 
+                                 class="w-full h-48 object-contain">
+                            
+                            {{-- Boutons de navigation --}}
+                            @if(count($articleImages) > 1)
+                                <button @click.stop="prev()" type="button" class="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                    </svg>
+                                </button>
+                                <button @click.stop="next()" type="button" class="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </button>
+                                
+                                {{-- Indicateur de position --}}
+                                <div class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">
+                                    <span x-text="(currentIndex + 1) + '/' + images.length"></span>
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        {{-- Placeholder si pas d'image --}}
+                        <div class="w-full h-48 flex flex-col items-center justify-center text-gray-400 bg-gray-100">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="text-xs mt-2">Aucune image</span>
                         </div>
                     @endif
 
