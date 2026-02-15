@@ -396,6 +396,7 @@ class ArticleType extends Model
      * Récupérer l'URL d'une image de taxonomie depuis R2
      * Dossier: taxonomy/{folder}/{slug}-{type}.png
      * Fonctionne pour consoles, cartes, accessoires
+     * Retourne null si le fichier n'existe pas sur R2
      */
     private function getTaxonomyImageUrl($type): ?string
     {
@@ -410,6 +411,17 @@ class ArticleType extends Model
         }
 
         $filename = "{$slug}-{$type}.png";
+        $r2Path = "taxonomy/{$folder}/{$filename}";
+        
+        // Vérifier l'existence du fichier sur R2
+        try {
+            if (!\Storage::disk('r2')->exists($r2Path)) {
+                return null;
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Erreur vérification image taxonomie R2 {$r2Path}: " . $e->getMessage());
+            return null;
+        }
         
         // En production : URL directe R2
         if (app()->environment('production')) {
