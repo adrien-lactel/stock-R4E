@@ -32,7 +32,7 @@
                         @php
                             $displayImage = $sheet->main_image ?: ($sheet->images[0] ?? null);
                         @endphp
-                        <div class="relative aspect-[4/3]">
+                        <div class="relative aspect-[4/3] border border-gray-900">
                             @if($displayImage)
                                 <img src="{{ $displayImage }}" alt="{{ $sheet->name }}" 
                                      class="w-full h-full object-cover">
