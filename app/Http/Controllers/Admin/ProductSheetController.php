@@ -98,6 +98,9 @@ class ProductSheetController extends Controller
                             ->orWhere('slug', \Illuminate\Support\Str::slug($selectedType->publisher))
                             ->first();
                     }
+                    
+                    // Charger les images de taxonomie R2
+                    $this->loadTaxonomyImagesForType($selectedType, $selectedCategory);
                 }
             }
         }
@@ -118,6 +121,9 @@ class ProductSheetController extends Controller
                         ->first();
                 }
                 
+                // Charger les images de taxonomie R2
+                $this->loadTaxonomyImagesForType($selectedType, $selectedCategory);
+                
                 $prefilledData['article_type_id'] = $request->article_type_id;
             }
         }
@@ -134,6 +140,56 @@ class ProductSheetController extends Controller
             'prefilledData' => $prefilledData,
             'associatedConsole' => $console,
         ]);
+    }
+
+    /**
+     * Charger les images de taxonomie R2 pour un type d'article
+     */
+    private function loadTaxonomyImagesForType($articleType, $category)
+    {
+        if (!$articleType || !$category) {
+            return;
+        }
+
+        // Mapper les catégories vers leurs dossiers R2
+        $categoryFolders = [
+            'Consoles' => 'consoles',
+            'Cartes à collectionner' => 'cartes',
+            'Accessoires' => 'accessoires',
+        ];
+
+        $folder = $categoryFolders[$category->name] ?? null;
+        if (!$folder) {
+            return;
+        }
+
+        // Utiliser la méthode du modèle pour garantir la cohérence
+        $identifier = $articleType->getTaxonomySlug();
+
+        // Charger les images depuis R2
+        $r2BaseUrl = config('filesystems.disks.r2.url');
+        $imageTypes = ['logo', 'display1', 'display2', 'display3'];
+        $taxonomyImages = [];
+
+        foreach ($imageTypes as $type) {
+            $filename = "{$identifier}-{$type}.png";
+            $r2Path = "taxonomy/{$folder}/{$filename}";
+            
+            try {
+                if (\Storage::disk('r2')->exists($r2Path)) {
+                    $taxonomyImages[] = "{$r2BaseUrl}/{$r2Path}";
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Erreur vérification image taxonomie R2 {$r2Path}: " . $e->getMessage());
+            }
+        }
+
+        // Fusionner avec les images existantes du type
+        if (!empty($taxonomyImages)) {
+            $existingImages = $articleType->images ?? [];
+            // Ajouter les images de taxonomie au début
+            $articleType->images = array_merge($taxonomyImages, $existingImages);
+        }
     }
 
     /**
@@ -720,6 +776,9 @@ class ProductSheetController extends Controller
                         ->orWhere('slug', \Illuminate\Support\Str::slug($selectedType->publisher))
                         ->first();
                 }
+                
+                // Charger les images de taxonomie R2
+                $this->loadTaxonomyImagesForType($selectedType, $selectedCategory);
             }
         }
 

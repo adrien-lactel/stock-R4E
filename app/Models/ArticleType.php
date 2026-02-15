@@ -169,9 +169,9 @@ class ArticleType extends Model
             return $gameUrl;
         }
         
-        // Pour les consoles: utiliser display1 comme cover
-        if ($this->isConsoleCategory()) {
-            return $this->getConsoleImageUrl('display1');
+        // Pour les consoles, cartes, accessoires: utiliser display1 comme cover
+        if ($this->isConsoleCategory() || $this->isCardsCategory() || $this->isAccessoryCategory()) {
+            return $this->getTaxonomyImageUrl('display1');
         }
         
         return null;
@@ -180,7 +180,7 @@ class ArticleType extends Model
     /**
      * Accessor pour l'URL du logo
      * Pour les jeux: ROM ID-logo.png
-     * Pour les consoles: slug-logo.png
+     * Pour les consoles/cartes/accessoires: slug-logo.png
      */
     public function getLogoUrlAttribute()
     {
@@ -190,9 +190,9 @@ class ArticleType extends Model
             return $gameUrl;
         }
         
-        // Pour les consoles
-        if ($this->isConsoleCategory()) {
-            return $this->getConsoleImageUrl('logo');
+        // Pour les consoles, cartes, accessoires
+        if ($this->isConsoleCategory() || $this->isCardsCategory() || $this->isAccessoryCategory()) {
+            return $this->getTaxonomyImageUrl('logo');
         }
         
         return null;
@@ -200,7 +200,7 @@ class ArticleType extends Model
 
     /**
      * Accessor pour l'URL du screenshot 1 (gameplay)
-     * Priorité: colonne directe > URL R2 générée > console display2
+     * Priorité: colonne directe > URL R2 générée > taxonomie display2
      */
     public function getScreenshot1UrlAttribute()
     {
@@ -215,9 +215,9 @@ class ArticleType extends Model
             return $gameUrl;
         }
         
-        // Pour les consoles: utiliser display2 comme gameplay
-        if ($this->isConsoleCategory()) {
-            return $this->getConsoleImageUrl('display2');
+        // Pour les consoles, cartes, accessoires: utiliser display2 comme gameplay
+        if ($this->isConsoleCategory() || $this->isCardsCategory() || $this->isAccessoryCategory()) {
+            return $this->getTaxonomyImageUrl('display2');
         }
         
         return null;
@@ -225,7 +225,7 @@ class ArticleType extends Model
 
     /**
      * Accessor pour l'URL du screenshot 2 (artwork)
-     * Priorité: colonne directe > URL R2 générée > console display3
+     * Priorité: colonne directe > URL R2 générée > taxonomie display3
      */
     public function getScreenshot2UrlAttribute()
     {
@@ -240,9 +240,9 @@ class ArticleType extends Model
             return $gameUrl;
         }
         
-        // Pour les consoles: utiliser display3 comme artwork
-        if ($this->isConsoleCategory()) {
-            return $this->getConsoleImageUrl('display3');
+        // Pour les consoles, cartes, accessoires: utiliser display3 comme artwork
+        if ($this->isConsoleCategory() || $this->isCardsCategory() || $this->isAccessoryCategory()) {
+            return $this->getTaxonomyImageUrl('display3');
         }
         
         return null;
@@ -304,20 +304,107 @@ class ArticleType extends Model
     }
 
     /**
-     * Générer le slug/identifier pour les images de console
+     * Vérifie si ce type appartient à la catégorie Cartes à collectionner (ID = 12)
      */
-    public function getConsoleSlug(): string
+    public function isCardsCategory(): bool
     {
-        return \Illuminate\Support\Str::slug($this->name);
+        $subCategory = $this->relationLoaded('subCategory') 
+            ? $this->subCategory 
+            : $this->subCategory()->first();
+        
+        if (!$subCategory) {
+            return false;
+        }
+
+        $brand = $subCategory->relationLoaded('brand')
+            ? $subCategory->brand
+            : $subCategory->brand()->first();
+        
+        if (!$brand) {
+            return false;
+        }
+
+        $category = $brand->relationLoaded('category')
+            ? $brand->category
+            : $brand->category()->first();
+        
+        return $category && $category->id === 12;
     }
 
     /**
-     * Récupérer l'URL d'une image console depuis R2
-     * Dossier: taxonomy/consoles/{slug}-{type}.png
+     * Vérifie si ce type appartient à la catégorie Accessoires (ID = 13)
      */
-    private function getConsoleImageUrl($type)
+    public function isAccessoryCategory(): bool
     {
-        $slug = $this->getConsoleSlug();
+        $subCategory = $this->relationLoaded('subCategory') 
+            ? $this->subCategory 
+            : $this->subCategory()->first();
+        
+        if (!$subCategory) {
+            return false;
+        }
+
+        $brand = $subCategory->relationLoaded('brand')
+            ? $subCategory->brand
+            : $subCategory->brand()->first();
+        
+        if (!$brand) {
+            return false;
+        }
+
+        $category = $brand->relationLoaded('category')
+            ? $brand->category
+            : $brand->category()->first();
+        
+        return $category && $category->id === 13;
+    }
+
+    /**
+     * Récupérer le dossier de taxonomie selon la catégorie
+     */
+    public function getTaxonomyFolder(): ?string
+    {
+        if ($this->isConsoleCategory()) {
+            return 'consoles';
+        } elseif ($this->isCardsCategory()) {
+            return 'cartes';
+        } elseif ($this->isAccessoryCategory()) {
+            return 'accessoires';
+        }
+        return null;
+    }
+
+    /**
+     * Générer le slug/identifier pour les images de taxonomie
+     * DOIT correspondre à la logique JavaScript du formulaire:
+     * typeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+     */
+    public function getTaxonomySlug(): string
+    {
+        // Convertir en minuscules
+        $slug = strtolower($this->name);
+        // Remplacer tout ce qui n'est pas a-z0-9 par un tiret
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+        // Remplacer les tirets multiples par un seul
+        $slug = preg_replace('/-+/', '-', $slug);
+        // Supprimer les tirets au début et à la fin
+        $slug = trim($slug, '-');
+        return $slug;
+    }
+
+    /**
+     * Récupérer l'URL d'une image de taxonomie depuis R2
+     * Dossier: taxonomy/{folder}/{slug}-{type}.png
+     * Fonctionne pour consoles, cartes, accessoires
+     */
+    private function getTaxonomyImageUrl($type): ?string
+    {
+        $folder = $this->getTaxonomyFolder();
+        if (!$folder) {
+            return null;
+        }
+
+        $slug = $this->getTaxonomySlug();
         if (!$slug) {
             return null;
         }
@@ -327,48 +414,58 @@ class ArticleType extends Model
         // En production : URL directe R2
         if (app()->environment('production')) {
             $r2PublicUrl = config('filesystems.disks.r2.url') ?: 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
-            return $r2PublicUrl . "/taxonomy/consoles/{$filename}";
+            return $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
         } else {
             return route('proxy.taxonomy-image', [
-                'folder' => 'consoles',
+                'folder' => $folder,
                 'filename' => $filename
             ]);
         }
     }
 
     /**
-     * Accessor pour les images de taxonomie de console
+     * @deprecated Utilisez getTaxonomyImageUrl() à la place
+     * Conservé pour compatibilité
+     */
+    private function getConsoleImageUrl($type)
+    {
+        return $this->getTaxonomyImageUrl($type);
+    }
+
+    /**
+     * Accessor pour les images de taxonomie
      * (logo et display1-3 mappés vers cover/artwork/gameplay)
+     * Fonctionne pour consoles, cartes, accessoires
      */
     public function getConsoleLogoUrlAttribute()
     {
-        if (!$this->isConsoleCategory()) {
+        if (!$this->isConsoleCategory() && !$this->isCardsCategory() && !$this->isAccessoryCategory()) {
             return null;
         }
-        return $this->getConsoleImageUrl('logo');
+        return $this->getTaxonomyImageUrl('logo');
     }
 
     public function getConsoleDisplay1UrlAttribute()
     {
-        if (!$this->isConsoleCategory()) {
+        if (!$this->isConsoleCategory() && !$this->isCardsCategory() && !$this->isAccessoryCategory()) {
             return null;
         }
-        return $this->getConsoleImageUrl('display1');
+        return $this->getTaxonomyImageUrl('display1');
     }
 
     public function getConsoleDisplay2UrlAttribute()
     {
-        if (!$this->isConsoleCategory()) {
+        if (!$this->isConsoleCategory() && !$this->isCardsCategory() && !$this->isAccessoryCategory()) {
             return null;
         }
-        return $this->getConsoleImageUrl('display2');
+        return $this->getTaxonomyImageUrl('display2');
     }
 
     public function getConsoleDisplay3UrlAttribute()
     {
-        if (!$this->isConsoleCategory()) {
+        if (!$this->isConsoleCategory() && !$this->isCardsCategory() && !$this->isAccessoryCategory()) {
             return null;
         }
-        return $this->getConsoleImageUrl('display3');
+        return $this->getTaxonomyImageUrl('display3');
     }
 }

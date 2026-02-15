@@ -145,7 +145,7 @@
             </div>
             
             <p class="text-sm text-gray-600 mb-2">
-                Ajoutez les images pour cette console. Elles seront sauvegardées dans la taxonomie R2.
+                Ajoutez les images pour cet article. Elles seront sauvegardées dans la taxonomie R2.
             </p>
             
             <div id="console-logo-name" class="text-center font-medium text-indigo-600 mb-4"></div>
@@ -481,10 +481,10 @@
         <div id="console-logo-section" class="mt-4 hidden">
             <div class="flex items-center gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                 <div id="console-logo-thumb" class="w-16 h-16 bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                    <span class="text-gray-400 text-2xl">🎮</span>
+                    <span id="console-logo-icon" class="text-gray-400 text-2xl">🎮</span>
                 </div>
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-700">📷 Images de la console</p>
+                    <p id="console-logo-title" class="text-sm font-medium text-gray-700">📷 Images</p>
                     <p class="text-xs text-gray-500">Logo du nom + 3 photos pour la fiche produit</p>
                 </div>
                 <button type="button" onclick="openConsoleLogoModal()" 
@@ -5020,7 +5020,15 @@ document.addEventListener('DOMContentLoaded', function() {
   
   let consoleImageFiles = { logo: null, display1: null, display2: null, display3: null };
   let consoleLogoName = '';
-  const CONSOLE_CATEGORY_ID = 1; // ID de la catégorie "Consoles"
+  let currentCategoryId = null;
+  let currentCategoryConfig = null;
+  
+  // Configuration des catégories supportant les images
+  const CATEGORY_CONFIGS = {
+    1: { id: 1, name: 'Consoles', folder: 'consoles', icon: '🎮', label: 'console' },
+    12: { id: 12, name: 'Cartes à collectionner', folder: 'cartes', icon: '🃏', label: 'carte' },
+    13: { id: 13, name: 'Accessoires', folder: 'accessoires', icon: '🎯', label: 'accessoire' }
+  };
   
   // Afficher/masquer la section logo selon la catégorie
   function updateConsoleLogoSection() {
@@ -5040,20 +5048,34 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    const isConsoleCategory = parseInt(cat.value) === CONSOLE_CATEGORY_ID;
+    const categoryId = parseInt(cat.value);
+    const categoryConfig = CATEGORY_CONFIGS[categoryId];
     const hasType = type && type.value && type.selectedIndex > 0;
     
-    console.log('🎮 Conditions:', { isConsoleCategory, hasType, catValue: cat.value, CONSOLE_CATEGORY_ID });
+    console.log('🎮 Conditions:', { categoryId, hasConfig: !!categoryConfig, hasType, catValue: cat.value });
     
-    if (isConsoleCategory && hasType) {
+    if (categoryConfig && hasType) {
+      currentCategoryId = categoryId;
+      currentCategoryConfig = categoryConfig;
       logoSection.classList.remove('hidden');
-      console.log('✅ Section images console affichée');
-      // Mettre à jour le nom de la console
+      console.log(`✅ Section images ${categoryConfig.label} affichée`);
+      
+      // Mettre à jour l'icône et le titre de la section
+      const iconElement = document.getElementById('console-logo-icon');
+      const titleElement = document.getElementById('console-logo-title');
+      if (iconElement) iconElement.textContent = categoryConfig.icon;
+      if (titleElement) {
+        titleElement.textContent = `📷 Images ${categoryConfig.label === 'console' ? 'de la console' : categoryConfig.label === 'carte' ? 'de la carte' : 'de l\'accessoire'}`;
+      }
+      
+      // Mettre à jour le nom de l'élément
       const typeName = type.options[type.selectedIndex].text;
       consoleLogoName = typeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     } else {
+      currentCategoryId = null;
+      currentCategoryConfig = null;
       logoSection.classList.add('hidden');
-      console.log('🔒 Section images console masquée');
+      console.log('🔒 Section images masquée');
     }
   }
   
@@ -5071,12 +5093,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const type = document.getElementById('article_type_id');
     const nameDisplay = document.getElementById('console-logo-name');
     
-    if (!modal || !type) return;
+    if (!modal || !type || !currentCategoryConfig) return;
     
-    const typeName = type.options[type.selectedIndex]?.text || 'Console';
+    const typeName = type.options[type.selectedIndex]?.text || currentCategoryConfig.label;
     consoleLogoName = typeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     
-    nameDisplay.textContent = `🎮 ${typeName}`;
+    // Mettre à jour le titre du modal avec l'icône de la catégorie
+    const modalTitle = modal.querySelector('h3');
+    if (modalTitle) {
+      modalTitle.textContent = `📷 Images ${currentCategoryConfig.label === 'console' ? 'de la console' : currentCategoryConfig.label === 'carte' ? 'de la carte' : 'de l\'accessoire'}`;
+    }
+    
+    nameDisplay.textContent = `${currentCategoryConfig.icon} ${typeName}`;
     
     // Reset toutes les dropzones
     consoleImageFiles = { logo: null, display1: null, display2: null, display3: null };
@@ -5103,7 +5131,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Charger les images existantes depuis R2
     try {
-      const response = await fetch(`{{ route('admin.taxonomy.console-images') }}?identifier=${encodeURIComponent(consoleLogoName)}&folder=consoles`, {
+      const response = await fetch(`{{ route('admin.taxonomy.console-images') }}?identifier=${encodeURIComponent(consoleLogoName)}&folder=${encodeURIComponent(currentCategoryConfig.folder)}`, {
         credentials: 'same-origin',
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
       });
@@ -5247,8 +5275,8 @@ document.addEventListener('DOMContentLoaded', function() {
       // Utiliser le blob stocké avec son nom de fichier
       formData.append('images[]', fileData.blob, fileData.name);
       formData.append('identifier', consoleLogoName);
-      formData.append('folder', 'consoles');
-      formData.append('platform', 'Consoles');
+      formData.append('folder', currentCategoryConfig.folder);
+      formData.append('platform', currentCategoryConfig.name);
       formData.append('type', imgType);
       
       try {

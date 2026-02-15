@@ -16,7 +16,12 @@ class ImageProxyController extends Controller
     public function proxyTaxonomyImage($folder, $filename)
     {
         // Vérifier que le dossier est valide
-        $allowedFolders = ['gameboy', 'game boy color', 'game boy advance', 'n64', 'snes', 'nes', 'gamegear', 'wonderswan', 'wonderswan color', 'segasaturn', 'megadrive', 'editeurs'];
+        $allowedFolders = [
+            'gameboy', 'game boy color', 'game boy advance', 'n64', 'snes', 'nes', 
+            'gamegear', 'wonderswan', 'wonderswan color', 'segasaturn', 'megadrive', 
+            'editeurs',
+            'consoles', 'cartes', 'accessoires' // Dossiers de taxonomie multi-catégories
+        ];
         if (!in_array($folder, $allowedFolders)) {
             abort(404);
         }
