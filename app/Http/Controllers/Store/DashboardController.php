@@ -70,7 +70,7 @@ class DashboardController extends Controller
             'console.mods',
         ])
         ->where('store_id', $store->id)
-        ->where('status', 'pending')
+        ->where('status', 'proposed')
         ->orderBy('created_at', 'desc')
         ->get();
 
