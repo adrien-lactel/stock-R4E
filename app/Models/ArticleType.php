@@ -36,14 +36,23 @@ class ArticleType extends Model
     {
         // Mapping des préfixes ROM ID vers les dossiers R2 (noms avec espaces)
         $romIdPrefixMapping = [
+            // Game Boy family
             'DMG' => 'gameboy',           // Game Boy original
             'CGB' => 'game boy color',    // Game Boy Color
             'AGB' => 'game boy advance',  // Game Boy Advance
-            'SNS' => 'snes',              // Super Nintendo
+            'AGS' => 'game boy advance',  // Game Boy Advance SP
+            
+            // Nintendo consoles
+            'SNS' => 'snes',              // Super Nintendo (US)
+            'SHVC' => 'snes',             // Super Famicom (JP)
             'NES' => 'nes',               // NES
+            'NUS' => 'n64',               // Nintendo 64
+            
+            // Sega consoles
             'GG' => 'gamegear',           // Game Gear
             'T-' => 'megadrive',          // Mega Drive/Genesis (format T-XXXXX)
             'MK-' => 'megadrive',         // Mega Drive/Genesis (format MK-XXXXX)
+            'MK' => 'megadrive',          // Mega Drive/Genesis (format MK-XXXXX sans tiret)
         ];
 
         // Priorité 1: détecter depuis le préfixe du ROM ID (plus précis)
@@ -122,23 +131,52 @@ class ArticleType extends Model
     }
 
     /**
+     * Extraire le nom complet du jeu (pour Game Gear et plateformes sans ROM ID)
+     * Format attendu: "slug - Nom Complet" ex: "aladdin-japan-en - Aladdin (Japan) (En)"
+     * Retourne la partie après le tiret, ou le nom entier si pas de tiret
+     */
+    private function getGameName()
+    {
+        if (!$this->name) {
+            return null;
+        }
+        
+        // Si le nom contient " - ", prendre la partie droite
+        if (str_contains($this->name, ' - ')) {
+            $parts = explode(' - ', $this->name, 2);
+            return trim($parts[1]);
+        }
+        
+        // Sinon, retourner le nom complet
+        return $this->name;
+    }
+
+    /**
      * Récupérer l'URL d'une image depuis R2
+     * Utilise ROM ID si disponible, sinon fallback sur le nom du jeu
      */
     private function getR2ImageUrl($type)
     {
-        $romId = $this->getEffectiveRomId();
-        if (!$romId) {
-            return null;
-        }
-
         $folder = $this->getPlatformFolder();
         if (!$folder) {
             return null;
         }
 
+        // Priorité 1: ROM ID (pour Game Boy, SNES, NES, etc.)
+        $identifier = $this->getEffectiveRomId();
+        
+        // Priorité 2: Nom complet du jeu (pour Game Gear et autres sans ROM ID)
+        if (!$identifier) {
+            $identifier = $this->getGameName();
+        }
+        
+        if (!$identifier) {
+            return null;
+        }
+
         // Générer l'URL de l'image (on assume qu'elle existe en .png)
         // Si elle n'existe pas, elle retournera 404 mais c'est géré par le frontend
-        $filename = "{$romId}-{$type}.png";
+        $filename = "{$identifier}-{$type}.png";
         
         // URL-encoder le dossier s'il contient des espaces
         $folderEncoded = rawurlencode($folder);

@@ -2408,8 +2408,21 @@ document.addEventListener('DOMContentLoaded', function() {
             folder = categoryName.toLowerCase().trim();
         }
         
-        // Identifier = ROM ID ou nom du type slugifié
-        const identifier = romId || articleTypeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        // Identifier = ROM ID ou nom du jeu extrait
+        let identifier;
+        if (romId) {
+            // Priorité 1: ROM ID (Game Boy, SNES, etc.)
+            identifier = romId;
+        } else if (articleTypeName.includes(' - ')) {
+            // Priorité 2: Nom complet du jeu (partie après " - ")
+            // Ex: "sonic-blast-world - Sonic Blast (World)" → "Sonic Blast (World)"
+            const parts = articleTypeName.split(' - ');
+            identifier = parts.slice(1).join(' - ').trim();
+        } else {
+            // Fallback: slugifier le nom entier
+            identifier = articleTypeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        }
+        
         const platform = subCategoryName || categoryName || 'Generic';
         
         // Stocker pour les fonctions ultérieures

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Extraction ROM IDs SNES</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+        }
+        .test-case {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case.success {
+            border-left: 4px solid #10b981;
+        }
+        .test-case.error {
+            border-left: 4px solid #ef4444;
+        }
+        .input {
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+        .output {
+            color: #1f2937;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        .stats {
+            background: #dbeafe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test - Extraction des ROM IDs SNES</h1>
+    <p>Ce test vérifie que la fonction <code>extractRomIdFromName()</code> extrait correctement les ROM IDs depuis les noms de jeux.</p>
+    
+    <div id="results"></div>
+    <div class="stats" id="stats"></div>
+
+    <script>
+        // ⚠️ Fonction à tester (copie depuis form.blade.php)
+        function extractRomIdFromName(name) {
+            if (!name) return null;
+            
+            // Pattern pour extraire le ROM ID au début du nom (ex: "SHVC-MW - Super Mario World" -> "SHVC-MW")
+            const match = name.match(/^([A-Z0-9]{2,4}-[A-Z0-9\-]+?)\s*-\s*(.+)$/i);
+            if (match) {
+                return match[1].toUpperCase();
+            }
+            
+            return null;
+        }
+
+        // 📋 Cas de test
+        const testCases = [
+            // SNES - Super Famicom (Japon)
+            { input: 'SHVC-MW - Super Mario World', expected: 'SHVC-MW' },
+            { input: 'SHVC-ZL - The Legend of Zelda: A Link to the Past', expected: 'SHVC-ZL' },
+            { input: 'SHVC-MK - Super Mario Kart', expected: 'SHVC-MK' },
+            
+            // SNES - Super Nintendo (International)
+            { input: 'SNS-MW-USA - Super Mario World', expected: 'SNS-MW-USA' },
+            { input: 'SNS-ZL-EUR - The Legend of Zelda: A Link to the Past', expected: 'SNS-ZL-EUR' },
+            { input: 'SNS-MK-JPN - Super Mario Kart', expected: 'SNS-MK-JPN' },
+            
+            // Game Boy
+            { input: 'DMG-VUA - Dr. Mario', expected: 'DMG-VUA' },
+            { input: 'CGB-BXTF - Pokémon Crystal Version', expected: 'CGB-BXTF' },
+            { input: 'AGB-A2YE - Super Mario Advance 2', expected: 'AGB-A2YE' },
+            
+            // NES
+            { input: 'HVC-SM - Super Mario Bros.', expected: 'HVC-SM' },
+            { input: 'NES-ZL-USA - The Legend of Zelda', expected: 'NES-ZL-USA' },
+            
+            // N64
+            { input: 'NUS-NSME - Super Mario 64', expected: 'NUS-NSME' },
+            
+            // Cas avec tirets multiples dans le ROM ID
+            { input: 'SHVC-A-MW - Super Mario World (Version A)', expected: 'SHVC-A-MW' },
+            
+            // Cas négatifs (pas de ROM ID)
+            { input: 'Super Mario World', expected: null },
+            { input: 'The Legend of Zelda', expected: null },
+            { input: '', expected: null },
+            { input: null, expected: null },
+        ];
+
+        // 🧪 Exécuter les tests
+        const resultsDiv = document.getElementById('results');
+        let passed = 0;
+        let failed = 0;
+
+        testCases.forEach((test, index) => {
+            const result = extractRomIdFromName(test.input);
+            const success = result === test.expected;
+            
+            if (success) passed++;
+            else failed++;
+
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-case ${success ? 'success' : 'error'}`;
+            testDiv.innerHTML = `
+                <div>
+                    <span class="icon">${success ? '✅' : '❌'}</span>
+                    <strong>Test ${index + 1}</strong>
+                </div>
+                <div class="input">📥 Entrée: <code>${test.input || '(null)'}</code></div>
+                <div class="output">📤 Résultat: <code>${result || '(null)'}</code> ${success ? '' : `<br>⚠️ Attendu: <code>${test.expected || '(null)'}</code>`}</div>
+            `;
+            resultsDiv.appendChild(testDiv);
+        });
+
+        // 📊 Statistiques
+        const statsDiv = document.getElementById('stats');
+        const total = testCases.length;
+        const percentage = Math.round((passed / total) * 100);
+        statsDiv.innerHTML = `
+            <h2>📊 Résultats</h2>
+            <p style="font-size: 1.5em; margin: 10px 0;">
+                ✅ <strong>${passed}</strong> / ${total} tests réussis (${percentage}%)
+            </p>
+            ${failed > 0 ? `<p style="color: #ef4444;">❌ ${failed} test(s) échoué(s)</p>` : '<p style="color: #10b981;">🎉 Tous les tests sont passés !</p>'}
+        `;
+    </script>
+</body>
+</html>

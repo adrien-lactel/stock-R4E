@@ -81,12 +81,28 @@ function displayGameSuggestions(games) {
     gameName.className = 'font-semibold text-sm text-gray-900 truncate';
     gameName.textContent = game.name;
     
-    const gameId = document.createElement('div');
-    gameId.className = 'text-xs text-gray-500 truncate';
-    gameId.textContent = game.rom_id || game.slug || '';
+    const gameMetadata = document.createElement('div');
+    gameMetadata.className = 'flex items-center gap-2 text-xs text-gray-500 mt-0.5';
+    
+    // ROM ID avec badge
+    if (game.rom_id) {
+      const romIdBadge = document.createElement('span');
+      romIdBadge.className = 'inline-flex items-center px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-mono text-xs';
+      romIdBadge.textContent = game.rom_id;
+      gameMetadata.appendChild(romIdBadge);
+    }
+    
+    // Région si disponible
+    if (game.region) {
+      const regionBadge = document.createElement('span');
+      regionBadge.className = 'inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs';
+      const regionEmoji = game.region === 'Japan' ? '🇯🇵' : game.region === 'USA' ? '🇺🇸' : game.region === 'Europe' ? '🇪🇺' : '🌍';
+      regionBadge.textContent = `${regionEmoji} ${game.region}`;
+      gameMetadata.appendChild(regionBadge);
+    }
     
     contentDiv.appendChild(gameName);
-    contentDiv.appendChild(gameId);
+    contentDiv.appendChild(gameMetadata);
     div.appendChild(contentDiv);
     suggestionsDiv.appendChild(div);
   });

@@ -276,7 +276,7 @@
             <div class="flex-1 relative">
                 <input type="text" 
                        id="game-search" 
-                       placeholder="Ex: DMG-A1J-0 ou Pokémon Red"
+                       placeholder="Recherche par ROM ID (ex: SHVC-23, DMG-A1J) ou nom de jeu"
                        class="w-full rounded border-gray-300"
                        oninput="window.onGameInput()"
                        onkeydown="window.onGameKeydown(event)"

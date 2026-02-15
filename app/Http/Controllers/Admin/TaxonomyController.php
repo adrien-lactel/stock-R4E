@@ -772,6 +772,20 @@ public function destroyType(ArticleType $type)
             try {
                 $r2PublicUrl = config('filesystems.disks.r2.url');
                 
+                // Fallback si URL R2 non configurée
+                if (empty($r2PublicUrl)) {
+                    $r2PublicUrl = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
+                    \Log::warning("R2_PUBLIC_URL non configurée, utilisation du fallback");
+                }
+                
+                // DEBUG: Logger la config R2
+                \Log::info("getTaxonomyImages R2 config", [
+                    'identifier' => $identifier,
+                    'folder' => $folder,
+                    'r2_url' => $r2PublicUrl,
+                    'environment' => app()->environment()
+                ]);
+                
                 // Types d'images possibles
                 $imageTypes = ['cover', 'logo', 'artwork', 'gameplay', 'display1', 'display2', 'display3'];
                 
@@ -817,6 +831,8 @@ public function destroyType(ArticleType $type)
                                     'source' => 'r2'
                                 ];
                                 
+                                \Log::info("Image R2 trouvée", ['filename' => $filename, 'url' => $imageUrl]);
+                                
                                 $seenFilenames[$filename] = true;
                             } else {
                                 // Si la première variante n'existe pas, inutile de tester les suivantes
@@ -844,6 +860,14 @@ public function destroyType(ArticleType $type)
             if ($typeCompare !== 0) return $typeCompare;
             return $a['index'] - $b['index'];
         });
+
+        // DEBUG: Logger le résultat final
+        \Log::info("getTaxonomyImages résultat", [
+            'count' => count($images),
+            'images' => array_map(function($img) { 
+                return ['filename' => $img['filename'], 'url' => $img['url']]; 
+            }, $images)
+        ]);
 
         return response()->json([
             'success' => true,

@@ -1348,18 +1348,25 @@ class ConsoleAdminController extends Controller
         
         $games = \DB::table($tableName)
             ->where(function($q) use ($query, $words, $tableName) {
-                // Recherche exacte par ROM ID/slug
+                // Recherche par ROM ID (priorité 1)
                 if (\Schema::hasColumn($tableName, 'rom_id')) {
                     $q->where('rom_id', 'LIKE', '%' . $query . '%');
                 }
+                
+                // Recherche par slug (priorité 2)
                 if (\Schema::hasColumn($tableName, 'slug')) {
                     $q->orWhere('slug', 'LIKE', '%' . $query . '%');
                 }
                 
-                // Recherche par nom (exact)
+                // Recherche par nom (priorité 3)
                 $q->orWhere('name', 'LIKE', '%' . $query . '%');
                 
-                // Si plusieurs mots, recherche chaque mot séparément (plus flexible)
+                // Recherche par noms alternatifs si disponible
+                if (\Schema::hasColumn($tableName, 'alternate_names')) {
+                    $q->orWhere('alternate_names', 'LIKE', '%' . $query . '%');
+                }
+                
+                // Si plusieurs mots, recherche multi-mots dans le nom
                 if (count($words) > 1) {
                     $q->orWhere(function($subQ) use ($words) {
                         foreach ($words as $word) {
@@ -1368,6 +1375,14 @@ class ConsoleAdminController extends Controller
                     });
                 }
             })
+            ->orderByRaw(
+                \Schema::hasColumn($tableName, 'rom_id') 
+                ? "CASE WHEN rom_id LIKE ? THEN 1 WHEN name LIKE ? THEN 2 ELSE 3 END" 
+                : "CASE WHEN name LIKE ? THEN 1 ELSE 2 END",
+                \Schema::hasColumn($tableName, 'rom_id') 
+                ? ['%' . $query . '%', '%' . $query . '%']
+                : ['%' . $query . '%']
+            )
             ->limit(15)
             ->get();
 
