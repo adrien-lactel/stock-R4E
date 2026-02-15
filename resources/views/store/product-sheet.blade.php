@@ -397,20 +397,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Actions --}}
-    @if($console->status === 'stock')
-        <div class="bg-white rounded-lg shadow p-6">
-            <form method="POST" action="{{ route('store.console.sell', $console->id) }}" 
-                  onsubmit="return confirm('Confirmer la vente de cet article ?');">
-                @csrf
-                <button type="submit" 
-                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition">
-                    💰 Vendre cet article
-                </button>
-            </form>
-        </div>
-    @endif
 </div>
 
 {{-- MODAL ZOOM --}}
