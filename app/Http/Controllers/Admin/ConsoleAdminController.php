@@ -920,7 +920,7 @@ class ConsoleAdminController extends Controller
         // Soft delete si configuré, sinon suppression complète
         $console->delete();
 
-        return redirect()->route('admin.articles.recent')
+        return redirect()->route('admin.consoles.index')
             ->with('success', "Article #{$articleId} supprimé avec succès.");
     }
 
