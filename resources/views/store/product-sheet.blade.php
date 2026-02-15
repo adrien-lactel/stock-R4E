@@ -1,242 +1,498 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-8">
-    {{-- Breadcrumb --}}
-    <div class="mb-6 text-sm text-gray-600">
-        <a href="{{ route('store.dashboard', $store->id) }}" class="hover:text-indigo-600">← Retour au stock</a>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    {{-- HEADER --}}
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">🖼️ Fiche Produit</h1>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('store.dashboard', $store->id) }}" class="px-4 py-2 rounded border hover:bg-gray-50">← Retour</a>
+        </div>
     </div>
 
     @php
-            // Vérifications de sécurité et définition des variables
-            $sheet = $console->productSheet ?? null;
-            $type = $console->articleType ?? null;
-            
-            // Images : priorité ProductSheet
-            $mainImage = null;
-            if ($sheet && $sheet->main_image) {
-                $mainImage = $sheet->main_image;
-            } elseif ($type && isset($type->cover_image)) {
-                $mainImage = $type->cover_image;
-            }
-            
-            $images = [];
-            if ($sheet && is_array($sheet->images)) {
-                $images = $sheet->images;
-            }
-            
-            // Textes : priorité ProductSheet
-            $title = 'Article #'.$console->id;
-            if ($sheet && $sheet->name) {
-                $title = $sheet->name;
-            } elseif ($type && isset($type->name)) {
-                $title = $type->name;
-            }
-            
-            $description = null;
-            if ($sheet && $sheet->description) {
-                $description = $sheet->description;
-            } elseif ($type && isset($type->description)) {
-                $description = $type->description;
-            }
-            
-            $marketingDesc = ($sheet && $sheet->marketing_description) ? $sheet->marketing_description : null;
-        @endphp
+        // Variables sécurisées
+        $sheet = $console->productSheet ?? null;
+        $type = $console->articleType ?? null;
+        $selectedSubCategory = $type && isset($type->subCategory) ? $type->subCategory : null;
+        
+        // Prix : priorité à l'offre, puis pivot store
+        $price = 'N/A';
+        if (isset($offer) && $offer && isset($offer->sale_price)) {
+            $price = $offer->sale_price;
+        } elseif ($console->pivot && isset($console->pivot->sale_price)) {
+            $price = $console->pivot->sale_price;
+        }
+        
+        // Images article (ProductSheet)
+        $articleImages = $sheet && isset($sheet->images) ? $sheet->images : [];
+        if (is_string($articleImages)) {
+            $articleImages = json_decode($articleImages, true) ?? [];
+        }
+        // Normaliser les images: extraire les URLs
+        $articleImages = array_filter(array_map(function($img) {
+            if (is_string($img) && str_starts_with($img, 'http')) return $img;
+            if (is_array($img) && isset($img['url']) && str_starts_with($img['url'], 'http')) return $img['url'];
+            return null;
+        }, $articleImages));
+        
+        // Si pas d'images dans ProductSheet, ajouter main_image
+        if (count($articleImages) === 0 && $sheet && $sheet->main_image) {
+            $articleImages = [$sheet->main_image];
+        }
+        
+        // Titre
+        $title = 'Article #'.$console->id;
+        if ($sheet && $sheet->name) {
+            $title = $sheet->name;
+        } elseif ($type && isset($type->name)) {
+            $title = $type->name;
+        }
+        
+        // Mods featured
+        $displayMods = $sheet && isset($sheet->featured_mods) ? $sheet->featured_mods : [];
+    @endphp
 
-        <div class="grid md:grid-cols-2 gap-8">
-            {{-- COLONNE GAUCHE - IMAGES --}}
-            <div class="space-y-4">
-                {{-- Image principale --}}
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    @if($mainImage)
-                        <img src="{{ $mainImage }}" 
-                             alt="{{ $title }}" 
-                             class="w-full h-auto object-cover">
-                    @elseif($type && isset($type->cover_image))
-                        <img src="{{ $type->cover_image }}" 
-                             alt="{{ $title }}" 
-                             class="w-full h-auto object-cover">
+    {{-- FICHE PRODUIT VISUELLE --}}
+    <div class="bg-white rounded-lg p-6 mb-6">
+        <div class="flex flex-wrap justify-center w-fit lg:w-full mx-auto" style="border: 3px solid #1f2937; border-radius: 12px; padding: 12px;">
+            
+            {{-- COLONNE 1: Slideshow images de l'article + Prix (GAUCHE) --}}
+            <div class="flex flex-col items-center justify-between shrink-0 order-1">
+                {{-- TAXONOMIE BREADCRUMB (en haut) --}}
+                <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; width: 100%; height: 76px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
+                    <div style="font-size: 16px; color: #111827; font-weight: 700; text-align: center;">
+                        {{ $selectedSubCategory && isset($selectedSubCategory->brand) && isset($selectedSubCategory->brand->category) ? $selectedSubCategory->brand->category->name : 'Catégorie' }} › 
+                        {{ $selectedSubCategory && isset($selectedSubCategory->brand) ? $selectedSubCategory->brand->name : 'Marque' }} › 
+                        {{ $selectedSubCategory && isset($selectedSubCategory->name) ? $selectedSubCategory->name : 'Sous-catégorie' }}
+                    </div>
+                </div>
+                
+                {{-- Slideshow centré verticalement --}}
+                <div class="flex-1 flex items-center justify-center">
+                @if(count($articleImages) > 0)
+                    <div x-data="{
+                        currentIndex: 0,
+                        images: @js($articleImages),
+                        get currentImage() { return this.images[this.currentIndex]; },
+                        next() {
+                            this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                        },
+                        prev() {
+                            this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                        }
+                    }">
+                        <div class="relative group">
+                            <img :src="currentImage" 
+                                 alt="Image article" 
+                                 class="max-h-64 w-auto object-contain rounded-lg cursor-zoom-in"
+                                 @click="openZoomModal(currentImage)">
+                            
+                            {{-- COUP DE COEUR --}}
+                            @if($sheet && isset($sheet->is_favorite) && $sheet->is_favorite)
+                                <div class="absolute top-2 left-2 bg-red-500/90 rounded-full p-2 shadow-lg">
+                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                    </svg>
+                                </div>
+                            @endif
+                            
+                            {{-- MODS ICONS --}}
+                            @if(count($displayMods) > 0)
+                                <div class="absolute top-2 right-2 flex flex-wrap gap-1 bg-black/60 rounded-lg p-1.5 max-w-[60%] justify-end">
+                                    @foreach($displayMods as $mod)
+                                        @if(isset($mod['icon']) && str_starts_with($mod['icon'], 'data:image/'))
+                                            <img src="{{ $mod['icon'] }}" alt="{{ $mod['name'] ?? 'Mod' }}" class="w-6 h-6 drop-shadow-lg" style="image-rendering: pixelated;" title="{{ $mod['name'] ?? 'Mod' }}">
+                                        @else
+                                            <span class="text-lg drop-shadow-lg" title="{{ $mod['name'] ?? 'Mod' }}">{{ $mod['icon'] ?? '🔧' }}</span>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                            
+                            {{-- Boutons de navigation --}}
+                            @if(count($articleImages) > 1)
+                                <button @click="prev()" type="button" class="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                    </svg>
+                                </button>
+                                <button @click="next()" type="button" class="absolute right-0 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </button>
+                                
+                                {{-- Indicateur de position --}}
+                                <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                                    <span x-text="(currentIndex + 1) + '/' + images.length"></span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @else
+                    <div class="h-64 w-48 flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded-lg">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                @endif
+                </div>
+
+                {{-- Prix --}}
+                <div class="w-full mt-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 text-center">
+                    <div class="text-xs text-white/80 uppercase font-medium mb-1">Prix magasin</div>
+                    <div class="text-2xl font-bold text-white">
+                        {{ $price !== 'N/A' ? number_format($price, 2) : '—' }} €
+                    </div>
+                </div>
+            </div>
+
+            {{-- Séparateur vertical 1 --}}
+            <div class="hidden lg:block w-px bg-gray-800 mx-4 self-stretch order-2"></div>
+
+            {{-- COLONNE 2: Logo du jeu + Informations (MILIEU - FLEXIBLE) --}}
+            <div class="flex-1 order-4 lg:order-3" style="min-width: 256px;">
+                {{-- Logo du jeu --}}
+                <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center; height: 76px; box-sizing: border-box;">
+                    @php
+                        $logoImage = $type && isset($type->logo_url) ? $type->logo_url : null;
+                    @endphp
+                    
+                    @if($logoImage)
+                        <img src="{{ $logoImage }}" 
+                             alt="Logo" 
+                             style="max-height: 40px; object-fit: contain;">
                     @else
-                        <div class="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                            <span class="text-gray-400 text-lg">📦 Aucune image disponible</span>
+                        <span style="font-size: 12px; color: #6b7280;">&nbsp;</span>
+                    @endif
+                </div>
+
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ $title }}</h2>
+                
+                {{-- Informations supplémentaires --}}
+                <div class="space-y-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-700">Référence:</span>
+                        <span class="text-sm text-gray-600">#{{ $console->id }}</span>
+                    </div>
+                    
+                    @if($console->rom_id)
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-gray-700">ROM ID:</span>
+                            <span class="text-sm text-gray-600">{{ $console->rom_id }}</span>
+                        </div>
+                    @endif
+                    
+                    @if($console->year)
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-gray-700">Année:</span>
+                            <span class="text-sm text-gray-600">{{ $console->year }}</span>
+                        </div>
+                    @endif
+                    
+                    @if($console->region)
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-gray-700">Région:</span>
+                            <span class="text-sm text-gray-600">{{ $console->region }}</span>
+                        </div>
+                    @endif
+                    
+                    @if($type && isset($type->publisher))
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-gray-700">Éditeur:</span>
+                            <span class="text-sm text-gray-600">{{ $type->publisher }}</span>
+                        </div>
+                    @endif
+                    
+                    @if($console->completeness)
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-gray-700">Complétude:</span>
+                            <span class="text-sm text-gray-600">{{ $console->completeness }}</span>
                         </div>
                     @endif
                 </div>
 
-                {{-- Images supplémentaires de la fiche --}}
-                @if($images && count($images) > 0)
-                    @foreach($images as $image)
-                        <div class="bg-white rounded-lg shadow overflow-hidden">
-                            <img src="{{ $image }}" 
-                                 alt="{{ $title }}" 
-                                 class="w-full h-auto object-cover">
+                {{-- POINTS FORTS (critères de condition) --}}
+                @php
+                    $criteria = $sheet && isset($sheet->condition_criteria) ? $sheet->condition_criteria : [];
+                    $criteriaLabels = $sheet && isset($sheet->condition_criteria_labels) ? $sheet->condition_criteria_labels : [
+                        'box_condition' => 'Boîte',
+                        'manual_condition' => 'Manuel',
+                        'media_condition' => 'Support',
+                        'completeness' => 'Complétude',
+                        'rarity' => 'Rareté',
+                        'overall_condition' => 'État général'
+                    ];
+                    $allCriteriaKeys = ['box_condition', 'manual_condition', 'media_condition', 'completeness', 'rarity', 'overall_condition'];
+                    $defaultLabelsDisplay = [
+                        'box_condition' => 'Boîte',
+                        'manual_condition' => 'Manuel',
+                        'media_condition' => 'Support',
+                        'completeness' => 'Complétude',
+                        'rarity' => 'Rareté',
+                        'overall_condition' => 'État général'
+                    ];
+                    
+                    $hasVisibleCriteria = false;
+                    foreach($allCriteriaKeys as $key) {
+                        if (isset($criteria[$key]) && $criteria[$key] > 0) {
+                            $hasVisibleCriteria = true;
+                            break;
+                        }
+                    }
+                @endphp
+                
+                @if($hasVisibleCriteria)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3">⭐ Points forts</h3>
+                        <div class="space-y-2">
+                            @foreach($allCriteriaKeys as $key)
+                                @php
+                                    $value = $criteria[$key] ?? 0;
+                                @endphp
+                                @if($value > 0)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">{{ $criteriaLabels[$key] ?? $defaultLabelsDisplay[$key] }}</span>
+                                        <div class="flex gap-0.5">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <span class="text-lg {{ $value >= $i ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                                            @endfor
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
                         </div>
-                    @endforeach
-                @elseif($type && isset($type->gameplay_image))
-                    <div class="bg-white rounded-lg shadow overflow-hidden">
-                        <img src="{{ $type->gameplay_image }}" 
-                             alt="Gameplay" 
-                             class="w-full h-auto object-cover">
+                    </div>
+                @endif
+
+                {{-- SECTIONS TEXTUELLES --}}
+                @if($sheet && isset($sheet->display_sections) && in_array('marketing_description', $sheet->display_sections) && $sheet->marketing_description)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">💬 Avis de l'équipe R4E</h3>
+                        <p class="text-sm text-gray-600 leading-relaxed">{{ $sheet->marketing_description }}</p>
+                    </div>
+                @endif
+
+                @if($sheet && isset($sheet->display_sections) && in_array('description', $sheet->display_sections) && $sheet->description)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">📝 Description</h3>
+                        <p class="text-sm text-gray-600 leading-relaxed">{{ $sheet->description }}</p>
+                    </div>
+                @endif
+
+                @if($sheet && isset($sheet->display_sections) && in_array('technical_specs', $sheet->display_sections) && $sheet->technical_specs)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">⚙️ Caractéristiques techniques</h3>
+                        <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{{ $sheet->technical_specs }}</p>
+                    </div>
+                @endif
+
+                @if($sheet && isset($sheet->display_sections) && in_array('included_items', $sheet->display_sections) && $sheet->included_items)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">📦 Accessoires inclus</h3>
+                        <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{{ $sheet->included_items }}</p>
+                    </div>
+                @endif
+
+                {{-- MODIFICATIONS --}}
+                @if($console->mods && $console->mods->count() > 0)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">🔧 Modifications</h3>
+                        <div class="space-y-1">
+                            @foreach($console->mods as $mod)
+                                <div class="text-sm bg-amber-50 px-3 py-1.5 rounded border border-amber-200 text-amber-900">
+                                    {{ $mod->name }}
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
             </div>
 
-            {{-- COLONNE DROITE - INFORMATIONS --}}
-            <div class="space-y-6">
-                {{-- En-tête produit --}}
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    {{-- Numéro de fiche produit --}}
-                    @if($sheet)
-                        <div class="mb-3 inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-800 border-2 border-blue-300">
-                            📄 Fiche produit #{{ $sheet->id }}
+            {{-- Séparateur vertical 2 --}}
+            <div class="hidden lg:block w-px bg-gray-800 mx-4 self-stretch order-4"></div>
+
+            {{-- COLONNE 3: Cover/Artwork/Gameplay + Logo Éditeur (DROITE - FIXE) --}}
+            <div class="flex flex-col w-64 shrink-0 order-3 lg:order-5 justify-between">
+                {{-- Conteneur pour info images (en haut) --}}
+                <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; height: 76px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
+                    <div style="font-size: 14px; color: #111827; font-weight: 700; text-align: center;">
+                        {{ ($type && method_exists($type, 'isConsoleCategory') && ($type->isConsoleCategory() || $type->isCardsCategory() || $type->isAccessoryCategory())) ? 'Visuels' : 'Images gameplay, cover et artwork' }}
+                    </div>
+                </div>
+                
+                {{-- Slideshow centré verticalement --}}
+                <div class="flex-1 flex items-center justify-center">
+                {{-- Image Cover/Artwork/Gameplay (depuis la taxonomie) avec navigation --}}
+                <div x-data="{
+                    imageType: 'cover',
+                    images: {
+                        cover: {{ $type && isset($type->cover_image_url) && $type->cover_image_url ? "'" . $type->cover_image_url . "'" : 'null' }},
+                        artwork: {{ $type && isset($type->screenshot2_url) && $type->screenshot2_url ? "'" . $type->screenshot2_url . "'" : 'null' }},
+                        gameplay: {{ $type && isset($type->screenshot1_url) && $type->screenshot1_url ? "'" . $type->screenshot1_url . "'" : 'null' }}
+                    },
+                    get currentImage() { return this.images[this.imageType]; },
+                    get currentLabel() {
+                        const isTaxonomy = {{ ($type && method_exists($type, 'isConsoleCategory') && ($type->isConsoleCategory() || $type->isCardsCategory() || $type->isAccessoryCategory())) ? 'true' : 'false' }};
+                        const labels = isTaxonomy 
+                            ? { cover: 'Visuel 1', artwork: 'Visuel 2', gameplay: 'Visuel 3' }
+                            : { cover: 'Cover', artwork: 'Artwork', gameplay: 'Gameplay' };
+                        return labels[this.imageType];
+                    },
+                    nextImage() {
+                        const types = ['cover', 'artwork', 'gameplay'];
+                        const currentIndex = types.indexOf(this.imageType);
+                        this.imageType = types[(currentIndex + 1) % types.length];
+                    },
+                    prevImage() {
+                        const types = ['cover', 'artwork', 'gameplay'];
+                        const currentIndex = types.indexOf(this.imageType);
+                        this.imageType = types[(currentIndex - 1 + types.length) % types.length];
+                    }
+                }">
+                    <div class="relative group inline-block">
+                        <template x-if="currentImage">
+                            <img :src="currentImage" 
+                                 :alt="currentLabel" 
+                                 class="w-64 h-64 object-cover rounded-lg cursor-zoom-in"
+                                 @click="openZoomModal(currentImage)">
+                        </template>
+                        <template x-if="!currentImage">
+                            <div class="w-64 h-64 flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded-lg">
+                                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                        </template>
+                        
+                        {{-- Boutons de navigation --}}
+                        <button @click="prevImage()" type="button" class="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <button @click="nextImage()" type="button" class="absolute right-0 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                </div>
+
+                {{-- Logo Éditeur (en bas) --}}
+                <div class="w-64">
+                    @if($type && isset($type->publisher_logo_url) && $type->publisher_logo_url)
+                        <img src="{{ $type->publisher_logo_url }}" 
+                             alt="Logo éditeur" 
+                             class="w-full h-16 object-contain rounded-lg">
+                    @else
+                        <div class="w-full h-16 flex items-center justify-center bg-gray-100 rounded-lg">
+                            <span class="text-xs text-gray-400">Pas de logo éditeur</span>
                         </div>
                     @endif
-
-                    <div class="mb-2 text-sm text-gray-500">
-                        {{ $console->articleCategory ? $console->articleCategory->name : '' }} › 
-                        {{ $console->articleSubCategory ? $console->articleSubCategory->name : '' }}
-                    </div>
-                    <h1 class="text-3xl font-bold text-gray-900 mb-4">
-                        {{ $title }}
-                    </h1>
-
-                    {{-- Prix --}}
-                    <div class="flex items-baseline gap-4 mb-6">
-                        <div class="text-4xl font-bold text-indigo-600">
-                            @php
-                                $price = 'N/A';
-                                if (isset($offer) && $offer && isset($offer->sale_price)) {
-                                    $price = $offer->sale_price;
-                                } elseif ($console->pivot && isset($console->pivot->sale_price)) {
-                                    $price = $console->pivot->sale_price;
-                                }
-                            @endphp
-                            {{ $price }} €
-                        </div>
-                        @if($type && isset($type->average_market_price))
-                            <div class="text-sm text-gray-500">
-                                Prix moyen constaté : {{ $type->average_market_price }} €
-                            </div>
-                        @endif
-                    </div>
-
-                    {{-- Statut --}}
-                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                        {{ $console->status === 'stock' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                        @if($console->status === 'stock')
-                            ✅ En stock
-                        @else
-                            {{ ucfirst($console->status) }}
-                        @endif
-                    </div>
                 </div>
-
-                {{-- Description marketing --}}
-                @if($marketingDesc)
-                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg shadow p-6 border-2 border-indigo-200">
-                        <h2 class="text-xl font-semibold mb-3 text-indigo-900">✨ Pourquoi ce produit ?</h2>
-                        <div class="text-gray-700 leading-relaxed">
-                            {!! nl2br(e($marketingDesc)) !!}
-                        </div>
-                    </div>
-                @endif
-
-                {{-- Description --}}
-                @if($description)
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="text-xl font-semibold mb-3 text-gray-900">📝 Description</h2>
-                        <div class="text-gray-700 leading-relaxed">
-                            {!! nl2br(e($description)) !!}
-                        </div>
-                    </div>
-                @endif
-
-                {{-- Spécifications techniques --}}
-                @if($sheet && isset($sheet->technical_specs))
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="text-xl font-semibold mb-3 text-gray-900">⚙️ Spécifications techniques</h2>
-                        <div class="text-gray-700 leading-relaxed">
-                            {!! nl2br(e($sheet->technical_specs)) !!}
-                        </div>
-                    </div>
-                @endif
-
-                {{-- Contenu de la boîte --}}
-                @if($sheet && isset($sheet->included_items))
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="text-xl font-semibold mb-3 text-gray-900">📦 Contenu de la boîte</h2>
-                        <div class="text-gray-700 leading-relaxed">
-                            {!! nl2br(e($sheet->included_items)) !!}
-                        </div>
-                    </div>
-                @endif
-
-                {{-- Points forts (si pas de fiche) --}}
-                @if(!$sheet && $type && isset($type->key_features))
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="text-xl font-semibold mb-3 text-gray-900">⭐ Points forts</h2>
-                        <ul class="space-y-2">
-                            @foreach(explode("\n", $type->key_features) as $feature)
-                                @if(trim($feature))
-                                    <li class="flex items-start gap-2">
-                                        <span class="text-green-500 mt-1">✓</span>
-                                        <span class="text-gray-700">{{ trim($feature) }}</span>
-                                    </li>
-                                @endif
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                {{-- Informations complémentaires --}}
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-xl font-semibold mb-3 text-gray-900">ℹ️ Informations</h2>
-                    <dl class="space-y-2 text-sm">
-                        @if($console->serial_number)
-                            <div class="flex justify-between">
-                                <dt class="text-gray-600">Numéro de série :</dt>
-                                <dd class="font-mono text-gray-900">{{ $console->serial_number }}</dd>
-                            </div>
-                        @endif
-                        <div class="flex justify-between">
-                            <dt class="text-gray-600">Référence :</dt>
-                            <dd class="font-mono text-gray-900">#{{ $console->id }}</dd>
-                        </div>
-                        @if($console->real_value)
-                            <div class="flex justify-between">
-                                <dt class="text-gray-600">Valeur réelle :</dt>
-                                <dd class="text-gray-900">{{ $console->real_value }} €</dd>
-                            </div>
-                        @endif
-                        @if($console->mods && $console->mods->count() > 0)
-                            <div class="pt-2 border-t">
-                                <dt class="text-gray-600 mb-2">Modifications :</dt>
-                                <dd class="space-y-1">
-                                    @foreach($console->mods as $mod)
-                                        <div class="text-gray-900 text-xs bg-gray-50 px-2 py-1 rounded">
-                                            {{ $mod->name }}
-                                        </div>
-                                    @endforeach
-                                </dd>
-                            </div>
-                        @endif
-                    </dl>
-                </div>
-
-                {{-- Actions --}}
-                @if($console->status === 'stock')
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <form method="POST" action="{{ route('store.console.sell', $console->id) }}" 
-                              onsubmit="return confirm('Confirmer la vente de cet article ?');">
-                            @csrf
-                            <button type="submit" 
-                                    class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition">
-                                💰 Vendre cet article
-                            </button>
-                        </form>
-                    </div>
-                @endif
             </div>
         </div>
     </div>
+
+    {{-- Actions --}}
+    @if($console->status === 'stock')
+        <div class="bg-white rounded-lg shadow p-6">
+            <form method="POST" action="{{ route('store.console.sell', $console->id) }}" 
+                  onsubmit="return confirm('Confirmer la vente de cet article ?');">
+                @csrf
+                <button type="submit" 
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                    💰 Vendre cet article
+                </button>
+            </form>
+        </div>
+    @endif
+</div>
+
+{{-- MODAL ZOOM --}}
+<div id="zoomModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onclick="closeZoomModal()">
+    <button type="button" onclick="closeZoomModal()" class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-50">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
+    <div class="relative max-w-full max-h-full overflow-hidden" onclick="event.stopPropagation()">
+        <img id="zoomImage" src="" alt="Zoom" class="max-w-[90vw] max-h-[90vh] object-contain transition-transform duration-200" style="transform-origin: center center;">
+    </div>
+    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm">
+        Molette pour zoomer • Clic extérieur ou Échap pour fermer
+    </div>
+</div>
+
+<script>
+let currentScale = 1;
+const minScale = 1;
+const maxScale = 5;
+
+function openZoomModal(imageUrl) {
+    currentScale = 1;
+    const modal = document.getElementById('zoomModal');
+    const img = document.getElementById('zoomImage');
+    img.src = imageUrl;
+    img.style.transform = 'scale(1)';
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeZoomModal() {
+    const modal = document.getElementById('zoomModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    currentScale = 1;
+}
+
+// Zoom avec molette
+document.getElementById('zoomModal')?.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    const img = document.getElementById('zoomImage');
+    const delta = e.deltaY > 0 ? -0.2 : 0.2;
+    currentScale = Math.min(maxScale, Math.max(minScale, currentScale + delta));
+    img.style.transform = `scale(${currentScale})`;
+});
+
+// Fermer avec Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeZoomModal();
+    }
+});
+
+// Zoom tactile (pinch-to-zoom)
+let initialDistance = 0;
+let initialScale = 1;
+
+document.getElementById('zoomModal')?.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+        e.preventDefault();
+        initialDistance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+        );
+        initialScale = currentScale;
+    }
+});
+
+document.getElementById('zoomModal')?.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 2) {
+        e.preventDefault();
+        const currentDistance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+        );
+        const scale = (currentDistance / initialDistance) * initialScale;
+        currentScale = Math.min(maxScale, Math.max(minScale, scale));
+        const img = document.getElementById('zoomImage');
+        img.style.transform = `scale(${currentScale})`;
+    }
+});
+</script>
 @endsection
