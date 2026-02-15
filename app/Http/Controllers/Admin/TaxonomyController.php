@@ -767,60 +767,68 @@ public function destroyType(ArticleType $type)
             }
         }
         
-        // Mode R2 (Production/Railway) : lister directement depuis R2
+        // Mode R2 (Production/Railway) : vérifier l'existence des fichiers spécifiques
         if (empty($images) || app()->environment('production')) {
             try {
-                $r2Path = "taxonomy/{$folder}/";
-                $files = \Storage::disk('r2')->files($r2Path);
+                $r2PublicUrl = config('filesystems.disks.r2.url');
                 
-                foreach ($files as $filePath) {
-                    $filename = basename($filePath);
-                    
-                    // Vérifier si correspond à l'identifier
-                    if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.(png|jpg|jpeg)$/i', $filename, $matches)) {
-                        // Éviter les doublons si déjà dans les images locales
+                // Types d'images possibles
+                $imageTypes = ['cover', 'logo', 'artwork', 'gameplay', 'display1', 'display2', 'display3'];
+                
+                // Pour chaque type, vérifier jusqu'à 5 variantes (base + -2, -3, -4, -5)
+                foreach ($imageTypes as $type) {
+                    for ($i = 1; $i <= 5; $i++) {
+                        $suffix = $i === 1 ? '' : "-{$i}";
+                        $filename = "{$identifier}-{$type}{$suffix}.png";
+                        $filePath = "taxonomy/{$folder}/{$filename}";
+                        
+                        // Éviter les doublons
                         if (isset($seenFilenames[$filename])) {
                             continue;
                         }
                         
-                        $fullType = $matches[1];
-                        
-                        // Pour display1/2/3, le type complet EST le type de base (pas d'index)
-                        if (preg_match('/^(cover|artwork|gameplay|logo|display1|display2|display3)(-\d+)?$/i', $fullType, $typeMatches)) {
-                            $baseType = $typeMatches[1];
-                            $index = isset($typeMatches[2]) ? (int)str_replace('-', '', $typeMatches[2]) : 1;
-                            
-                            // En production: URL R2 directe, sinon proxy
-                            if (app()->environment('production')) {
-                                $r2PublicUrl = config('filesystems.disks.r2.url');
-                                $imageUrl = $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
+                        // Vérifier si le fichier existe sur R2
+                        try {
+                            if (\Storage::disk('r2')->exists($filePath)) {
+                                // Récupérer la taille
+                                $fileSize = 0;
+                                try {
+                                    $fileSize = \Storage::disk('r2')->size($filePath);
+                                } catch (\Exception $e) {
+                                    // Taille non disponible
+                                }
+                                
+                                // URL publique
+                                $imageUrl = app()->environment('production')
+                                    ? $r2PublicUrl . "/{$filePath}"
+                                    : route('proxy.taxonomy-image', [
+                                        'folder' => $folder,
+                                        'filename' => $filename
+                                    ]);
+                                
+                                $images[] = [
+                                    'filename' => $filename,
+                                    'path' => $filePath,
+                                    'url' => $imageUrl,
+                                    'type' => $type,
+                                    'full_type' => $type . $suffix,
+                                    'index' => $i,
+                                    'size' => $fileSize,
+                                    'source' => 'r2'
+                                ];
+                                
+                                $seenFilenames[$filename] = true;
                             } else {
-                                $imageUrl = route('proxy.taxonomy-image', [
-                                    'folder' => $folder,
-                                    'filename' => $filename
-                                ]);
+                                // Si la première variante n'existe pas, inutile de tester les suivantes
+                                if ($i === 1) {
+                                    break;
+                                }
                             }
-                            
-                            // Essayer de récupérer la taille
-                            $fileSize = 0;
-                            try {
-                                $fileSize = \Storage::disk('r2')->size($filePath);
-                            } catch (\Exception $e) {
-                                // Taille non disponible
+                        } catch (\Exception $e) {
+                            // Fichier non trouvé ou erreur, passer au suivant
+                            if ($i === 1) {
+                                break; // Pas de variante de base, inutile de tester -2, -3, etc.
                             }
-                            
-                            $images[] = [
-                                'filename' => $filename,
-                                'path' => $filePath,
-                                'url' => $imageUrl,
-                                'type' => $baseType,
-                                'full_type' => $fullType,
-                                'index' => $index,
-                                'size' => $fileSize,
-                                'source' => 'r2'
-                            ];
-                            
-                            $seenFilenames[$filename] = true;
                         }
                     }
                 }
