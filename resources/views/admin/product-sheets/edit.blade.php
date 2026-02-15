@@ -2253,17 +2253,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const articleTypeName = @json($selectedType->name ?? 'Article');
         const subCategoryName = @json($selectedSubCategory->name ?? '');
         const categoryName = @json($selectedCategory->name ?? '');
+        const categoryId = @json($selectedCategory->id ?? null);
         
         // Dossier de taxonomie calculé depuis PHP (utilise le mapping correct)
         const phpTaxonomyFolder = @json(isset($selectedType) && method_exists($selectedType, 'getPlatformFolder') ? $selectedType->getPlatformFolder() : null);
         
-        // Images déjà connues depuis PHP (pour affichage immédiat)
-        const knownImages = {
-            cover: @json($selectedType->cover_image_url ?? null),
-            logo: @json($selectedType->logo_url ?? null),
-            artwork: @json($selectedType->screenshot2_url ?? null),
-            gameplay: @json($selectedType->screenshot1_url ?? null)
-        };
+        // Déterminer si c'est une catégorie avec images de taxonomie R2 (consoles/cartes/accessoires)
+        const isTaxonomyCategory = [1, 12, 13].includes(categoryId); // 1=Consoles, 12=Cartes, 13=Accessoires
+        
+        // Images déjà connues depuis PHP
+        let knownImages;
+        if (isTaxonomyCategory) {
+            // Pour consoles/cartes/accessoires : utiliser les images de taxonomie R2
+            knownImages = {
+                logo: @json($selectedType->logo_url ?? null),
+                display1: @json($selectedType->console_display1_url ?? null),
+                display2: @json($selectedType->console_display2_url ?? null),
+                display3: @json($selectedType->console_display3_url ?? null)
+            };
+        } else {
+            // Pour les jeux vidéo : utiliser les anciennes images
+            knownImages = {
+                cover: @json($selectedType->cover_image_url ?? null),
+                logo: @json($selectedType->logo_url ?? null),
+                artwork: @json($selectedType->screenshot2_url ?? null),
+                gameplay: @json($selectedType->screenshot1_url ?? null)
+            };
+        }
         
         // Déterminer le folder - utiliser le mapping PHP si disponible, sinon fallback
         let folder = 'other';
@@ -2354,10 +2370,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="flex items-center justify-center gap-3 mb-4">
                     <label class="text-sm font-medium text-gray-700">Type d'image :</label>
                     <select id="taxonomy-upload-type-select" class="border border-gray-300 rounded px-3 py-2 text-sm font-medium">
-                        <option value="cover">📖 Cover</option>
-                        <option value="logo">🏷️ Logo</option>
-                        <option value="artwork">🎨 Artwork</option>
-                        <option value="gameplay">🎮 Gameplay</option>
+                        ${isTaxonomyCategory ? `
+                            <option value="logo">🏷️ Logo</option>
+                            <option value="display1">📸 Photo 1</option>
+                            <option value="display2">📸 Photo 2</option>
+                            <option value="display3">📸 Photo 3</option>
+                        ` : `
+                            <option value="cover">📖 Cover</option>
+                            <option value="logo">🏷️ Logo</option>
+                            <option value="artwork">🎨 Artwork</option>
+                            <option value="gameplay">🎮 Gameplay</option>
+                        `}
                     </select>
                 </div>
                 
@@ -2465,7 +2488,16 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Images connues depuis PHP (pour affichage immédiat)
-    const knownTaxonomyImages = {
+    // Déterminer si c'est une catégorie avec images de taxonomie R2
+    @php
+        $isTaxonomyCategory = isset($selectedCategory) && in_array($selectedCategory->id, [1, 12, 13]);
+    @endphp
+    const knownTaxonomyImages = @json($isTaxonomyCategory) ? {
+        logo: @json($selectedType->logo_url ?? null),
+        display1: @json($selectedType->console_display1_url ?? null),
+        display2: @json($selectedType->console_display2_url ?? null),
+        display3: @json($selectedType->console_display3_url ?? null)
+    } : {
         cover: @json($selectedType->cover_image_url ?? null),
         logo: @json($selectedType->logo_url ?? null),
         artwork: @json($selectedType->screenshot2_url ?? null),
@@ -2578,12 +2610,27 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const select = document.createElement('select');
             select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
-            select.innerHTML = `
-                <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
-                <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
-                <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
-                <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
-            `;
+            
+            // Adapter les options selon la catégorie
+            @php
+                $isTaxonomyCat = isset($selectedCategory) && in_array($selectedCategory->id, [1, 12, 13]);
+            @endphp
+            const isTaxonomyCat = @json($isTaxonomyCat);
+            if (isTaxonomyCat) {
+                select.innerHTML = `
+                    <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
+                    <option value="display1" ${image.type === 'display1' ? 'selected' : ''}>📸 Photo 1</option>
+                    <option value="display2" ${image.type === 'display2' ? 'selected' : ''}>📸 Photo 2</option>
+                    <option value="display3" ${image.type === 'display3' ? 'selected' : ''}>📸 Photo 3</option>
+                `;
+            } else {
+                select.innerHTML = `
+                    <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
+                    <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
+                    <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
+                    <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
+                `;
+            }
             // Désactiver le select pour les images PHP (pas renommables directement)
             if (image.source === 'php') {
                 select.disabled = true;
