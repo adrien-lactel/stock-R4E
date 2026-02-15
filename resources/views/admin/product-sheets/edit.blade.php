@@ -537,8 +537,8 @@
 
             {{-- POINTS FORTS --}}
             <script>
-                // Variable globale pour les critères
-                var conditionCriteria = @json($sheet->condition_criteria ?? []);
+                // Variable globale pour les critères - s'assurer que c'est toujours un objet
+                var conditionCriteria = @json($sheet->condition_criteria ?? []) || {};
                 
                 // Fonction globale pour les étoiles (appelée par onclick)
                 function setRating(criterion, rating) {
@@ -758,26 +758,23 @@
             </div>
 
             {{-- Champ caché pour les critères de collection --}}
-            <input type="hidden" name="condition_criteria" id="condition_criteria_input" value="{{ json_encode($sheet->condition_criteria ?? []) }}">
             <input type="hidden" name="condition_criteria" id="condition_criteria_input" value='{{ json_encode($sheet->condition_criteria ?? []) }}'>
             <script>
-                // Synchronise le champ caché Points forts à chaque changement
-                function syncConditionCriteriaInput() {
-                    document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
-                }
-                document.querySelectorAll('.criterion-toggle, .star-btn, input[name^="condition_criteria_labels"]').forEach(function(el) {
-                    el.addEventListener('change', syncConditionCriteriaInput);
-                    el.addEventListener('input', syncConditionCriteriaInput);
-                });
-            </script>
-            <script>
-                // Synchronise le champ caché Points forts à chaque changement
-                document.querySelectorAll('.criterion-toggle, .star-btn, input[name^="condition_criteria_labels"]').forEach(function(el) {
-                    el.addEventListener('change', function() {
-                        document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
-                    });
-                    el.addEventListener('input', function() {
-                        document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+                // Synchroniser le champ caché à chaque changement
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.querySelectorAll('.criterion-toggle, .star-btn, input[name^="condition_criteria_labels"]').forEach(function(el) {
+                        el.addEventListener('change', function() {
+                            if (typeof conditionCriteria !== 'undefined') {
+                                document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+                            }
+                        });
+                        el.addEventListener('click', function() {
+                            if (typeof conditionCriteria !== 'undefined') {
+                                setTimeout(function() {
+                                    document.getElementById('condition_criteria_input').value = JSON.stringify(conditionCriteria);
+                                }, 100);
+                            }
+                        });
                     });
                 });
             </script>
