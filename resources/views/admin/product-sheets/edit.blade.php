@@ -832,86 +832,169 @@
             <div class="mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">📷 Images</h2>
 
-                {{-- IMAGES DE TAXONOMIE (JEUX VIDÉO) --}}
+                {{-- IMAGES DE TAXONOMIE --}}
                 @if(isset($selectedType) && $selectedType)
+                    @php
+                        $isTaxCategory = isset($selectedCategory) && in_array($selectedCategory->id, [1, 12, 13]);
+                        $sectionIcon = $isTaxCategory ? '📸' : '🎮';
+                        $sectionTitle = $isTaxCategory ? 'Images de taxonomie' : 'Images du jeu (taxonomie)';
+                    @endphp
                     <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <h3 class="text-sm font-semibold text-blue-900 mb-3">
-                            🎮 Images du jeu (taxonomie)
+                            {{ $sectionIcon }} {{ $sectionTitle }}
                         </h3>
-                        <p class="text-xs text-blue-700 mb-3">Images partagées pour tous les exemplaires de ce jeu</p>
+                        <p class="text-xs text-blue-700 mb-3">Images partagées pour tous les exemplaires de ce type</p>
                         
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {{-- Cover --}}
-                            <div class="bg-white rounded-lg p-3 border border-blue-200">
-                                <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
-                                    @if($selectedType->cover_image_url)
-                                        <img src="{{ $selectedType->cover_image_url }}" class="w-full h-full object-cover cursor-pointer" alt="Cover" onclick="openZoomModal('{{ $selectedType->cover_image_url }}')">
-                                    @else
-                                        <span class="text-gray-400 text-xs">Aucune image</span>
-                                    @endif
-                                </div>
-                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Cover</p>
-                                @if($selectedType->cover_image_url)
-                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->cover_image_url }}')" 
-                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                        ⭐ Utiliser
-                                    </button>
-                                @endif
-                            </div>
-
-                            {{-- Logo --}}
-                            <div class="bg-white rounded-lg p-3 border border-blue-200">
-                                <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                            @if($isTaxCategory)
+                                {{-- CATÉGORIES DE TAXONOMIE: Logo + Photo 1/2/3 --}}
+                                
+                                {{-- Logo --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->logo_url)
+                                            <img src="{{ $selectedType->logo_url }}" class="w-full h-full object-contain p-2 cursor-pointer" alt="Logo" onclick="openZoomModal('{{ $selectedType->logo_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Logo</p>
                                     @if($selectedType->logo_url)
-                                        <img src="{{ $selectedType->logo_url }}" class="w-full h-full object-contain p-2 cursor-pointer" alt="Logo" onclick="openZoomModal('{{ $selectedType->logo_url }}')">
-                                    @else
-                                        <span class="text-gray-400 text-xs">Aucune image</span>
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->logo_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
                                     @endif
                                 </div>
-                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Logo</p>
-                                @if($selectedType->logo_url)
-                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->logo_url }}')" 
-                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                        ⭐ Utiliser
-                                    </button>
-                                @endif
-                            </div>
 
-                            {{-- Screenshot 1 --}}
-                            <div class="bg-white rounded-lg p-3 border border-blue-200">
-                                <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                {{-- Photo 1 (display1) --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->console_display1_url)
+                                            <img src="{{ $selectedType->console_display1_url }}" class="w-full h-full object-cover cursor-pointer" alt="Photo 1" onclick="openZoomModal('{{ $selectedType->console_display1_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Photo 1</p>
+                                    @if($selectedType->console_display1_url)
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->console_display1_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
+                                    @endif
+                                </div>
+
+                                {{-- Photo 2 (display2) --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->console_display2_url)
+                                            <img src="{{ $selectedType->console_display2_url }}" class="w-full h-full object-cover cursor-pointer" alt="Photo 2" onclick="openZoomModal('{{ $selectedType->console_display2_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Photo 2</p>
+                                    @if($selectedType->console_display2_url)
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->console_display2_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
+                                    @endif
+                                </div>
+
+                                {{-- Photo 3 (display3) --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->console_display3_url)
+                                            <img src="{{ $selectedType->console_display3_url }}" class="w-full h-full object-cover cursor-pointer" alt="Photo 3" onclick="openZoomModal('{{ $selectedType->console_display3_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Photo 3</p>
+                                    @if($selectedType->console_display3_url)
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->console_display3_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
+                                    @endif
+                                </div>
+                            @else
+                                {{-- JEUX VIDÉO: Cover + Logo + Artwork + Gameplay --}}
+                                
+                                {{-- Cover --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->cover_image_url)
+                                            <img src="{{ $selectedType->cover_image_url }}" class="w-full h-full object-cover cursor-pointer" alt="Cover" onclick="openZoomModal('{{ $selectedType->cover_image_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Cover</p>
+                                    @if($selectedType->cover_image_url)
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->cover_image_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
+                                    @endif
+                                </div>
+
+                                {{-- Logo --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->logo_url)
+                                            <img src="{{ $selectedType->logo_url }}" class="w-full h-full object-contain p-2 cursor-pointer" alt="Logo" onclick="openZoomModal('{{ $selectedType->logo_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Logo</p>
+                                    @if($selectedType->logo_url)
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->logo_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
+                                    @endif
+                                </div>
+
+                                {{-- Screenshot 1 (Gameplay) --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->screenshot1_url)
+                                            <img src="{{ $selectedType->screenshot1_url }}" class="w-full h-full object-cover cursor-pointer" alt="Screenshot 1" onclick="openZoomModal('{{ $selectedType->screenshot1_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Gameplay</p>
                                     @if($selectedType->screenshot1_url)
-                                        <img src="{{ $selectedType->screenshot1_url }}" class="w-full h-full object-cover cursor-pointer" alt="Screenshot 1" onclick="openZoomModal('{{ $selectedType->screenshot1_url }}')">
-                                    @else
-                                        <span class="text-gray-400 text-xs">Aucune image</span>
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot1_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
                                     @endif
                                 </div>
-                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Screenshot 1</p>
-                                @if($selectedType->screenshot1_url)
-                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot1_url }}')" 
-                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                        ⭐ Utiliser
-                                    </button>
-                                @endif
-                            </div>
 
-                            {{-- Screenshot 2 --}}
-                            <div class="bg-white rounded-lg p-3 border border-blue-200">
-                                <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                {{-- Screenshot 2 (Artwork) --}}
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+                                        @if($selectedType->screenshot2_url)
+                                            <img src="{{ $selectedType->screenshot2_url }}" class="w-full h-full object-cover cursor-pointer" alt="Screenshot 2" onclick="openZoomModal('{{ $selectedType->screenshot2_url }}')">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Aucune image</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-center font-medium text-gray-600 mb-1">Artwork</p>
                                     @if($selectedType->screenshot2_url)
-                                        <img src="{{ $selectedType->screenshot2_url }}" class="w-full h-full object-cover cursor-pointer" alt="Screenshot 2" onclick="openZoomModal('{{ $selectedType->screenshot2_url }}')">
-                                    @else
-                                        <span class="text-gray-400 text-xs">Aucune image</span>
+                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot2_url }}')" 
+                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
+                                            ⭐ Utiliser
+                                        </button>
                                     @endif
                                 </div>
-                                <p class="text-xs text-center font-medium text-gray-600 mb-1">Screenshot 2</p>
-                                @if($selectedType->screenshot2_url)
-                                    <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot2_url }}')" 
-                                            class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                        ⭐ Utiliser
-                                    </button>
-                                @endif
-                            </div>
+                            @endif
                         </div>
                         
                         <div class="mt-3 flex items-center justify-between">
