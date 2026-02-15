@@ -46,7 +46,7 @@
                     {{-- Prix --}}
                     <div class="flex items-baseline gap-4 mb-6">
                         <div class="text-4xl font-bold text-indigo-600">
-                            {{ $console->pivot?->sale_price ?? 'N/A' }} €
+                            {{ $offer?->sale_price ?? $console->pivot?->sale_price ?? 'N/A' }} €
                         </div>
                         @if($console->articleType?->average_market_price)
                             <div class="text-sm text-gray-500">
