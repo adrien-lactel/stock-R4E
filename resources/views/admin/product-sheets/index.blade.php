@@ -54,7 +54,7 @@
                             
                             {{-- Icônes des mods en overlay --}}
                             @if($sheet->featured_mods && count($sheet->featured_mods) > 0)
-                                <div class="absolute top-2 right-2 flex flex-wrap gap-1 max-w-[60px]">
+                                <div class="absolute top-2 right-2 flex flex-col gap-1 items-end max-w-[200px]">
                                     @foreach($sheet->featured_mods as $mod)
                                         @php
                                             // Si l'icône n'est pas dans featured_mods, la récupérer depuis la DB
@@ -66,14 +66,14 @@
                                             $icon = $icon ?: '🔧';
                                             $isBase64 = str_starts_with($icon, 'data:image');
                                         @endphp
-                                        <span class="bg-white/90 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg" 
-                                              title="{{ $mod['name'] }}">
+                                        <div class="bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-2 shadow-lg">
                                             @if($isBase64)
-                                                <img src="{{ $icon }}" alt="{{ $mod['name'] }}" class="w-6 h-6" style="image-rendering: pixelated;">
+                                                <img src="{{ $icon }}" alt="{{ $mod['name'] }}" class="w-5 h-5" style="image-rendering: pixelated;">
                                             @else
-                                                <span class="text-lg">{{ $icon }}</span>
+                                                <span class="text-base">{{ $icon }}</span>
                                             @endif
-                                        </span>
+                                            <span class="text-xs font-medium text-gray-800">{{ $mod['name'] }}</span>
+                                        </div>
                                     @endforeach
                                 </div>
                             @endif
