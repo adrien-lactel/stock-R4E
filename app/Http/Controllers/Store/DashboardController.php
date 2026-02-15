@@ -60,26 +60,11 @@ class DashboardController extends Controller
         ->orderBy('created_at', 'desc')
         ->get();
 
-    // =====================
-    // 📬 OFFRES REÇUES
-    // =====================
-    $offers = \App\Models\ConsoleOffer::with([
-            'console.articleType',
-            'console.articleCategory',
-            'console.articleSubCategory',
-            'console.mods',
-        ])
-        ->where('store_id', $store->id)
-        ->where('status', 'proposed')
-        ->orderBy('created_at', 'desc')
-        ->get();
-
     return view('store.dashboard', compact(
         'store',
         'consoles',
         'savConsoles',
-        'externalRepairs',
-        'offers'
+        'externalRepairs'
     ));
 }
 
