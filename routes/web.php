@@ -535,6 +535,21 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
             ->name('consoles.remove-mod');
 
         /* =====================
+        | LOGISTIQUE / ENVOIS
+        ===================== */
+        Route::get('/shipments', [App\Http\Controllers\Admin\ShipmentController::class, 'index'])
+            ->name('shipments.index');
+
+        Route::post('/shipments/payment-received', [App\Http\Controllers\Admin\ShipmentController::class, 'markPaymentReceived'])
+            ->name('shipments.payment-received');
+
+        Route::post('/shipments/mark-shipped', [App\Http\Controllers\Admin\ShipmentController::class, 'markAsShipped'])
+            ->name('shipments.mark-shipped');
+
+        Route::post('/shipments/mark-received', [App\Http\Controllers\Admin\ShipmentController::class, 'markAsReceived'])
+            ->name('shipments.mark-received');
+
+        /* =====================
         | PRIX / MAGASINS - DÉSACTIVÉ
         ===================== */
         // Route::get('/prices', [ConsolePriceController::class, 'index'])
@@ -680,6 +695,13 @@ Route::middleware(['auth'])
 
         Route::post('/offers/bulk-reject', [StoreOfferController::class, 'bulkReject'])
             ->name('offers.bulk-reject');
+
+        // Suivi des envois
+        Route::get('/offers/tracking', [StoreOfferController::class, 'tracking'])
+            ->name('offers.tracking');
+
+        Route::post('/offers/confirm-reception', [StoreOfferController::class, 'confirmReception'])
+            ->name('offers.confirm-reception');
 
         /* =====================
         | HISTORIQUE DES VENTES

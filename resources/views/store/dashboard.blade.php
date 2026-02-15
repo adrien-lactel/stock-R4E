@@ -16,6 +16,11 @@
                 📦 Offres disponibles
             </a>
             
+            <a href="{{ route('store.offers.tracking') }}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium shadow-sm">
+                🚚 Suivi des envois
+            </a>
+            
             <a href="{{ route('store.external-repair.create', $store) }}" 
                class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base font-medium shadow-sm">
                 🔧 Demande réparation externe

@@ -108,6 +108,13 @@ class DashboardController extends Controller
                         'route' => 'admin.lot-requests.index',
                     ],
                     [
+                        'title' => 'Suivi envois',
+                        'subtitle' => 'Logistique',
+                        'description' => 'Gérer les envois et réceptions d\'articles vers les magasins.',
+                        'icon' => '🚚',
+                        'route' => 'admin.shipments.index',
+                    ],
+                    [
                         'title' => 'SAV & retours',
                         'subtitle' => 'Support',
                         'description' => 'Valider dossiers SAV, devis et affectations réparateurs.',

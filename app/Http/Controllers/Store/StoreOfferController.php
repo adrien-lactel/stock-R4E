@@ -240,4 +240,81 @@ class StoreOfferController extends Controller
         
         return back()->with('success', "$count article(s) refusé(s).");
     }
+
+    /**
+     * Afficher le suivi des envois côté magasin
+     */
+    public function tracking()
+    {
+        $storeId = Auth::user()->store_id;
+        $store = \App\Models\Store::findOrFail($storeId);
+
+        // Récupérer tous les envois (shipped et received)
+        $shipments = ConsoleOffer::with([
+            'console.articleType',
+            'console.productSheet',
+        ])
+            ->where('store_id', $storeId)
+            ->whereIn('status', ['shipped', 'received'])
+            ->orderBy('shipped_at', 'desc')
+            ->get();
+
+        return view('store.offers.tracking', compact('shipments', 'store'));
+    }
+
+    /**
+     * Confirmer la réception d'un envoi
+     */
+    public function confirmReception(Request $request)
+    {
+        $storeId = Auth::user()->store_id;
+        
+        $validated = $request->validate([
+            'offer_ids' => ['required', 'array'],
+            'offer_ids.*' => ['exists:console_offers,id'],
+        ]);
+        
+        $offerIds = $validated['offer_ids'];
+        
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // Récupérer les offres
+            $offers = ConsoleOffer::whereIn('id', $offerIds)
+                ->where('store_id', $storeId)
+                ->where('status', 'shipped')
+                ->with('console')
+                ->get();
+
+            foreach ($offers as $offer) {
+                // Marquer comme reçu
+                $offer->update([
+                    'status' => 'received',
+                    'received_at' => now(),
+                ]);
+
+                // Attacher la console au magasin si ce n'est pas déjà fait
+                $console = $offer->console;
+                if (!$console->stores()->where('stores.id', $storeId)->exists()) {
+                    $console->stores()->attach($storeId, [
+                        'sale_price' => $offer->sale_price,
+                    ]);
+                }
+
+                // Déterminer le bon statut selon le type d'offre
+                // L'offre a le statut original dans un autre champ ou on peut le déduire
+                // Pour simplifier, on vérifie si c'était un achat (payment_received = true) ou dépôt
+                if ($offer->payment_received) {
+                    $console->update(['status' => 'stock']);
+                } else {
+                    $console->update(['status' => 'stock']); // ou 'consignment' selon votre logique
+                }
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', count($offers) . " article(s) réceptionné(s) avec succès.");
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Erreur lors de la réception : ' . $e->getMessage());
+        }
+    }
 }
