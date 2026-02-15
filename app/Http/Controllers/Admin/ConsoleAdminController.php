@@ -869,31 +869,19 @@ class ConsoleAdminController extends Controller
      ===================================================== */
     public function addMod(Request $request, Console $console)
     {
-        try {
-            $validated = $request->validate([
-                'mod_id' => ['required', 'exists:mods,id'],
-                'price_applied' => ['nullable', 'numeric', 'min:0'],
-                'notes' => ['nullable', 'string', 'max:500'],
-                'work_time_minutes' => ['nullable', 'integer', 'min:0'],
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'error' => 'Erreur de validation',
-                    'errors' => $e->errors()
-                ], 422);
-            }
-            throw $e;
-        }
+        $validated = $request->validate([
+            'mod_id' => ['required', 'exists:mods,id'],
+            'price_applied' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:500'],
+            'work_time_minutes' => ['nullable', 'integer', 'min:0'],
+        ]);
 
         $mod = Mod::findOrFail($validated['mod_id']);
 
         // Vérifier si le mod n'est pas déjà associé
         if ($console->mods()->where('mod_id', $mod->id)->exists()) {
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['error' => 'Ce mod est déjà associé à cet article.'], 400);
-            }
-            return back()->with('error', 'Ce mod est déjà associé à cet article.');
+            return redirect()->route('admin.articles.edit_full', $console)
+                ->with('error', 'Ce mod est déjà associé à cet article.');
         }
 
         $console->mods()->attach($mod->id, [
@@ -902,17 +890,8 @@ class ConsoleAdminController extends Controller
             'work_time_minutes' => $validated['work_time_minutes'] ?? null,
         ]);
 
-        if ($request->expectsJson() || $request->ajax()) {
-            // Recharger la relation mods
-            $console->load('mods');
-            return response()->json([
-                'success' => true,
-                'message' => "Mod \"{$mod->name}\" ajouté à l'article #{$console->id}.",
-                'mods' => $console->mods
-            ]);
-        }
-
-        return back()->with('success', "Mod \"{$mod->name}\" ajouté à l'article #{$console->id}.");
+        return redirect()->route('admin.articles.edit_full', $console)
+            ->with('success', "Mod \"{$mod->name}\" ajouté à l'article #{$console->id}.");
     }
 
     /* =====================================================

@@ -18,6 +18,18 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-6 p-4 bg-red-100 text-red-800 rounded border border-red-300">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if ($errors->any())
         <div class="mb-6 p-4 bg-red-50 text-red-800 rounded border border-red-200">
             <ul class="list-disc pl-5 space-y-1 text-sm">
@@ -202,10 +214,9 @@
                 </div>
             @endif
 
-            <form id="add-mod-form" method="POST" action="{{ route('admin.consoles.add-mod', $console) }}" class="mt-3 max-w-md">
+            <form method="POST" action="{{ route('admin.consoles.add-mod', $console) }}" class="mt-3 max-w-md">
                 @csrf
                 <div class="p-4 border rounded-lg bg-white">
-                    <div id="mod-form-message" class="hidden mb-3 p-2 rounded text-sm"></div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">➕ Ajouter un Mod / Opération</label>
                     <select name="mod_id" class="w-full rounded border-gray-300 text-sm" required>
                         <option value="">— Aucun —</option>
@@ -421,104 +432,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } 
     }
   })();
-});
-</script>
-
-<script>
-// Gestion AJAX pour l'ajout de mod
-document.addEventListener('DOMContentLoaded', function() {
-    const addModForm = document.getElementById('add-mod-form');
-    const messageDiv = document.getElementById('mod-form-message');
-    
-    if (addModForm) {
-        addModForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            console.log('Form submitted');
-            
-            const formData = new FormData(addModForm);
-            const submitButton = addModForm.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            
-            // Récupérer le token CSRF
-            const csrfToken = addModForm.querySelector('input[name="_token"]').value;
-            console.log('CSRF Token:', csrfToken);
-            
-            // Désactiver le bouton pendant l'envoi
-            submitButton.disabled = true;
-            submitButton.innerHTML = '⏳ Ajout en cours...';
-            
-            // Masquer les anciens messages
-            messageDiv.classList.add('hidden');
-            
-            try {
-                console.log('Sending request to:', addModForm.action);
-                
-                const response = await fetch(addModForm.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: formData
-                });
-                
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers.get('content-type'));
-                
-                let data;
-                const contentType = response.headers.get('content-type');
-                
-                if (contentType && contentType.includes('application/json')) {
-                    data = await response.json();
-                    console.log('Response data:', data);
-                } else {
-                    // Si ce n'est pas du JSON, c'est probablement une redirection HTML
-                    const text = await response.text();
-                    console.error('Response is not JSON:', text.substring(0, 200));
-                    messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
-                    messageDiv.textContent = 'Erreur: réponse inattendue du serveur. Rechargement...';
-                    messageDiv.classList.remove('hidden');
-                    setTimeout(() => location.reload(), 1500);
-                    return;
-                }
-                
-                if (response.ok && data.success) {
-                    // Afficher le message de succès
-                    messageDiv.className = 'mb-3 p-2 rounded text-sm bg-green-100 text-green-800 border border-green-300';
-                    messageDiv.textContent = data.message;
-                    messageDiv.classList.remove('hidden');
-                    
-                    // Réinitialiser le formulaire
-                    addModForm.reset();
-                    
-                    // Recharger uniquement cette page (pas de redirect)
-                    setTimeout(() => {
-                        location.reload();
-                    }, 800);
-                } else {
-                    // Afficher le message d'erreur
-                    messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
-                    messageDiv.textContent = data.error || data.message || 'Une erreur est survenue';
-                    messageDiv.classList.remove('hidden');
-                    
-                    // Réactiver le bouton
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            } catch (error) {
-                console.error('Erreur catch:', error);
-                messageDiv.className = 'mb-3 p-2 rounded text-sm bg-red-100 text-red-800 border border-red-300';
-                messageDiv.textContent = 'Erreur de communication: ' + error.message;
-                messageDiv.classList.remove('hidden');
-                
-                // Réactiver le bouton
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
-            }
-        });
-    }
 });
 </script>
 @endsection
