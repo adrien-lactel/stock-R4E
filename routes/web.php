@@ -23,6 +23,7 @@ use App\Http\Controllers\Store\StoreOfferController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\Admin\RepairerAdminController;
 use App\Http\Controllers\Admin\FeatureRequestController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\ImageProxyController;
 
 /*
@@ -365,6 +366,15 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         ===================== */
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        /* =====================
+        | GESTION UTILISATEURS
+        ===================== */
+        Route::get('/users', [UserManagementController::class, 'index'])
+            ->name('users.index');
+        
+        Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])
+            ->name('users.reset-password');
 
         /* =====================
         | BUGS & DEMANDES D'ÉVOLUTION

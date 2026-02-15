@@ -156,6 +156,13 @@ class DashboardController extends Controller
                 'title' => 'Administration R4E',
                 'cards' => [
                     [
+                        'title' => 'Gestion utilisateurs',
+                        'subtitle' => 'Sécurité',
+                        'description' => 'Voir tous les utilisateurs et réinitialiser leurs mots de passe.',
+                        'icon' => '👥',
+                        'route' => 'admin.users.index',
+                    ],
+                    [
                         'title' => 'Taxonomie articles',
                         'subtitle' => 'Catalogue',
                         'description' => 'Maintenir catégories, sous-catégories et types.',
