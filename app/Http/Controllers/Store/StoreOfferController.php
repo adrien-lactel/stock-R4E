@@ -17,20 +17,35 @@ class StoreOfferController extends Controller
     public function index()
     {
         $storeId = Auth::user()->store_id;
+        $store = \App\Models\Store::findOrFail($storeId);
 
+        // Offres à valider
         $offers = ConsoleOffer::with([
             'console.articleType',
             'console.articleCategory',
             'console.articleSubCategory',
-            'console.mods', // Pour afficher les mods/opérations
-            'console.productSheet', // Fiche produit
+            'console.mods',
+            'console.productSheet',
         ])
             ->where('store_id', $storeId)
             ->where('status', 'proposed')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('store.offers.index', compact('offers'));
+        // Offres validées (en attente d'expédition)
+        $validatedOffers = ConsoleOffer::with([
+            'console.articleType',
+            'console.articleCategory',
+            'console.articleSubCategory',
+            'console.mods',
+            'console.productSheet',
+        ])
+            ->where('store_id', $storeId)
+            ->whereIn('status', ['validated_buy', 'validated_consignment'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('store.offers.index', compact('offers', 'validatedOffers', 'store'));
     }
 
     /**
@@ -136,7 +151,7 @@ class StoreOfferController extends Controller
             return back()->with('error', 'Aucun article sélectionné.');
         }
         
-        $offers = ConsoleOffer::with('console')->whereIn('id', $offerIds)
+        $offers = ConsoleOffer::whereIn('id', $offerIds)
             ->where('store_id', $storeId)
             ->where('status', 'proposed')
             ->get();
@@ -149,26 +164,14 @@ class StoreOfferController extends Controller
         $total = 0;
         
         foreach ($offers as $offer) {
-            // Accepter l'offre
-            $offer->update(['status' => 'accepted']);
-            
-            // Attacher la console au magasin (ACHAT)
-            $console = $offer->console;
-            
-            if (!$console->stores()->where('stores.id', $storeId)->exists()) {
-                $console->stores()->attach($storeId, [
-                    'sale_price' => $offer->sale_price,
-                ]);
-            }
-            
-            $console->update(['store_id' => $storeId]);
+            // Marquer comme validé pour achat (en attente d'expédition)
+            $offer->update(['status' => 'validated_buy']);
             
             $count++;
             $total += $offer->sale_price ?? 0;
         }
         
-        return redirect()->route('store.dashboard', $storeId)
-            ->with('success', "$count article(s) acheté(s) pour " . number_format($total, 2) . " € !");
+        return back()->with('success', "$count article(s) validé(s) pour achat (Total: " . number_format($total, 2) . " €). Les articles seront expédiés à votre adresse.");
     }
 
     /**
@@ -189,7 +192,7 @@ class StoreOfferController extends Controller
             return back()->with('error', 'Aucun article sélectionné.');
         }
         
-        $offers = ConsoleOffer::with('console')->whereIn('id', $offerIds)
+        $offers = ConsoleOffer::whereIn('id', $offerIds)
             ->where('store_id', $storeId)
             ->where('status', 'proposed')
             ->get();
@@ -202,26 +205,14 @@ class StoreOfferController extends Controller
         $total = 0;
         
         foreach ($offers as $offer) {
-            // Accepter l'offre en dépôt-vente
-            $offer->update(['status' => 'accepted_consignment']);
-            
-            // Attacher la console au magasin (DÉPÔT-VENTE)
-            $console = $offer->console;
-            
-            if (!$console->stores()->where('stores.id', $storeId)->exists()) {
-                $console->stores()->attach($storeId, [
-                    'sale_price' => $offer->consignment_price ?? $offer->sale_price,
-                ]);
-            }
-            
-            $console->update(['store_id' => $storeId]);
+            // Marquer comme validé pour dépôt-vente (en attente d'expédition)
+            $offer->update(['status' => 'validated_consignment']);
             
             $count++;
             $total += $offer->consignment_price ?? $offer->sale_price ?? 0;
         }
         
-        return redirect()->route('store.dashboard', $storeId)
-            ->with('success', "$count article(s) pris en dépôt-vente pour " . number_format($total, 2) . " € !");
+        return back()->with('success', "$count article(s) validé(s) pour dépôt-vente (Total: " . number_format($total, 2) . " €). Les articles seront expédiés à votre adresse.");
     }
 
     /**

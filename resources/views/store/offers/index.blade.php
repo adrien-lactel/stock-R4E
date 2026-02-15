@@ -91,9 +91,78 @@
         </div>
     @endif
 
+    {{-- SECTION OFFRES VALIDÉES (en attente d'expédition) --}}
+    @if($validatedOffers->isNotEmpty())
+        <div class="mb-8 p-6 bg-amber-50 border-2 border-amber-300 rounded-lg">
+            <h2 class="text-2xl font-bold text-amber-900 mb-4">
+                📮 Articles validés en attente d'expédition ({{ $validatedOffers->count() }})
+            </h2>
+            
+            <div class="mb-4 p-4 bg-white rounded-lg border border-amber-200">
+                <h3 class="font-semibold text-amber-900 mb-2">📍 Adresse d'expédition :</h3>
+                <div class="text-gray-700">
+                    <p class="font-bold">{{ $store->name }}</p>
+                    <p>{{ $store->address }}</p>
+                    <p>{{ $store->postal_code }} {{ $store->city }}</p>
+                    @if($store->phone)
+                        <p class="mt-2">📞 {{ $store->phone }}</p>
+                    @endif
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                @foreach($validatedOffers as $offer)
+                    @php
+                        $console = $offer->console;
+                        $sheet = $console->productSheet ?? null;
+                        $mainImage = $sheet?->main_image ?? null;
+                        
+                        $statusLabel = $offer->status === 'validated_buy' ? 'ACHAT' : 'DÉPÔT-VENTE';
+                        $statusColor = $offer->status === 'validated_buy' ? 'blue' : 'green';
+                        $price = $offer->status === 'validated_buy' ? $offer->sale_price : ($offer->consignment_price ?? $offer->sale_price);
+                    @endphp
+                    
+                    <div class="bg-white rounded-lg border-2 border-{{ $statusColor }}-400 p-3">
+                        @if($mainImage)
+                            <img src="{{ $mainImage }}" alt="Article" class="w-full h-32 object-contain mb-2 rounded">
+                        @else
+                            <div class="w-full h-32 bg-gray-100 flex items-center justify-center mb-2 rounded">
+                                <span class="text-gray-400 text-xs">Pas d'image</span>
+                            </div>
+                        @endif
+                        
+                        <div class="mb-2">
+                            <span class="inline-block px-2 py-1 text-xs font-bold bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 rounded">
+                                ✓ {{ $statusLabel }}
+                            </span>
+                        </div>
+                        
+                        <h4 class="text-sm font-bold text-gray-900 mb-1 line-clamp-2">
+                            {{ $console->articleType?->name ?? 'N/A' }}
+                        </h4>
+                        
+                        <div class="text-lg font-bold text-{{ $statusColor }}-600">
+                            {{ number_format($price, 2, ',', ' ') }} €
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- SECTION OFFRES À VALIDER --}}
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">
+            📋 Nouvelles offres à valider
+            @if($offers->isNotEmpty())
+                <span class="text-lg text-gray-600">({{ $offers->count() }})</span>
+            @endif
+        </h2>
+    </div>
+
     @if($offers->isEmpty())
         <div class="p-8 text-center text-gray-500 bg-pink-50 border border-pink-100 rounded-lg">
-            <p class="text-xl">Aucune offre disponible pour le moment.</p>
+            <p class="text-xl">Aucune nouvelle offre disponible pour le moment.</p>
         </div>
     @else
         {{-- Grille de mini fiches (4 par ligne) --}}
