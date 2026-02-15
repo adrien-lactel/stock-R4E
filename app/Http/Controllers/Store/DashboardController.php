@@ -104,7 +104,13 @@ class DashboardController extends Controller
         // Charger la console avec ses relations
         // Si la console n'est pas dans le stock, vérifier s'il y a une offre
         $consoleInStock = $store->consoles()
-            ->with(['articleType', 'articleCategory', 'articleSubCategory', 'mods', 'productSheet'])
+            ->with([
+                'articleType', 
+                'articleCategory', 
+                'articleSubCategory.brand', 
+                'mods', 
+                'productSheet'
+            ])
             ->find($console->id);
 
         if ($consoleInStock) {
@@ -121,7 +127,13 @@ class DashboardController extends Controller
             }
 
             // Charger la console avec ses relations
-            $console->load(['articleType', 'articleCategory', 'articleSubCategory', 'mods', 'productSheet']);
+            $console->load([
+                'articleType', 
+                'articleCategory', 
+                'articleSubCategory.brand', 
+                'mods', 
+                'productSheet'
+            ]);
         }
 
         return view('store.product-sheet', compact('store', 'console', 'offer'));

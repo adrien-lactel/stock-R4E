@@ -15,7 +15,9 @@
         // Variables sécurisées
         $sheet = $console->productSheet ?? null;
         $type = $console->articleType ?? null;
-        $selectedSubCategory = $type && isset($type->subCategory) ? $type->subCategory : null;
+        $category = $console->articleCategory ?? null;
+        $subCategory = $console->articleSubCategory ?? null;
+        $brand = $subCategory && isset($subCategory->brand) ? $subCategory->brand : null;
         
         // Prix : priorité à l'offre, puis pivot store
         $price = 'N/A';
@@ -63,9 +65,9 @@
                 {{-- TAXONOMIE BREADCRUMB (en haut) --}}
                 <div style="background: #e5e7eb; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; width: 100%; height: 76px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
                     <div style="font-size: 16px; color: #111827; font-weight: 700; text-align: center;">
-                        {{ $selectedSubCategory && isset($selectedSubCategory->brand) && isset($selectedSubCategory->brand->category) ? $selectedSubCategory->brand->category->name : 'Catégorie' }} › 
-                        {{ $selectedSubCategory && isset($selectedSubCategory->brand) ? $selectedSubCategory->brand->name : 'Marque' }} › 
-                        {{ $selectedSubCategory && isset($selectedSubCategory->name) ? $selectedSubCategory->name : 'Sous-catégorie' }}
+                        {{ $category ? $category->name : 'Catégorie' }} › 
+                        {{ $brand ? $brand->name : 'Marque' }} › 
+                        {{ $subCategory ? $subCategory->name : 'Sous-catégorie' }}
                     </div>
                 </div>
                 
