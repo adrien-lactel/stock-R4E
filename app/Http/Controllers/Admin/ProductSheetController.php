@@ -608,10 +608,14 @@ class ProductSheetController extends Controller
             'condition_criteria_labels' => 'nullable|array',
             'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
+            'is_favorite' => 'boolean',
         ]);
         
         // Restaurer le format original des images (avec is_generic flags)
         $data['images'] = $originalImages;
+        
+        // Gérer la checkbox is_favorite (non envoyée si non cochée)
+        $data['is_favorite'] = $request->has('is_favorite');
 
         $sheet = ProductSheet::create($data);
 
@@ -799,10 +803,14 @@ class ProductSheetController extends Controller
             'condition_criteria_labels' => 'nullable|array',
             'featured_mods' => 'nullable|array',
             'is_active' => 'boolean',
+            'is_favorite' => 'boolean',
         ]);
         
         // Restaurer le format original des images (avec is_generic flags)
         $data['images'] = $originalImages;
+        
+        // Gérer la checkbox is_favorite (non envoyée si non cochée)
+        $data['is_favorite'] = $request->has('is_favorite');
 
         $productSheet->update($data);
 
