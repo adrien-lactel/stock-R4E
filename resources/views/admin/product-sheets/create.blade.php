@@ -1328,6 +1328,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let taxonomyModalIdentifier = null;
     let taxonomyModalFolder = null;
     let taxonomyModalPlatform = null;
+    let taxonomyModalIsTaxonomyCategory = false;
     
     window.openTaxonomyImageEditorModal = function() {
         console.log('🖼️ Ouverture modal édition images taxonomie');
@@ -1371,6 +1372,7 @@ document.addEventListener('DOMContentLoaded', function() {
         taxonomyModalIdentifier = identifier;
         taxonomyModalFolder = folder;
         taxonomyModalPlatform = platform;
+        taxonomyModalIsTaxonomyCategory = isTaxonomyCategory;
         
         console.log('📂 Données modal taxonomie:', { identifier, folder, platform, romId });
         
@@ -1422,7 +1424,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="flex items-center justify-center gap-3 mb-4">
                     <label class="text-sm font-medium text-gray-700">Type d'image :</label>
                     <select id="taxonomy-upload-type-select" class="border border-gray-300 rounded px-3 py-2 text-sm font-medium">
-                        ${isTaxonomyCategory ? `
+                        ${taxonomyModalIsTaxonomyCategory ? `
                             <option value="logo">🏷️ Logo</option>
                             <option value="display1">📸 Photo 1</option>
                             <option value="display2">📸 Photo 2</option>
@@ -1585,7 +1587,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
                     
                     // Adapter les options selon la catégorie
-                    if (isTaxonomyCategory) {
+                    if (taxonomyModalIsTaxonomyCategory) {
                         select.innerHTML = `
                             <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
                             <option value="display1" ${image.type === 'display1' ? 'selected' : ''}>📸 Photo 1</option>
