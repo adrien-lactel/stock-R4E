@@ -2510,6 +2510,10 @@ async function loadTaxonomyImages(identifier, folder) {
       
       const timestamp = Date.now();
       
+      // Détecter automatiquement le type (console vs jeu) en regardant les premiers types d'images
+      const hasDisplayTypes = data.images.some(img => ['display1', 'display2', 'display3'].includes(img.type));
+      const isConsoleCat = hasDisplayTypes;
+      
       data.images.forEach(image => {
         const imageCard = document.createElement('div');
         imageCard.className = 'border-2 border-gray-200 rounded-lg p-3 bg-white hover:border-blue-400 transition-colors';
@@ -2528,12 +2532,23 @@ async function loadTaxonomyImages(identifier, folder) {
         
         const select = document.createElement('select');
         select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
-        select.innerHTML = `
-          <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
-          <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
-          <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
-          <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
-        `;
+        
+        // Adapter les options selon le type détecté
+        if (isConsoleCat) {
+          select.innerHTML = `
+            <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
+            <option value="display1" ${image.type === 'display1' ? 'selected' : ''}>📸 Photo 1</option>
+            <option value="display2" ${image.type === 'display2' ? 'selected' : ''}>📸 Photo 2</option>
+            <option value="display3" ${image.type === 'display3' ? 'selected' : ''}>📸 Photo 3</option>
+          `;
+        } else {
+          select.innerHTML = `
+            <option value="cover" ${image.type === 'cover' ? 'selected' : ''}>📖 Cover</option>
+            <option value="logo" ${image.type === 'logo' ? 'selected' : ''}>🏷️ Logo</option>
+            <option value="artwork" ${image.type === 'artwork' ? 'selected' : ''}>🎨 Artwork</option>
+            <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
+          `;
+        }
         select.onchange = () => renameTaxonomyImage(identifier, folder, image.full_type, select.value);
         
         labelRow.appendChild(select);
