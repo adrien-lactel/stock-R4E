@@ -2774,29 +2774,6 @@ document.addEventListener('DOMContentLoaded', function() {
             imageCard.appendChild(img);
             imageCard.appendChild(labelRow);
             
-            // Bouton "Utiliser pour cette fiche" - toujours visible
-            const useForSheetBtn = document.createElement('button');
-            useForSheetBtn.type = 'button';
-            useForSheetBtn.className = 'w-full text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
-            useForSheetBtn.innerHTML = '⭐ Utiliser pour cette fiche';
-            useForSheetBtn.title = 'Définir comme image principale de cette fiche produit';
-            useForSheetBtn.onclick = () => {
-                window.useTaxonomyImageAsPrimary(image.url);
-                closeTaxonomyImageEditorModal(true); // Ne pas recharger la page
-            };
-            imageCard.appendChild(useForSheetBtn);
-            
-            // Bouton "Définir comme principale" pour les images indexées (seulement R2)
-            if (image.index > 1 && image.source !== 'php') {
-                const setPrimaryBtn = document.createElement('button');
-                setPrimaryBtn.type = 'button';
-                setPrimaryBtn.className = 'w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
-                setPrimaryBtn.innerHTML = '🔄 Définir comme principale (R2)';
-                setPrimaryBtn.title = 'Remplacer l\'image principale de ce type sur R2';
-                setPrimaryBtn.onclick = () => setAsPrimaryImageEdit(identifier, folder, image.full_type, image.type);
-                imageCard.appendChild(setPrimaryBtn);
-            }
-            
             // Afficher la taille si disponible
             if (image.size > 0) {
                 const sizeInfo = document.createElement('div');
@@ -2943,40 +2920,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {
             console.error('Erreur suppression:', e);
             alert('❌ Erreur lors de la suppression');
-        }
-    }
-    
-    // Définir une image comme principale
-    async function setAsPrimaryImageEdit(identifier, folder, currentFullType, baseType) {
-        if (!confirm(`Définir "${currentFullType}" comme image principale "${baseType}" ?`)) return;
-        
-        try {
-            const response = await fetch('{{ route("admin.taxonomy.set-primary-image") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    identifier: identifier,
-                    folder: folder,
-                    current_type: currentFullType,
-                    base_type: baseType
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('✅ ' + data.message);
-                loadTaxonomyImagesGrid(identifier, folder);
-            } else {
-                alert('❌ ' + data.message);
-            }
-        } catch (e) {
-            console.error('Erreur:', e);
-            alert('❌ Erreur lors de l\'opération');
         }
     }
 </script>
