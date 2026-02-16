@@ -128,7 +128,7 @@ class ProductSheetController extends Controller
             }
         }
 
-        return view('admin.product-sheets.create', [
+        return view('admin.product-sheets.edit', [
             'sheet' => new ProductSheet(),
             'categories' => $categories,
             'mods' => $mods,
