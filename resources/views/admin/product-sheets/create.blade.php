@@ -7,7 +7,7 @@
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 
     <div style="background: red; color: white; padding: 20px; font-size: 30px; text-align: center; margin-bottom: 20px;">
-        🔴 CREATE.BLADE.PHP - FICHIER MODIFIÉ 🔴
+        🔴 CREATE.BLADE.PHP - VERSION 2026-02-16-19:00 🔴
     </div>
 
     {{-- HEADER --}}
