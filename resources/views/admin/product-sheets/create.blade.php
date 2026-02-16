@@ -1374,7 +1374,7 @@ document.addEventListener('DOMContentLoaded', function() {
         taxonomyModalPlatform = platform;
         taxonomyModalIsTaxonomyCategory = isTaxonomyCategory;
         
-        console.log('📂 Données modal taxonomie:', { identifier, folder, platform, romId });
+        console.log('📂 Données modal taxonomie:', { identifier, folder, platform, romId, isTaxonomyCategory, categoryId });
         
         // Créer la modal
         const modal = document.createElement('div');
@@ -1544,6 +1544,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const gridContainer = document.getElementById('taxonomy-images-grid');
         if (!gridContainer) return;
         
+        console.log('🔍 loadTaxonomyImagesGrid - taxonomyModalIsTaxonomyCategory =', taxonomyModalIsTaxonomyCategory);
+        
         try {
             const apiUrl = `{{ route("admin.taxonomy.get-images") }}?identifier=${encodeURIComponent(identifier)}&folder=${encodeURIComponent(folder)}`;
             console.log('📡 Chargement images depuis:', apiUrl);
@@ -1585,6 +1587,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const select = document.createElement('select');
                     select.className = 'text-sm border border-gray-300 rounded px-2 py-1 font-medium flex-1';
+                    console.log(`🎛️ Création select pour ${image.filename} - isTaxonomy: ${taxonomyModalIsTaxonomyCategory}, index: ${image.index}`);
+                    
+                    // Les images primaires (index = 1) ne peuvent pas changer de type
+                    // car ce sont les images de référence (cover, logo, artwork, gameplay)
+                    if (image.index === 1) {
+                        select.disabled = true;
+                        select.className += ' bg-gray-100 cursor-not-allowed opacity-75';
+                        select.title = 'Les images primaires ne peuvent pas changer de type. Ajoutez des variantes avec les boutons d\'upload.';
+                    }
                     
                     // Adapter les options selon la catégorie
                     if (taxonomyModalIsTaxonomyCategory) {
@@ -1602,7 +1613,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <option value="gameplay" ${image.type === 'gameplay' ? 'selected' : ''}>🎮 Gameplay</option>
                         `;
                     }
-                    select.onchange = () => renameTaxonomyImage(identifier, folder, image.full_type, select.value);
+                    
+                    if (image.index > 1) {
+                        select.onchange = () => renameTaxonomyImage(identifier, folder, image.full_type, select.value);
+                    }
                     
                     labelRow.appendChild(select);
                     
