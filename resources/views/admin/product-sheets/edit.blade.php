@@ -909,7 +909,8 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Photo 3</p>
-
+                                </div>
+                            @else
                                 {{-- JEUX VIDÉO: Cover + Logo + Artwork + Gameplay --}}
                                 
                                 {{-- Cover --}}
