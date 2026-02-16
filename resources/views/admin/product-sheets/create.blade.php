@@ -1644,6 +1644,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageCard.appendChild(img);
                     imageCard.appendChild(labelRow);
                     
+                    // LOG: Confirmer qu'on est bien dans CREATE.BLADE.PHP
+                    console.log('🟢 CREATE.BLADE.PHP - Pas de bouton "Utiliser" ajouté');
+                    
                     imageCard.appendChild(sizeInfo);
                     gridContainer.appendChild(imageCard);
                 });
