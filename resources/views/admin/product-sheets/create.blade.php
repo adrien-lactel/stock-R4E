@@ -1648,6 +1648,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageCard.appendChild(img);
                     imageCard.appendChild(labelRow);
                     
+                    // Bouton "Définir comme principale" pour les images indexées
+                    if (image.index > 1) {
+                        const setPrimaryBtn = document.createElement('button');
+                        setPrimaryBtn.type = 'button';
+                        setPrimaryBtn.className = 'w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium flex items-center justify-center gap-1 mt-2';
+                        setPrimaryBtn.innerHTML = '⭐ Définir comme principale';
+                        setPrimaryBtn.onclick = () => setAsPrimaryImage(identifier, folder, image.full_type, image.type);
+                        imageCard.appendChild(setPrimaryBtn);
+                    }
+                    
                     imageCard.appendChild(sizeInfo);
                     gridContainer.appendChild(imageCard);
                 });
@@ -1794,6 +1804,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Définir une image comme principale
+    async function setAsPrimaryImage(identifier, folder, currentFullType, baseType) {
+        if (!confirm(`Définir "${currentFullType}" comme image principale "${baseType}" ?`)) return;
+        
+        try {
+            const response = await fetch('{{ route("admin.taxonomy.set-primary-image") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    identifier: identifier,
+                    folder: folder,
+                    current_type: currentFullType,
+                    base_type: baseType
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('✅ ' + data.message, 'success');
+                loadTaxonomyImagesGrid(identifier, folder);
+            } else {
+                showToast('❌ ' + data.message, 'error');
+            }
+        } catch (e) {
+            console.error('Erreur:', e);
+            showToast('❌ Erreur lors de l\'opération', 'error');
+        }
+    }
+
     // Ouvrir le modal de gestion du logo éditeur
     window.openPublisherLogoModal = function() {
         const articleTypeId = window.getCurrentArticleTypeId();
