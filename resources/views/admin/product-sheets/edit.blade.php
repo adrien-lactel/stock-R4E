@@ -873,12 +873,6 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Logo</p>
-                                    @if($selectedType->logo_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->logo_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
                                 </div>
 
                                 {{-- Photo 1 (display1) --}}
@@ -891,12 +885,6 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Photo 1</p>
-                                    @if($selectedType->console_display1_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->console_display1_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
                                 </div>
 
                                 {{-- Photo 2 (display2) --}}
@@ -909,12 +897,6 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Photo 2</p>
-                                    @if($selectedType->console_display2_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->console_display2_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
                                 </div>
 
                                 {{-- Photo 3 (display3) --}}
@@ -927,14 +909,7 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Photo 3</p>
-                                    @if($selectedType->console_display3_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->console_display3_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
-                                </div>
-                            @else
+
                                 {{-- JEUX VIDÉO: Cover + Logo + Artwork + Gameplay --}}
                                 
                                 {{-- Cover --}}
@@ -947,12 +922,6 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Cover</p>
-                                    @if($selectedType->cover_image_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->cover_image_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
                                 </div>
 
                                 {{-- Logo --}}
@@ -965,12 +934,6 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Logo</p>
-                                    @if($selectedType->logo_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->logo_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
                                 </div>
 
                                 {{-- Screenshot 1 (Gameplay) --}}
@@ -983,12 +946,6 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Gameplay</p>
-                                    @if($selectedType->screenshot1_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot1_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
                                 </div>
 
                                 {{-- Screenshot 2 (Artwork) --}}
@@ -1001,12 +958,6 @@
                                         @endif
                                     </div>
                                     <p class="text-xs text-center font-medium text-gray-600 mb-1">Artwork</p>
-                                    @if($selectedType->screenshot2_url)
-                                        <button type="button" onclick="useTaxonomyImageAsPrimary('{{ $selectedType->screenshot2_url }}')" 
-                                                class="w-full text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-medium">
-                                            ⭐ Utiliser
-                                        </button>
-                                    @endif
                                 </div>
                             @endif
                         </div>
