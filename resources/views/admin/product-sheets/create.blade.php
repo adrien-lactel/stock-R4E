@@ -551,8 +551,43 @@
                     :primary-image="$prefilledData['main_image'] ?? ''"
                 />
                 
-                {{-- Note: Les boutons "Définir comme principale" ont été retirés du modal de taxonomie --}}
-                {{-- car ils modifient les images R2 globales, ce qui n'est pas pertinent en création de fiche --}}
+                {{-- Masquer les éléments non pertinents pour les fiches produits --}}
+                <style>
+                    /* Masquer le bouton des photos génériques de la taxonomie */
+                    button[onclick="openTaxonomyImagesModal()"] {
+                        display: none !important;
+                    }
+                </style>
+                
+                {{-- Script pour masquer la section des images génériques dans le modal --}}
+                <script>
+                // Observer pour détecter l'ouverture du modal et masquer la section des images génériques
+                (function() {
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            mutation.addedNodes.forEach(function(node) {
+                                if (node.nodeType === 1 && node.id === 'article-images-modal') {
+                                    console.log('🔧 Modal images détecté, masquage de la section génériques...');
+                                    
+                                    // Masquer la section entière qui contient les images génériques
+                                    setTimeout(() => {
+                                        const genericSection = node.querySelector('.border-t.pt-6');
+                                        if (genericSection) {
+                                            const heading = genericSection.querySelector('h4');
+                                            if (heading && heading.textContent.includes('autres articles')) {
+                                                genericSection.style.display = 'none';
+                                                console.log('✅ Section images génériques masquée');
+                                            }
+                                        }
+                                    }, 100);
+                                }
+                            });
+                        });
+                    });
+                    
+                    observer.observe(document.body, { childList: true, subtree: true });
+                })();
+                </script>
                 
                 {{-- Configuration des routes pour le gestionnaire d'images --}}
                 <script>
