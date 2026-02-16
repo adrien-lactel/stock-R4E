@@ -123,7 +123,8 @@ class ArticleType extends Model
         }
         
         // Sinon, essayer d'extraire du nom (format "ROM_ID - Nom")
-        if ($this->name && preg_match('/^([A-Z0-9]{2,4}-[A-Z0-9]+)\s*-/i', $this->name, $matches)) {
+        // Regex corrigée pour capturer les ROM IDs avec tirets multiples (ex: SHVC-ADFJ-JPN)
+        if ($this->name && preg_match('/^([A-Z0-9]{2,4}-[A-Z0-9\-]+?)\s+-\s+/i', $this->name, $matches)) {
             return strtoupper($matches[1]);
         }
         
