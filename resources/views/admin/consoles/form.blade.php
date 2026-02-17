@@ -688,48 +688,6 @@
         </form>
     </div>
 
-    {{-- =====================
-         15 DERNIÈRES ENTRÉES
-    ===================== --}}
-    <div class="mt-10 bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">
-            🕒 15 dernières entrées en stock
-        </h2>
-
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm divide-y divide-gray-200">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-3 py-2 text-left">ID</th>
-                        <th class="px-3 py-2 text-left">Catégorie</th>
-                        <th class="px-3 py-2 text-left">Type</th>
-                        <th class="px-3 py-2 text-left">Statut</th>
-                        <th class="px-3 py-2 text-left">Réparateur</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse($lastConsoles as $c)
-                        <tr>
-                            <td class="px-3 py-2">#{{ $c->id }}</td>
-                            <td class="px-3 py-2">{{ $c->articleCategory?->name ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ $c->articleType?->name ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ ucfirst($c->status) }}</td>
-                            <td class="px-3 py-2">
-                                {{ $c->repairer?->name ?? '—' }}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-3 py-6 text-center text-gray-500">
-                                Aucune entrée récente
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 </div>
 
 {{-- =====================
