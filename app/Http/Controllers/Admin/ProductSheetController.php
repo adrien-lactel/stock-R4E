@@ -839,7 +839,7 @@ class ProductSheetController extends Controller
             return response()->json([]);
         }
 
-        // Mapping des noms de plateformes vers les slugs R2
+        // Mapping des noms de plateformes vers les dossiers taxonomy
         $platformToSlug = [
             'Game Boy' => 'gameboy',
             'NES' => 'nes',
@@ -848,21 +848,27 @@ class ProductSheetController extends Controller
             'Game Gear' => 'gamegear',
         ];
         
-        // Helper pour formater une suggestion avec image depuis R2 + cache
+        // Helper pour formater une suggestion avec image depuis taxonomy/ (legacy path)
         $formatSuggestionWithImage = function($game, $platform) use ($platformToSlug) {
             $romId = $game->rom_id ?? $game->slug ?? null;
             $imageUrl = null;
             
-            // Récupérer l'image cover depuis R2 via cache
+            // Récupérer l'image cover depuis taxonomy/ (où sont les images actuellement)
             if ($romId && isset($platformToSlug[$platform])) {
                 $platformSlug = $platformToSlug[$platform];
                 
                 try {
-                    $images = $this->getGameImages($platformSlug, $romId);
+                    // Chercher dans taxonomy/{platform}/{rom_id}-cover.png
+                    $coverPath = "taxonomy/{$platformSlug}/{$romId}-cover.png";
                     
-                    // Prendre la première cover image
-                    if (isset($images['cover']) && !empty($images['cover'])) {
-                        $imageUrl = $images['cover'][0]['url'] ?? null;
+                    if (\Storage::disk('r2')->exists($coverPath)) {
+                        $imageUrl = \Storage::disk('r2')->url($coverPath);
+                    } else {
+                        // Essayer .jpg si .png n'existe pas
+                        $coverPathJpg = "taxonomy/{$platformSlug}/{$romId}-cover.jpg";
+                        if (\Storage::disk('r2')->exists($coverPathJpg)) {
+                            $imageUrl = \Storage::disk('r2')->url($coverPathJpg);
+                        }
                     }
                 } catch (\Exception $e) {
                     // Si erreur, continuer sans image

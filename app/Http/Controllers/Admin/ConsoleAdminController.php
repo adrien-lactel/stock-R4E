@@ -104,13 +104,13 @@ class ConsoleAdminController extends Controller
 
     /**
      * Construire l'URL de l'image cover d'un jeu depuis R2
-     * Pattern: products/games/{platform}/{rom_id}-cover-1.jpg
+     * Pattern: taxonomy/{platform}/{rom_id}-cover.png
      */
     private function getGameImageUrl($game, $platform)
     {
         if (!$game) return null;
 
-        // Mapping des plateformes vers les slugs R2
+        // Mapping des plateformes vers les dossiers taxonomy
         $platformSlugMap = [
             'gameboy' => 'gameboy',
             'n64' => 'n64',
@@ -118,7 +118,7 @@ class ConsoleAdminController extends Controller
             'snes' => 'snes',
             'gamegear' => 'gamegear',
             'wonderswan' => 'wonderswan',
-            'segasaturn' => 'saturn',
+            'segasaturn' => 'segasaturn',
             'megadrive' => 'megadrive',
         ];
 
@@ -128,19 +128,21 @@ class ConsoleAdminController extends Controller
         $identifier = $game->rom_id ?? $game->slug ?? null;
         if (!$identifier) return null;
 
-        // Construire le pattern de recherche R2
+        // Construire le chemin de l'image cover (format legacy mais fonctionnel)
         try {
-            $pattern = "products/games/{$platformSlug}/{$identifier}-cover-";
-            $files = \Storage::disk('r2')->files("products/games/{$platformSlug}");
+            $coverPath = "taxonomy/{$platformSlug}/{$identifier}-cover.png";
             
-            // Chercher la première image cover
-            foreach ($files as $file) {
-                if (str_contains(basename($file), $identifier . '-cover-')) {
-                    return \Storage::disk('r2')->url($file);
-                }
+            // Vérifier si le fichier existe sur R2
+            if (\Storage::disk('r2')->exists($coverPath)) {
+                return \Storage::disk('r2')->url($coverPath);
             }
             
-            // Si aucune image trouvée, retourner null (pas de placeholder)
+            // Si pas de .png, essayer .jpg
+            $coverPathJpg = "taxonomy/{$platformSlug}/{$identifier}-cover.jpg";
+            if (\Storage::disk('r2')->exists($coverPathJpg)) {
+                return \Storage::disk('r2')->url($coverPathJpg);
+            }
+            
             return null;
             
         } catch (\Exception $e) {
