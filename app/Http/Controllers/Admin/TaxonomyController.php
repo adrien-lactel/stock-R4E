@@ -808,7 +808,6 @@ public function destroyType(ArticleType $type)
                     }
                 }
             }
-        }
         
         // Mode R2 (Production/Railway) : vérifier l'existence des fichiers spécifiques
         if (empty($images) || app()->environment('production')) {

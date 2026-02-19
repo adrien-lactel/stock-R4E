@@ -440,6 +440,13 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         Route::delete('/product-sheets/delete-image', [ProductSheetController::class, 'deleteImage'])
             ->name('product-sheets.delete-image');
 
+        // Gestion des images de jeux (nouveau système R2 + cache)
+        Route::post('/product-sheets/games/upload-image', [ProductSheetController::class, 'uploadGameImage'])
+            ->name('product-sheets.games.upload-image');
+
+        Route::delete('/product-sheets/games/delete-image', [ProductSheetController::class, 'deleteGameImage'])
+            ->name('product-sheets.games.delete-image');
+
         // Lookup Game Boy ROM ID
         Route::get('/product-sheets/autocomplete-rom', [ProductSheetController::class, 'autocompleteRomId'])
             ->name('product-sheets.autocomplete-rom');

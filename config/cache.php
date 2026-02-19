@@ -114,4 +114,19 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-cache-'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Game Images Cache TTL
+    |--------------------------------------------------------------------------
+    |
+    | Durée de vie du cache des images de jeux en secondes.
+    | Pattern R2: products/games/{platform}/{rom_id}-{type}-{index}.jpg
+    |
+    | Développement: 300 secondes (5 minutes) pour tests rapides
+    | Production: 3600 secondes (1 heure) pour performance
+    |
+    */
+
+    'game_images_ttl' => env('GAME_IMAGES_CACHE_TTL', 3600),
+
 ];

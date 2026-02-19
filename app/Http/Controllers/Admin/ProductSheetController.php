@@ -237,137 +237,7 @@ class ProductSheetController extends Controller
         return trim($description);
     }
 
-    /**
-     * Récupérer les images d'un jeu depuis R2 basées sur le ROM ID
-     */
-    private function getGameImagesFromR2($console)
-    {
-        if (!$console->rom_id) {
-            return [];
-        }
 
-        // Déterminer le dossier de la plateforme
-        $folder = $this->getPlatformFolder($console);
-        if (!$folder) {
-            return [];
-        }
-
-        $identifier = $console->rom_id; // Ex: DMG-VUA
-        $images = [];
-        
-        try {
-            // Lister les fichiers dans taxonomy/{folder}/
-            $r2Path = "taxonomy/{$folder}/";
-            $files = \Storage::disk('r2')->files($r2Path);
-            
-            $r2PublicUrl = config('filesystems.disks.r2.url');
-            
-            foreach ($files as $filePath) {
-                $filename = basename($filePath);
-                
-                // Vérifier si le fichier correspond au ROM ID (ex: DMG-VUA-cover.png)
-                if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.(png|jpg|jpeg)$/i', $filename, $matches)) {
-                    $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork"
-                    
-                    // En production: URL R2 directe, sinon proxy
-                    if (app()->environment('production')) {
-                        $imageUrl = $r2PublicUrl . "/taxonomy/{$folder}/{$filename}";
-                    } else {
-                        $imageUrl = route('proxy.taxonomy-image', [
-                            'folder' => $folder,
-                            'filename' => $filename
-                        ]);
-                    }
-                    
-                    // Déterminer le type (cover, artwork, gameplay, logo)
-                    $type = 'other';
-                    if (preg_match('/^(cover|artwork|gameplay|logo)(-\d+)?$/i', $fullType, $typeMatches)) {
-                        $type = strtolower($typeMatches[1]);
-                    }
-                    
-                    $images[] = [
-                        'url' => $imageUrl,
-                        'path' => $filePath,
-                        'type' => $type,
-                        'filename' => $filename,
-                        'source' => 'r2'
-                    ];
-                }
-            }
-            
-            \Log::info('Images R2 récupérées', [
-                'rom_id' => $identifier,
-                'folder' => $folder,
-                'count' => count($images),
-                'images' => $images
-            ]);
-            
-        } catch (\Exception $e) {
-            \Log::error('Erreur récupération images R2', [
-                'rom_id' => $identifier,
-                'folder' => $folder,
-                'error' => $e->getMessage()
-            ]);
-        }
-        
-        return $images;
-    }
-
-    /**
-     * Déterminer le dossier de la plateforme basé sur la sous-catégorie
-     */
-    private function getPlatformFolder($console)
-    {
-        // Mapping des noms de sous-catégories vers les dossiers R2
-        $platformMapping = [
-            'game boy' => 'gameboy',
-            'gameboy' => 'gameboy',
-            'game boy advance' => 'gba',
-            'gba' => 'gba',
-            'game boy color' => 'gbc',
-            'gbc' => 'gbc',
-            'super nintendo' => 'snes',
-            'snes' => 'snes',
-            'super famicom' => 'snes',
-            'nintendo 64' => 'n64',
-            'n64' => 'n64',
-            'nes' => 'nes',
-            'famicom' => 'nes',
-            'nintendo entertainment system' => 'nes',
-        ];
-        
-        // Récupérer le nom de la sous-catégorie
-        if ($console->articleType && $console->articleType->subCategory) {
-            $subCategoryName = strtolower($console->articleType->subCategory->name);
-            
-            // Chercher dans le mapping
-            foreach ($platformMapping as $key => $folder) {
-                if (str_contains($subCategoryName, $key)) {
-                    return $folder;
-                }
-            }
-        }
-        
-        // Fallback: essayer de deviner depuis le ROM ID
-        if ($console->rom_id) {
-            $romPrefix = substr($console->rom_id, 0, 3);
-            $prefixMapping = [
-                'DMG' => 'gameboy', // Game Boy
-                'AGB' => 'gba',      // Game Boy Advance
-                'CGB' => 'gbc',      // Game Boy Color
-                'SHVC' => 'snes',    // Super Famicom (SNES JP)
-                'SNS' => 'snes',     // SNES
-                'NUS' => 'n64',      // N64
-                'HVC' => 'nes',      // Famicom
-            ];
-            
-            if (isset($prefixMapping[$romPrefix])) {
-                return $prefixMapping[$romPrefix];
-            }
-        }
-        
-        return null;
-    }
 
     /* =====================================================
      | UPLOAD IMAGE — Upload d'une image
@@ -969,6 +839,19 @@ class ProductSheetController extends Controller
             return response()->json([]);
         }
 
+        // Helper pour formater une suggestion sans recherche d'image locale obsolète
+        $formatBasicSuggestion = function($game, $platform) {
+            $romId = $game->rom_id ?? $game->slug ?? null;
+            return [
+                'rom_id' => $romId,
+                'label' => $romId ? ($romId . ' - ' . $game->name) : $game->name,
+                'name' => $game->name,
+                'year' => $game->year ?? null,
+                'publisher' => $game->publisher ?? null,
+                'console' => ucfirst($platform),
+            ];
+        };
+
         $suggestions = collect();
         
         // ========================================
@@ -976,9 +859,6 @@ class ProductSheetController extends Controller
         // ========================================
         if ($searchType === 'rom_id') {
             $queryUpper = strtoupper($query);
-            
-            // Déterminer le dossier taxonomy basé sur le préfixe du ROM ID
-            $taxonomyFolder = $this->detectTaxonomyFolder($queryUpper);
             
             // Game Boy (DMG-, CGB-, AGB-)
             if (str_starts_with($queryUpper, 'DMG-') || str_starts_with($queryUpper, 'CGB-') || str_starts_with($queryUpper, 'AGB-')) {
@@ -989,7 +869,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($this->formatSuggestion($game, $taxonomyFolder));
+                    $suggestions->push($formatBasicSuggestion($game, 'Game Boy'));
                 }
             }
             
@@ -1003,7 +883,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($this->formatSuggestion($game, 'nes'));
+                    $suggestions->push($formatBasicSuggestion($game, 'NES'));
                 }
             }
             
@@ -1017,7 +897,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($this->formatSuggestion($game, 'snes'));
+                    $suggestions->push($formatBasicSuggestion($game, 'SNES'));
                 }
             }
             
@@ -1031,7 +911,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($this->formatSuggestion($game, 'n64'));
+                    $suggestions->push($formatBasicSuggestion($game, 'N64'));
                 }
             }
             
@@ -1039,10 +919,10 @@ class ProductSheetController extends Controller
             if ($suggestions->isEmpty()) {
                 // Chercher dans toutes les tables
                 $allTables = [
-                    ['table' => 'game_boy_games', 'folder' => 'gameboy', 'model' => \App\Models\GameBoyGame::class],
-                    ['table' => 'nes_games', 'folder' => 'nes'],
-                    ['table' => 'snes_games', 'folder' => 'snes'],
-                    ['table' => 'n64_games', 'folder' => 'n64'],
+                    ['table' => 'game_boy_games', 'platform' => 'Game Boy', 'model' => \App\Models\GameBoyGame::class],
+                    ['table' => 'nes_games', 'platform' => 'NES'],
+                    ['table' => 'snes_games', 'platform' => 'SNES'],
+                    ['table' => 'n64_games', 'platform' => 'N64'],
                 ];
                 
                 foreach ($allTables as $tableInfo) {
@@ -1062,7 +942,7 @@ class ProductSheetController extends Controller
                     }
                     
                     foreach ($games as $game) {
-                        $suggestions->push($this->formatSuggestion($game, $tableInfo['folder']));
+                        $suggestions->push($formatBasicSuggestion($game, $tableInfo['platform']));
                     }
                 }
             }
@@ -1079,113 +959,237 @@ class ProductSheetController extends Controller
                 ->get(['slug', 'name', 'year', 'publisher']);
             
             foreach ($games as $game) {
-                $localImage = $this->findLocalImageBySlug($game->slug, 'gamegear');
-                
-                $suggestions->push([
-                    'rom_id' => $game->slug,
-                    'slug' => $game->slug,
-                    'label' => $game->name,
-                    'name' => $game->name,
-                    'year' => $game->year ?? null,
-                    'publisher' => $game->publisher ?? null,
-                    'image_url' => $localImage,
-                    'console' => 'Game Gear',
-                ]);
+                $suggestions->push($formatBasicSuggestion($game, 'Game Gear'));
             }
         }
 
         return response()->json($suggestions->take(10));
     }
     
-    /**
-     * Détecter le dossier taxonomy basé sur le préfixe ROM ID
-     */
-    private function detectTaxonomyFolder($romId)
+    /* =====================================================
+     | GET GAME IMAGES — Récupérer les images d'un jeu depuis R2 avec cache
+     | Pattern: products/games/{platform}/{rom_id}-{type}-{index}.jpg
+     | Types: cover, artwork, gameplay, logo
+     ===================================================== */
+    private function getGameImages(string $platform, string $romId, bool $fresh = false): array
     {
-        if (str_starts_with($romId, 'DMG-')) return 'gameboy';
-        if (str_starts_with($romId, 'CGB-')) return 'game boy color';
-        if (str_starts_with($romId, 'AGB-')) return 'game boy advance';
-        if (str_starts_with($romId, 'HVC-') || str_starts_with($romId, 'NES-')) return 'nes';
-        if (str_starts_with($romId, 'SHVC-') || str_starts_with($romId, 'SNS-')) return 'snes';
-        if (preg_match('/^N[A-Z0-9]{3}-/', $romId)) return 'n64';
-        return 'gameboy'; // fallback
-    }
-    
-    /**
-     * Formater une suggestion avec image locale
-     */
-    private function formatSuggestion($game, $taxonomyFolder)
-    {
-        $romId = $game->rom_id ?? $game->slug ?? null;
-        $localImage = $this->findLocalImage($romId, $taxonomyFolder);
+        $cacheKey = "game_images:{$platform}:{$romId}";
         
-        return [
-            'rom_id' => $romId,
-            'label' => $romId . ' - ' . $game->name,
-            'name' => $game->name,
-            'year' => $game->year ?? null,
-            'publisher' => $game->publisher ?? null,
-            'image_url' => $localImage,
-            'console' => ucfirst(str_replace('-', ' ', $taxonomyFolder)),
-        ];
-    }
-    
-    /**
-     * Trouver l'image locale d'un jeu par ROM ID
-     */
-    private function findLocalImage($romId, $taxonomyFolder)
-    {
-        if (!$romId) return null;
-        
-        $basePath = public_path("images/taxonomy/{$taxonomyFolder}");
-        $baseUrl = asset("images/taxonomy/{$taxonomyFolder}");
-        
-        // Chercher image cover en priorité
-        $coverFile = "{$basePath}/{$romId}-cover.png";
-        if (file_exists($coverFile)) {
-            return "{$baseUrl}/{$romId}-cover.png";
+        // Bypass cache si demandé
+        if ($fresh) {
+            \Cache::forget($cacheKey);
         }
         
-        // Fallback sur artwork
-        $artworkFile = "{$basePath}/{$romId}-artwork.png";
-        if (file_exists($artworkFile)) {
-            return "{$baseUrl}/{$romId}-artwork.png";
-        }
-        
-        // Fallback sur logo
-        $logoFile = "{$basePath}/{$romId}-logo.png";
-        if (file_exists($logoFile)) {
-            return "{$baseUrl}/{$romId}-logo.png";
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Trouver l'image locale d'un jeu Game Gear par slug
-     */
-    private function findLocalImageBySlug($slug, $taxonomyFolder)
-    {
-        if (!$slug) return null;
-        
-        $basePath = public_path("images/taxonomy/{$taxonomyFolder}");
-        $baseUrl = asset("images/taxonomy/{$taxonomyFolder}");
-        
-        // Chercher image cover en priorité
-        $coverFile = "{$basePath}/{$slug}-cover.png";
-        if (file_exists($coverFile)) {
-            return "{$baseUrl}/{$slug}-cover.png";
-        }
-        
-        // Fallback sur artwork
-        $artworkFile = "{$basePath}/{$slug}-artwork.png";
-        if (file_exists($artworkFile)) {
-            return "{$baseUrl}/{$slug}-artwork.png";
-        }
-        
-        return null;
+        return \Cache::remember($cacheKey, config('cache.game_images_ttl', 3600), function() use ($platform, $romId) {
+            try {
+                $pattern = "products/games/{$platform}/{$romId}-";
+                $files = \Storage::disk('r2')->files("products/games/{$platform}");
+                
+                // Filtrer les fichiers qui correspondent au rom_id
+                $matchingFiles = array_filter($files, function($file) use ($romId) {
+                    return str_contains(basename($file), $romId . '-');
+                });
+                
+                $images = [];
+                
+                foreach ($matchingFiles as $file) {
+                    $basename = basename($file);
+                    
+                    // Parse: {rom_id}-{type}-{index}.{ext}
+                    if (preg_match('/-(\w+)-(\d+)\.(jpg|png|jpeg|webp|avif)$/i', $basename, $matches)) {
+                        $type = strtolower($matches[1]);
+                        $index = (int)$matches[2];
+                        
+                        if (!isset($images[$type])) {
+                            $images[$type] = [];
+                        }
+                        
+                        $images[$type][] = [
+                            'url' => \Storage::disk('r2')->url($file),
+                            'path' => $file,
+                            'index' => $index,
+                            'filename' => $basename,
+                        ];
+                    }
+                }
+                
+                // Trier chaque type par index
+                foreach ($images as &$typeImages) {
+                    usort($typeImages, fn($a, $b) => $a['index'] <=> $b['index']);
+                }
+                
+                \Log::info('Images de jeu récupérées depuis R2', [
+                    'platform' => $platform,
+                    'rom_id' => $romId,
+                    'count' => array_sum(array_map('count', $images)),
+                    'types' => array_keys($images),
+                ]);
+                
+                return $images;
+                
+            } catch (\Exception $e) {
+                \Log::error('Échec récupération images de jeu depuis R2', [
+                    'platform' => $platform,
+                    'rom_id' => $romId,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                
+                return [];
+            }
+        });
     }
 
+    /* =====================================================
+     | UPLOAD GAME IMAGE — Upload une image de jeu vers R2
+     | Auto-incrémente l'index pour chaque type
+     ===================================================== */
+    public function uploadGameImage(Request $request)
+    {
+        $request->validate([
+            'platform' => 'required|string',
+            'rom_id' => 'required|string',
+            'type' => 'required|in:cover,artwork,gameplay,logo',
+            'image' => 'required|file|mimes:jpeg,png,jpg,webp,avif|max:10240',
+        ]);
+
+        try {
+            $platform = $request->platform;
+            $romId = $request->rom_id;
+            $type = $request->type;
+            $file = $request->file('image');
+            
+            // Récupérer les images existantes pour déterminer le prochain index
+            $existingImages = $this->getGameImages($platform, $romId, true); // Fresh = true
+            $nextIndex = isset($existingImages[$type]) ? count($existingImages[$type]) + 1 : 1;
+            
+            // Format: {rom_id}-{type}-{index}.{ext}
+            $extension = $file->getClientOriginalExtension();
+            $filename = "{$romId}-{$type}-{$nextIndex}.{$extension}";
+            $path = "products/games/{$platform}/{$filename}";
+            
+            // Upload vers R2
+            \Storage::disk('r2')->put($path, file_get_contents($file), 'public');
+            
+            // Invalider le cache
+            $this->invalidateImageCache($platform, $romId);
+            
+            $url = \Storage::disk('r2')->url($path);
+            
+            \Log::info('Image de jeu uploadée vers R2', [
+                'platform' => $platform,
+                'rom_id' => $romId,
+                'type' => $type,
+                'index' => $nextIndex,
+                'filename' => $filename,
+                'url' => $url,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'url' => $url,
+                'path' => $path,
+                'filename' => $filename,
+                'type' => $type,
+                'index' => $nextIndex,
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Échec upload image de jeu', [
+                'platform' => $request->platform,
+                'rom_id' => $request->rom_id,
+                'error' => $e->getMessage(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /* =====================================================
+     | DELETE GAME IMAGE — Supprimer une image de jeu depuis R2
+     ===================================================== */
+    public function deleteGameImage(Request $request)
+    {
+        $request->validate([
+            'platform' => 'required|string',
+            'rom_id' => 'required|string',
+            'filename' => 'required|string',
+        ]);
+
+        try {
+            $platform = $request->platform;
+            $romId = $request->rom_id;
+            $filename = $request->filename;
+            
+            $path = "products/games/{$platform}/{$filename}";
+            
+            // Vérifier que le fichier existe
+            if (!\Storage::disk('r2')->exists($path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Image non trouvée',
+                ], 404);
+            }
+            
+            // Supprimer depuis R2
+            \Storage::disk('r2')->delete($path);
+            
+            // Invalider le cache
+            $this->invalidateImageCache($platform, $romId);
+            
+            \Log::info('Image de jeu supprimée depuis R2', [
+                'platform' => $platform,
+                'rom_id' => $romId,
+                'filename' => $filename,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Image supprimée avec succès',
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Échec suppression image de jeu', [
+                'platform' => $request->platform,
+                'rom_id' => $request->rom_id,
+                'filename' => $request->filename,
+                'error' => $e->getMessage(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /* =====================================================
+     | INVALIDATE IMAGE CACHE — Invalider le cache des images d'un jeu
+     ===================================================== */
+    private function invalidateImageCache(string $platform, string $romId): void
+    {
+        try {
+            $cacheKey = "game_images:{$platform}:{$romId}";
+            \Cache::forget($cacheKey);
+            
+            \Log::info('Cache d\'images invalidé', [
+                'platform' => $platform,
+                'rom_id' => $romId,
+                'cache_key' => $cacheKey,
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Échec invalidation cache d\'images', [
+                'platform' => $platform,
+                'rom_id' => $romId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+    
     /* =====================================================
      | GET TAXONOMY IMAGES — Récupérer images existantes pour une taxonomie
      ===================================================== */
