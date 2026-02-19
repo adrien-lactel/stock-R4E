@@ -839,16 +839,49 @@ class ProductSheetController extends Controller
             return response()->json([]);
         }
 
-        // Helper pour formater une suggestion sans recherche d'image locale obsolète
-        $formatBasicSuggestion = function($game, $platform) {
+        // Mapping des noms de plateformes vers les slugs R2
+        $platformToSlug = [
+            'Game Boy' => 'gameboy',
+            'NES' => 'nes',
+            'SNES' => 'snes',
+            'N64' => 'n64',
+            'Game Gear' => 'gamegear',
+        ];
+        
+        // Helper pour formater une suggestion avec image depuis R2 + cache
+        $formatSuggestionWithImage = function($game, $platform) use ($platformToSlug) {
             $romId = $game->rom_id ?? $game->slug ?? null;
+            $imageUrl = null;
+            
+            // Récupérer l'image cover depuis R2 via cache
+            if ($romId && isset($platformToSlug[$platform])) {
+                $platformSlug = $platformToSlug[$platform];
+                
+                try {
+                    $images = $this->getGameImages($platformSlug, $romId);
+                    
+                    // Prendre la première cover image
+                    if (isset($images['cover']) && !empty($images['cover'])) {
+                        $imageUrl = $images['cover'][0]['url'] ?? null;
+                    }
+                } catch (\Exception $e) {
+                    // Si erreur, continuer sans image
+                    \Log::warning('Erreur récupération image pour autocomplete', [
+                        'rom_id' => $romId,
+                        'platform' => $platformSlug,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            
             return [
                 'rom_id' => $romId,
                 'label' => $romId ? ($romId . ' - ' . $game->name) : $game->name,
                 'name' => $game->name,
                 'year' => $game->year ?? null,
                 'publisher' => $game->publisher ?? null,
-                'console' => ucfirst($platform),
+                'console' => $platform,
+                'image_url' => $imageUrl,
             ];
         };
 
@@ -869,7 +902,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($formatBasicSuggestion($game, 'Game Boy'));
+                    $suggestions->push($formatSuggestionWithImage($game, 'Game Boy'));
                 }
             }
             
@@ -883,7 +916,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($formatBasicSuggestion($game, 'NES'));
+                    $suggestions->push($formatSuggestionWithImage($game, 'NES'));
                 }
             }
             
@@ -897,7 +930,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($formatBasicSuggestion($game, 'SNES'));
+                    $suggestions->push($formatSuggestionWithImage($game, 'SNES'));
                 }
             }
             
@@ -911,7 +944,7 @@ class ProductSheetController extends Controller
                     ->get(['rom_id', 'name', 'year', 'publisher']);
                 
                 foreach ($games as $game) {
-                    $suggestions->push($formatBasicSuggestion($game, 'N64'));
+                    $suggestions->push($formatSuggestionWithImage($game, 'N64'));
                 }
             }
             
@@ -942,7 +975,7 @@ class ProductSheetController extends Controller
                     }
                     
                     foreach ($games as $game) {
-                        $suggestions->push($formatBasicSuggestion($game, $tableInfo['platform']));
+                        $suggestions->push($formatSuggestionWithImage($game, $tableInfo['platform']));
                     }
                 }
             }
@@ -959,7 +992,7 @@ class ProductSheetController extends Controller
                 ->get(['slug', 'name', 'year', 'publisher']);
             
             foreach ($games as $game) {
-                $suggestions->push($formatBasicSuggestion($game, 'Game Gear'));
+                $suggestions->push($formatSuggestionWithImage($game, 'Game Gear'));
             }
         }
 

@@ -103,57 +103,55 @@ class ConsoleAdminController extends Controller
     }
 
     /**
-     * Construire l'URL de l'image cover d'un jeu
+     * Construire l'URL de l'image cover d'un jeu depuis R2
+     * Pattern: products/games/{platform}/{rom_id}-cover-1.jpg
      */
     private function getGameImageUrl($game, $platform)
     {
         if (!$game) return null;
 
-        $isProduction = config('app.env') === 'production';
-        $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
-        $baseUrl = $isProduction ? $r2Url . '/taxonomy' : asset('images/taxonomy');
+        // Mapping des plateformes vers les slugs R2
+        $platformSlugMap = [
+            'gameboy' => 'gameboy',
+            'n64' => 'n64',
+            'nes' => 'nes',
+            'snes' => 'snes',
+            'gamegear' => 'gamegear',
+            'wonderswan' => 'wonderswan',
+            'segasaturn' => 'saturn',
+            'megadrive' => 'megadrive',
+        ];
 
-        // Plateformes utilisant le nom du fichier
-        $nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
-        
-        if (in_array($platform, $nameBasedPlatforms)) {
-            $identifier = preg_replace('/\.(ws|md|gg|bin)$/i', '', $game->name);
-            $identifier = trim($identifier);
-        } else {
-            $identifier = $game->rom_id ?? $game->slug ?? null;
-        }
+        $platformSlug = $platformSlugMap[$platform] ?? $platform;
 
+        // Identifier le jeu (rom_id ou slug)
+        $identifier = $game->rom_id ?? $game->slug ?? null;
         if (!$identifier) return null;
 
-        // Déterminer le dossier selon la plateforme
-        $folder = null;
-        if ($platform === 'gameboy') {
-            if (str_starts_with($identifier, 'CGB-')) {
-                $folder = 'game boy color';
-            } elseif (str_starts_with($identifier, 'AGB-')) {
-                $folder = 'game boy advance';
-            } else {
-                $folder = 'gameboy';
+        // Construire le pattern de recherche R2
+        try {
+            $pattern = "products/games/{$platformSlug}/{$identifier}-cover-";
+            $files = \Storage::disk('r2')->files("products/games/{$platformSlug}");
+            
+            // Chercher la première image cover
+            foreach ($files as $file) {
+                if (str_contains(basename($file), $identifier . '-cover-')) {
+                    return \Storage::disk('r2')->url($file);
+                }
             }
-        } else {
-            $platformFolders = [
-                'n64' => 'n64',
-                'nes' => 'nes',
-                'snes' => 'snes',
-                'gamegear' => 'gamegear',
-                'wonderswan' => 'wonderswan color',
-                'segasaturn' => 'segasaturn',
-                'megadrive' => 'megadrive'
-            ];
-            $folder = $platformFolders[$platform] ?? $platform;
+            
+            // Si aucune image trouvée, retourner null (pas de placeholder)
+            return null;
+            
+        } catch (\Exception $e) {
+            \Log::warning('Erreur récupération image cover autocomplete', [
+                'platform' => $platformSlug,
+                'identifier' => $identifier,
+                'error' => $e->getMessage(),
+            ]);
+            
+            return null;
         }
-
-        if (!$folder) return null;
-
-        // Construire l'URL de la cover
-        $fullPath = "{$baseUrl}/{$folder}/{$identifier}-cover.png";
-        
-        return $fullPath;
     }
     
     /* =====================================================
