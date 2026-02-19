@@ -590,7 +590,8 @@ function addArticleImageCard(imageUrl, fileName, state = 'uploaded') {
     card.innerHTML = `
       <div class="aspect-square relative bg-gray-100">
         <img src="${imageUrl}" alt="${fileName}" 
-             class="w-full h-full object-cover ${isUploading ? 'opacity-50' : ''}">
+             class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${isUploading ? 'opacity-50' : ''}"
+             data-lightbox-url="${imageUrl}" data-is-primary="${isPrimary}">
         
         ${isUploading ? `
           <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
@@ -611,7 +612,7 @@ function addArticleImageCard(imageUrl, fileName, state = 'uploaded') {
           <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             ${!isPrimary ? `
               <button type="button" 
-                      onclick="setPrimaryImage('${imageUrl}')" 
+                      data-set-primary="${imageUrl}"
                       class="bg-yellow-500 hover:bg-yellow-600 text-white p-1.5 rounded-full shadow-lg transition-colors"
                       title="Définir comme image principale">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -620,7 +621,7 @@ function addArticleImageCard(imageUrl, fileName, state = 'uploaded') {
               </button>
             ` : ''}
             <button type="button" 
-                    onclick="deleteArticleImage('${imageUrl}')" 
+                    data-delete-image="${imageUrl}"
                     class="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-lg transition-colors"
                     title="Supprimer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -636,7 +637,7 @@ function addArticleImageCard(imageUrl, fileName, state = 'uploaded') {
           <input type="text" 
                  placeholder="Légende (optionnel)" 
                  value=""
-                 onchange="updateArticleImageCaption('${imageUrl}', this.value)"
+                 data-caption-input="${imageUrl}"
                  class="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
         </div>
       ` : `
@@ -647,6 +648,42 @@ function addArticleImageCard(imageUrl, fileName, state = 'uploaded') {
     `;
     
     grid.appendChild(card);
+    
+    // Ajouter les event listeners
+    const img = card.querySelector('img[data-lightbox-url]');
+    if (img) {
+        img.addEventListener('click', () => {
+            if (typeof window.openImageLightbox === 'function') {
+                window.openImageLightbox(img.dataset.lightboxUrl, {
+                    isArticleImage: true,
+                    isPrimary: img.dataset.isPrimary === 'true',
+                    article_type_id: window.currentArticleTypeId
+                });
+            }
+        });
+    }
+    
+    const setPrimaryBtn = card.querySelector('[data-set-primary]');
+    if (setPrimaryBtn) {
+        setPrimaryBtn.addEventListener('click', () => {
+            setPrimaryImage(setPrimaryBtn.dataset.setPrimary);
+        });
+    }
+    
+    const deleteBtn = card.querySelector('[data-delete-image]');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+            deleteArticleImage(deleteBtn.dataset.deleteImage);
+        });
+    }
+    
+    const captionInput = card.querySelector('[data-caption-input]');
+    if (captionInput) {
+        captionInput.addEventListener('change', () => {
+            updateArticleImageCaption(captionInput.dataset.captionInput, captionInput.value);
+        });
+    }
+    
     updateArticleImagesCount();
 }
 
@@ -878,10 +915,12 @@ async function loadGenericArticleImages() {
                 
                 card.innerHTML = `
                     <div class="aspect-square relative bg-gray-100">
-                      <img src="${imageUrl}" alt="Photo générique ${index + 1}" class="w-full h-full object-cover">
+                      <img src="${imageUrl}" alt="Photo générique ${index + 1}" 
+                           class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                           data-lightbox-url="${imageUrl}">
                       
                       ${isAlreadyAdded ? `
-                        <div class="absolute inset-0 bg-purple-500 bg-opacity-20 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-purple-500 bg-opacity-20 flex items-center justify-center pointer-events-none">
                           <span class="bg-purple-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-lg">
                             ✓ Ajoutée
                           </span>
@@ -889,7 +928,7 @@ async function loadGenericArticleImages() {
                       ` : `
                         <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
                           <button type="button" 
-                                  onclick="addGenericImageToArticle('${imageUrl}')"
+                                  data-add-generic="${imageUrl}"
                                   class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:scale-105">
                             ➕ Ajouter
                           </button>
@@ -899,6 +938,29 @@ async function loadGenericArticleImages() {
                 `;
                 
                 grid.appendChild(card);
+                
+                // Ajouter event listener pour la lightbox
+                const img = card.querySelector('img[data-lightbox-url]');
+                if (img) {
+                    img.addEventListener('click', () => {
+                        if (typeof window.openImageLightbox === 'function') {
+                            window.openImageLightbox(img.dataset.lightboxUrl, {
+                                isArticleImage: true,
+                                isPrimary: false,
+                                article_type_id: window.currentArticleTypeId
+                            });
+                        }
+                    });
+                }
+                
+                // Ajouter event listener pour le bouton "Ajouter"
+                const addBtn = card.querySelector('[data-add-generic]');
+                if (addBtn) {
+                    addBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        addGenericImageToArticle(addBtn.dataset.addGeneric);
+                    });
+                }
             });
             
             document.getElementById('generic-images-count').textContent = `${data.images.length} photo(s) disponible(s)`;
@@ -984,11 +1046,24 @@ window.refreshArticleImagesPreview = function() {
         const isPrimary = (url === window.primaryImageUrl);
         return `
             <div class="relative group">
-              <img src="${url}" class="w-full aspect-square object-cover rounded border-2 ${isPrimary ? 'border-indigo-600' : 'border-gray-300'}">
+              <img src="${url}" class="w-full aspect-square object-cover rounded border-2 ${isPrimary ? 'border-indigo-600' : 'border-gray-300'} cursor-pointer hover:opacity-90 transition-opacity" data-lightbox-url="${url}" data-is-primary="${isPrimary}">
               ${isPrimary ? '<span class="absolute top-1 left-1 bg-indigo-600 text-white text-xs px-2 py-1 rounded font-bold shadow-lg">⭐ Principale</span>' : ''}
             </div>
         `;
     }).join('');
+    
+    // Ajouter les event listeners pour ouvrir la lightbox
+    previewContainer.querySelectorAll('img[data-lightbox-url]').forEach(img => {
+        img.addEventListener('click', () => {
+            if (typeof window.openImageLightbox === 'function') {
+                window.openImageLightbox(img.dataset.lightboxUrl, {
+                    isArticleImage: true,
+                    isPrimary: img.dataset.isPrimary === 'true',
+                    article_type_id: window.currentArticleTypeId
+                });
+            }
+        });
+    });
     
     if (window.uploadedGameImages.length > 4) {
         const more = document.createElement('div');

@@ -24,9 +24,8 @@ $tables = [
 
 $expectedColumns = [
     'id', 'rom_id', 'cartridge_id', 'name', 'name_jp', 'alternate_names',
-    'year', 'publisher', 'developer', 'region', 'slug', 'image_url',
-    'image_path', 'cloudinary_url', 'libretro_name', 'match_type',
-    'match_score', 'source', 'price', 'created_at', 'updated_at'
+    'year', 'publisher', 'developer', 'region', 'libretro_name', 
+    'source', 'price', 'created_at', 'updated_at'
 ];
 
 echo "═══════════════════════════════════════════════════════════════════════════════\n";
@@ -52,7 +51,7 @@ foreach ($tables as $tableName => $platform) {
     echo "   Total jeux: {$totalGames}\n";
     echo "   ROM_ID remplis: {$romIdFilled}/{$totalGames} (" . 
          ($totalGames > 0 ? round(($romIdFilled / $totalGames) * 100, 1) : 0) . "%)\n";
-    echo "   Colonnes: {$columnCount}/21\n";
+    echo "   Colonnes: {$columnCount}/15\n";
     echo "   Ordre identique: " . ($columnsMatch ? 'OUI ✅' : 'NON ❌') . "\n";
     
     if (!$columnsMatch) {
@@ -81,7 +80,7 @@ foreach ($tables as $tableName => $platform) {
 }
 
 echo "═══════════════════════════════════════════════════════════════════════════════\n";
-echo "📋 SCHÉMA UNIFORMISÉ (21 COLONNES)\n";
+echo "📋 SCHÉMA UNIFORMISÉ (15 COLONNES)\n";
 echo "═══════════════════════════════════════════════════════════════════════════════\n\n";
 
 foreach ($expectedColumns as $i => $col) {
@@ -90,16 +89,13 @@ foreach ($expectedColumns as $i => $col) {
     // Ajouter une description pour les colonnes importantes
     $descriptions = [
         'id' => 'Clé primaire auto-increment',
-        'rom_id' => 'Identifiant ROM (requis pour matching images)',
-        'cartridge_id' => 'ID physique cartouche (SNES spécifique)',
+        'rom_id' => 'Identifiant unique du jeu',
+        'cartridge_id' => 'ID physique cartouche',
         'name' => 'Nom du jeu (requis)',
         'name_jp' => 'Nom japonais',
         'alternate_names' => 'Noms alternatifs',
         'year' => 'Année de sortie',
-        'slug' => 'Slug URL-friendly',
-        'image_url' => 'URL externe',
-        'image_path' => 'Chemin local',
-        'cloudinary_url' => 'URL Cloudinary CDN',
+        'libretro_name' => 'Nom dans base Libretro',
         'source' => 'Source des données',
     ];
     
@@ -136,7 +132,7 @@ echo "════════════════════════�
 if ($allPassed) {
     echo "✅ SUCCÈS TOTAL: Toutes les 8 tables de jeux sont parfaitement uniformisées!\n\n";
     
-    echo "✓ 21 colonnes identiques sur toutes les tables\n";
+    echo "✓ 15 colonnes identiques sur toutes les tables\n";
     echo "✓ Ordre des colonnes strictement identique\n";
     echo "✓ Mega Drive: 26/26 jeux avec rom_id (" . $summary['mega_drive_games']['rom_id_filled'] . " vérifiés)\n";
     echo "✓ Game Gear: " . $summary['game_gear_games']['rom_id_filled'] . "/" . 
@@ -150,7 +146,13 @@ if ($allPassed) {
     echo "   La page de création d'article peut maintenant:\n";
     echo "   • Interroger uniquement la colonne 'rom_id' sur toutes les 8 tables\n";
     echo "   • Utiliser la même structure pour toutes les plateformes\n";
-    echo "   • Éviter les regex et manipulations conditionnelles\n";
+    echo "   • Éviter les regex et manipulations conditionnelles\n\n";
+    
+    echo "🚀 SIMPLIFICATION COMPLÈTE:\n";
+    echo "   • 6 colonnes obsolètes supprimées (cloudinary_url + 5 autres)\n";
+    echo "   • Schéma optimisé: 21 → 15 colonnes (-29%)\n";
+    echo "   • Gestion images: Pattern R2 (pas de colonne BDD)\n";
+    echo "   • Pattern: products/games/{platform}/{rom_id}-{type}-{index}.jpg\n";
     
 } else {
     echo "⚠️  ATTENTION: Des différences ont été détectées.\n";

@@ -36,7 +36,7 @@ $referenceOrder = [
     'updated_at',
 ];
 
-$tablesToFix = ['nes_games', 'mega_drive_games'];
+$tablesToFix = ['nes_games', 'mega_drive_games', 'n64_games', 'sega_saturn_games'];
 
 $sql = "-- ═══════════════════════════════════════════════════════════════════════\n";
 $sql .= "-- RÉORDONNANCEMENT DES COLONNES - nes_games & mega_drive_games\n";

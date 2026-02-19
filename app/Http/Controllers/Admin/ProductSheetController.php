@@ -462,8 +462,8 @@ class ProductSheetController extends Controller
             $imageUrl = $request->input('url');
             $romId = $request->input('rom_id');
             
-            // Si c'est une URL Cloudinary, la retourner directement
-            if (str_contains($imageUrl, 'cloudinary.com')) {
+            // Si c'est une URL R2, la retourner directement
+            if (str_contains($imageUrl, env('R2_PUBLIC_URL'))) {
                 return response()->json([
                     'success' => true,
                     'url' => $imageUrl,
@@ -520,37 +520,16 @@ class ProductSheetController extends Controller
             
             $filename = Str::random(40) . '.jpg';
             
-            // Upload vers Cloudinary
-            $path = Storage::disk('cloudinary')->putFileAs(
-                'R4E/products/images',
-                new \Illuminate\Http\File($tempFile),
-                $filename
-            );
+            // Upload vers R2 (Cloudflare R2 - remplace Cloudinary)
+            $path = 'products/external-images/' . $filename;
+            Storage::disk('r2')->put($path, file_get_contents($tempFile), 'public');
             
             // Supprimer le fichier temporaire
             @unlink($tempFile);
             
-            $uploadedFileUrl = Storage::disk('cloudinary')->url($path);
+            $uploadedFileUrl = Storage::disk('r2')->url($path);
 
-            \Log::info('Image uploadée vers Cloudinary', ['url' => $uploadedFileUrl]);
-
-            // Sauvegarder l'URL Cloudinary dans la BDD pour réutilisation (si la colonne existe)
-            if ($romId) {
-                try {
-                    $game = GameBoyGame::where('rom_id', $romId)->first();
-                    if ($game && Schema::hasColumn('game_boy_games', 'cloudinary_url')) {
-                        $game->cloudinary_url = $uploadedFileUrl;
-                        $game->save();
-                        \Log::info('URL Cloudinary sauvegardée pour ROM', ['rom_id' => $romId]);
-                    }
-                } catch (\Exception $e) {
-                    // Si la colonne n'existe pas, on ignore l'erreur et on continue
-                    \Log::warning('Impossible de sauvegarder cloudinary_url', [
-                        'rom_id' => $romId,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-            }
+            \Log::info('Image uploadée vers R2', ['url' => $uploadedFileUrl, 'rom_id' => $romId]);
 
             return response()->json([
                 'success' => true,
@@ -962,8 +941,8 @@ class ProductSheetController extends Controller
             ], 404);
         }
 
-        // Utiliser cloudinary_url si disponible, sinon image_url
-        $imageUrl = $game->cloudinary_url ?: $game->image_url;
+        // Utiliser image_url
+        $imageUrl = $game->image_url;
 
         return response()->json([
             'success' => true,
@@ -973,7 +952,7 @@ class ProductSheetController extends Controller
                 'image_url' => $imageUrl,
                 'price' => $game->price,
                 'rom_id' => $game->rom_id,
-                'has_cloudinary' => !empty($game->cloudinary_url),
+                'has_r2_cache' => !empty($game->image_path),
             ],
         ]);
     }
@@ -1427,13 +1406,10 @@ class ProductSheetController extends Controller
             $file = $request->file('image');
             $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
             
-            $path = Storage::disk('cloudinary')->putFileAs(
-                'R4E/products/images',
-                $file,
-                $filename
-            );
+            $path = 'products/taxonomy-images/' . $filename;
+            Storage::disk('r2')->put($path, file_get_contents($file), 'public');
 
-            $url = Storage::disk('cloudinary')->url($path);
+            $url = Storage::disk('r2')->url($path);
 
             // Créer ou mettre à jour une fiche "Template" pour cette taxonomie
             $type = ArticleType::find($request->article_type_id);

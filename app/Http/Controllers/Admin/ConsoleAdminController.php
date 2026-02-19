@@ -111,7 +111,7 @@ class ConsoleAdminController extends Controller
 
         $isProduction = config('app.env') === 'production';
         $r2Url = 'https://pub-ab739e57f0754a92b660c450ab8b019e.r2.dev';
-        $baseUrl = $isProduction ? $r2Url . '/taxonomy' : '/proxy/images/taxonomy';
+        $baseUrl = $isProduction ? $r2Url . '/taxonomy' : asset('images/taxonomy');
 
         // Plateformes utilisant le nom du fichier
         $nameBasedPlatforms = ['wonderswan', 'megadrive', 'segasaturn', 'gamegear'];
@@ -1151,8 +1151,8 @@ class ConsoleAdminController extends Controller
 
             $imageUrl = $request->input('image_url');
             
-            // Vérifier que c'est bien une image locale (pas Cloudinary)
-            if (str_contains($imageUrl, 'cloudinary')) {
+            // Vérifier que c'est bien une image locale (pas R2)
+            if (str_contains($imageUrl, env('R2_PUBLIC_URL'))) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette action est réservée aux images locales.'

@@ -714,11 +714,41 @@ public function destroyType(ArticleType $type)
 
             $images = [];
             $seenFilenames = []; // Éviter les doublons
+            
+            // Plateformes utilisant le NOM au lieu du ROM ID
+            $nameBasedPlatforms = ['wonderswan', 'gamegear', 'megadrive', 'saturn'];
+            $useNameMatching = in_array(strtolower($folder), $nameBasedPlatforms);
 
             // Mode LOCAL : lire depuis public/images/taxonomy/
             if (file_exists($basePath)) {
-                $pattern = "{$basePath}/{$identifier}-*.png";
-                $files = glob($pattern);
+                if ($useNameMatching) {
+                    // Pour WonderSwan, GameGear, etc.: chercher par nom de jeu
+                    // Pattern: "Nom du jeu (Region)-type.png" ou "Nom du jeu-type.png"
+                    $allFiles = glob("{$basePath}/*.png");
+                    $files = [];
+                    
+                    // Normaliser l'identifier pour la comparaison
+                    $normalizedIdentifier = strtolower(trim($identifier));
+                    
+                    foreach ($allFiles as $file) {
+                        $filename = basename($file);
+                        // Extraire le nom du jeu du fichier (tout avant le dernier -type.png)
+                        if (preg_match('/^(.+?)-(cover|logo|artwork|gameplay|display\d+)\.png$/i', $filename, $matches)) {
+                            $gameName = $matches[1];
+                            $normalizedGameName = strtolower(trim($gameName));
+                            
+                            // Comparaison flexible (contient ou commence par)
+                            if (strpos($normalizedGameName, $normalizedIdentifier) !== false || 
+                                strpos($normalizedIdentifier, $normalizedGameName) !== false) {
+                                $files[] = $file;
+                            }
+                        }
+                    }
+                } else {
+                    // Pour Game Boy, SNES, NES: chercher par ROM ID exact
+                    $pattern = "{$basePath}/{$identifier}-*.png";
+                    $files = glob($pattern);
+                }
             
             foreach ($files as $file) {
                 $filename = basename($file);
@@ -729,9 +759,22 @@ public function destroyType(ArticleType $type)
                     continue;
                 }
                 
-                // Extraire le type depuis le nom de fichier (ex: SNS-MK-cover.png -> cover)
-                if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.png$/i', $filename, $matches)) {
-                    $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork-3", "display1", etc.
+                // Extraire le type depuis le nom de fichier
+                if ($useNameMatching) {
+                    // Pattern flexible pour plateformes utilisant le nom
+                    if (preg_match('/^.+?-(cover|logo|artwork|gameplay|display\d+)\.png$/i', $filename, $matches)) {
+                        $fullType = $matches[1];
+                    } else {
+                        continue;
+                    }
+                } else {
+                    // Pattern standard avec ROM ID
+                    if (preg_match('/^' . preg_quote($identifier, '/') . '-(.+)\.png$/i', $filename, $matches)) {
+                        $fullType = $matches[1]; // Ex: "cover", "cover-2", "artwork-3", "display1", etc.
+                    } else {
+                        continue;
+                    }
+                }
                     
                     // Séparer le type de base et l'index
                     // Pour display1/2/3, le type complet EST le type de base (pas d'index)
